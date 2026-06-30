@@ -1,0 +1,26 @@
+# ---------------------------------------------------------------------------
+# Tentadata får ALDRIG checkas in. Verktyget bearbetar riktiga studentresultat
+# (Inspera-export i JSON, taggning i Excel, tentans PDF). Inget av det hör hemma
+# i repot. Koden själv innehåller inga data – men dina testfiler gör det.
+# ---------------------------------------------------------------------------
+*.json
+*.xlsx
+*.xls
+*.pdf
+*.csv
+
+# Versionerade lokala kopior (versionerna bärs av Git-historik och taggar,
+# inte av filnamn). Endast index.html ska finnas i repot.
+mcq_analys_v*.html
+mcq-resultat_*.html
+
+# OS- och editorskräp
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+node_modules/
+
+# Vill du checka in en SYNTETISK exempeltenta för demon: lägg den i examples/
+# och tvinga in den med  git add -f examples/exempel.json  (osv). Lägg ALDRIG
+# in riktiga studentdata – kontrollera innehållet först.
