@@ -6,6 +6,9 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.20.0
+- Verktyget fick namnet **Frågeluppen**. Sidhuvud, fliktitel och dokumentation uppdaterade.
+
 ## 3.19.0
 - Excel-export (.xlsx) i den **interaktiva HTML-exporten**: hämtar SheetJS från CDN
   vid klick och faller automatiskt tillbaka på CSV om biblioteket inte kan laddas

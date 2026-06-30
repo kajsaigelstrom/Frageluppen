@@ -1,0 +1,17 @@
+# Tentadata får ALDRIG checkas in.
+*.json
+*.xlsx
+*.xls
+*.pdf
+*.csv
+
+# Lokala versionerade kopior (versioner bärs av Git-taggar, inte filnamn)
+mcq_analys_v*.html
+mcq-resultat_*.html
+
+# OS- och editorskräp
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+node_modules/

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MCQ-analys för Inspera-tentor</title>
+<title>Frågeluppen</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -344,7 +344,7 @@
 <div class="wrap">
   <header>
     <div class="titlerow">
-      <h1>MCQ-analys för Inspera-tentor</h1>
+      <h1>Frågeluppen — MCQ-analys för Inspera-tentor</h1>
       <span class="devpill">Under utveckling</span>
     </div>
     <p class="subtitle">Visar svarsfördelning per alternativ, andel rätt och diskriminering – hur väl varje fråga skiljer starka från svaga studenter.</p>
@@ -536,8 +536,8 @@ const MIN_N_DIST = 20;
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum.
    Låt filnamnet följa samma nummer (mcq_analys_v3_12_0.html). */
-const VERSION = "3.19.0";
-const UPDATED = "2026-06-23";
+const VERSION = "3.20.0";
+const UPDATED = "2026-06-30";
 /* Exkludering = frågan dras ur poängsättningen. state.excluded: Map(frågenummer → orsak).
    Allt räknas om på den reducerade tentan; frågan visas kvar men märkt. */
 const EXCL_REASONS = ["Tekniskt fel","Låg kvalitet","Annan orsak"];

@@ -1,7 +1,9 @@
-# MCQ-analys för Inspera-tentor
+# Frågeluppen
+
+**MCQ-analys för Inspera-tentor.**
 
 Ett webbverktyg för att analysera resultaten från flervalstentor (MCQ) exporterade
-från Inspera. Verktyget visar svarsfördelning per alternativ, andel rätt och
+från Inspera. Frågeluppen visar svarsfördelning per alternativ, andel rätt och
 **diskriminering** – hur väl varje fråga skiljer starka från svaga studenter – som
 stöd för att bedöma frågekvalitet, hitta frågor att rätta om eller exkludera, och
 för att visualisera hela tentan i betygskollegiet.

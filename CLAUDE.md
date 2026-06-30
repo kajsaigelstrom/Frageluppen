@@ -1,7 +1,7 @@
 # CLAUDE.md – arbetsregler för det här repot
 
-Detta är ett pedagogiskt verktyg som analyserar MCQ-tentaresultat från Inspera.
-Läs den här filen innan du gör ändringar.
+Detta är **Frågeluppen**, ett pedagogiskt verktyg som analyserar MCQ-tentaresultat
+från Inspera. Läs den här filen innan du gör ändringar.
 
 ## Struktur
 - Hela verktyget är **en enda fil**: `index.html` (HTML + CSS + JS i samma fil,
