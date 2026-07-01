@@ -6,6 +6,10 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.22.1
+- Robusthet: sidan laddar och "Visa exempel" fungerar även om pdf.js/xlsx-CDN:erna är
+  blockerade (t.ex. på ett låst institutionsnät). Endast PDF-/Excel-inläsning kräver dem.
+
 ## 3.22.0
 - Inbyggt demoläge: en "Visa exempel"-knapp laddar en **syntetisk exempeltenta** direkt i
   appen – alla vyer, filter och exporter fungerar. Datan är en simulerad kohort som återger

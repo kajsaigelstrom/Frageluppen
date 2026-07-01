@@ -489,7 +489,11 @@
 <script>
 "use strict";
 const pdfjsLib = window.pdfjsLib;
-pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+// Skydda mot att hela sidan vitskärmar om pdf.js-CDN:en är blockerad (t.ex. på ett låst
+// institutionsnät). Utan pdf.js kan man inte läsa en PDF, men "Visa exempel", hjälpen och
+// resten av verktyget fungerar ändå.
+if (pdfjsLib && pdfjsLib.GlobalWorkerOptions)
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
 const $ = s => document.querySelector(s);
 const logEl = $("#log");
@@ -568,7 +572,7 @@ const MIN_N_DIST = 20;
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum.
    Låt filnamnet följa samma nummer (mcq_analys_v3_12_0.html). */
-const VERSION = "3.22.0";
+const VERSION = "3.22.1";
 const UPDATED = "2026-06-30";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel

@@ -1,82 +1,84 @@
 # Frågeluppen
 
-**MCQ-analys för Inspera-tentor.**
+**Ett webbverktyg för att analysera flervalstentor (MCQ) från Inspera – och för att bedöma och förbättra frågornas kvalitet.**
 
-Ett webbverktyg för att analysera resultaten från flervalstentor (MCQ) exporterade
-från Inspera. Frågeluppen visar svarsfördelning per alternativ, andel rätt och
-**diskriminering** – hur väl varje fråga skiljer starka från svaga studenter – som
-stöd för att bedöma frågekvalitet, hitta frågor att rätta om eller exkludera, och
-för att visualisera hela tentan i betygskollegiet.
+Frågeluppen visar, för varje fråga på en tenta, hur svaren fördelade sig, hur många som svarade rätt, och hur väl frågan *skiljer starka från svaga studenter* (diskriminering). Det används för att hitta frågor som behöver rättas om eller exkluderas, för att förbereda betygskollegiet, och för att ge frågekonstruktörer återkoppling.
 
-> **Status:** under utveckling. Verktyget fungerar men kan innehålla fel – dubbelkolla
-> viktiga slutsatser. Återkoppling och buggrapporter välkomnas (se Kontakt nedan).
+---
 
-## Demo
+## ▶ Så här kör du verktyget
 
-En körbar version ligger på GitHub Pages:
-**https://ANVÄNDARNAMN.github.io/REPONAMN/**
-*(ersätt med din faktiska adress när Pages är aktiverat — se nedan)*
+Hela verktyget är **en enda fil**, `index.html`. Du behöver inte installera något eller titta på någon annan fil.
 
-Verktyget körs helt i webbläsaren. Vill du visa det utan riktiga studentdata,
-använd en avidentifierad/syntetisk exempeltenta (se `examples/` om sådan finns).
+1. Klicka på **[`index.html`](index.html)** här ovanför i fillistan.
+2. Klicka på **nedladdningsknappen** (ikonen med en pil, "Download raw file", uppe till höger i filvyn).
+3. **Öppna den nedladdade filen** i en webbläsare (dubbelklicka på den, eller dra den till ett webbläsarfönster).
+4. Väl inne: klicka på **"Visa exempel"** för att se en färdig analys på en avidentifierad exempeltenta – ingen egen data behövs.
 
-## Vad det gör
+> Vill du hellre ha allt på en gång: klicka på den gröna **Code**-knappen högst upp på repot → **Download ZIP**, packa upp, och öppna `index.html`.
+>
+> Verktyget behöver internetuppkoppling för att kunna läsa PDF- och Excel-filer (biblioteken hämtas från nätet). "Visa exempel" fungerar även utan.
 
-- Läser tentans **PDF** + ett eller flera **JSON-resultat** från Inspera, samt en
-  valfri **Excel-fil** med teman/taggar per fråga.
-- Per fråga: andel som valde varje svarsalternativ, andel rätt, och punkt-biseriell
-  diskriminering (item–total-korrelation). Distraktoranalys med färgkodning av hur
-  effektiva felaktiga alternativ är.
-- Tre rapportvyer knutna till rättningsflödet:
-  - **Preliminär MCQ** – före rättning, diskriminering mot MCQ-delen.
-  - **Slutrapport MCQ** – efter rättning, diskriminering mot hela tentan.
-  - **Totalrapport** – hela tentan inklusive fritext och flersvar, för betygskollegiet.
-- Filtrering på tema/tagg, sortering, exkludering av frågor, och export till
-  **Excel/CSV/PDF** samt en fristående **interaktiv HTML**-fil att dela.
+---
+
+## Så här ser det ut
+
+Tre rapportvyer överst följer rättningsflödet; sammanfattningen visar hur många frågor som behöver åtgärdas:
+
+![Frågeluppen – MCQ-vy med sammanfattning](docs/shot-cards.png)
+
+Totalrapporten ger en översikt över hela tentan – varje frågas svårighet och diskriminering, filtrerbar på tema, med export till Excel:
+
+![Frågeluppen – totalrapport](docs/shot-total.png)
+
+*(Skärmbilderna är tagna med den inbyggda exempeltentan – syntetiska, avidentifierade data.)*
+
+---
+
+## Vad verktyget gör
+
+- Läser tentans **PDF** och ett eller flera **JSON-resultat** från Inspera, samt en valfri **Excel** med teman per fråga.
+- Visar per fråga: **svarsfördelning** per alternativ, **andel rätt** (svårighet) och **diskriminering** (punkt-biseriell item–total-korrelation), med färgkodad distraktoranalys.
+- Tre rapportvyer: **Preliminär MCQ** (före rättning), **Slutrapport MCQ** (efter rättning) och **Totalrapport** (hela tentan, inför betygskollegiet).
+- Filtrering på tema, exkludering av trasiga frågor, och export till **Excel, CSV, PDF** samt en fristående **interaktiv HTML** att dela.
+- En inbyggd **"? Hjälp"** förklarar hur måtten tolkas.
+
+Allt körs lokalt i webbläsaren – **inga data laddas upp någonstans**.
+
+---
+
+## Vad jag har gjort
+
+Frågeluppen är utvecklad av mig, **Kajsa Igelström**, för analys av läkarprogrammets MCQ-tentor. Mitt bidrag är den pedagogiska och psykometriska utformningen:
+
+- **Vilka mått som är relevanta och hur de ska tolkas** – svårighet, item–total-diskriminering och distraktoreffektivitet – och hur de presenteras så att en examinator kan agera på dem.
+- **Arbetsflödet** kring preliminär rapport, slutrapport och totalrapport, kopplat till rättning och betygskollegium, och återkopplingen till frågekonstruktörer.
+- **Kraven, besluten och granskningen** av vad som är korrekt (t.ex. hur diskriminering beräknas mot rätt kriterium, hur teman kopplas till frågor, vad som får delas vidare).
+
+Kodimplementeringen är framtagen med AI-assisterad utveckling (Claude), utifrån min specifikation och löpande granskning. Utvecklingen har skett iterativt – se [`CHANGELOG.md`](CHANGELOG.md).
+
+---
 
 ## Integritet
 
-Allt bearbetas lokalt i din webbläsare. Inga data laddas upp till någon server.
-Den delbara HTML-exporten bakar **endast in aggregat** (antal per alternativ, n,
-diskriminering, teman) – aldrig kandidatsvar eller rådata på individnivå.
+Verktyget bearbetar riktiga studentresultat lokalt i webbläsaren; ingenting laddas upp. Exporten och exempeldatan innehåller **endast aggregat** (antal per alternativ, n, diskriminering, teman) – aldrig enskilda kandidatsvar, identifierare eller rådata. Exempeltentan är en simulerad kohort som återger en riktig tentas statistik utan några riktiga svar eller frågetexter.
 
-## Använda verktyget
+---
 
-1. Öppna `index.html` (eller demolänken).
-2. Ladda upp tentans PDF, JSON-resultatet/-en och (valfritt) tagg-Excel.
-3. Växla mellan vyerna, filtrera på tema, exportera vid behov.
+## Övriga filer (behövs inte för att köra verktyget)
 
-Verktyget är desktop-orienterat.
-
-## Teknik
-
-- **En enda fil** (`index.html`) – ren HTML/CSS/JS, ingen byggprocess.
-- Beroenden hämtas från CDN: `pdf.js` (läsa PDF) och `SheetJS/xlsx` (läsa/skriva
-  Excel). För helt offline-bruk kan biblioteken läggas lokalt bredvid filen och
-  `src`/`workerSrc` pekas om (se kommentar högst upp i `index.html`).
-- Den exporterade interaktiva HTML-filen är fristående och kräver inget CDN för att
-  *visas* (xlsx-nedladdning därifrån hämtar SheetJS vid klick, med CSV som reserv offline).
-
-## Köra som demo (GitHub Pages)
-
-1. Lägg upp repot publikt på GitHub.
-2. Settings → Pages → välj branch `main`, mapp `/ (root)`.
-3. Efter någon minut nås verktyget på `https://ANVÄNDARNAMN.github.io/REPONAMN/`.
-
-## Bakgrund och författarskap
-
-Verktyget är utvecklat av **Kajsa Igelström** för analys av läkarprogrammets
-MCQ-tentor. Den pedagogiska och psykometriska designen – valet av mått
-(diskriminering, distraktoreffektivitet), arbetsflödet kring preliminär/slut/total-rapport
-och betygskollegiet, samt återkopplingen till frågekonstruktörer – är författarens.
-Implementeringen har tagits fram med AI-assisterad kodning (Claude), under författarens
-specifikation, granskning och beslut om vad som är korrekt.
+| Fil | Vad det är |
+|-----|-----------|
+| [`index.html`](index.html) | **Hela verktyget.** Det enda du behöver för att köra det. |
+| [`CHANGELOG.md`](CHANGELOG.md) | Utvecklingshistorik version för version. |
+| [`docs/`](docs) | Skärmbilder till denna README. |
+| [`CLAUDE.md`](CLAUDE.md) | Arbetsinstruktioner för vidareutveckling (AI-assisterad). |
+| [`LICENSE`](LICENSE) | MIT-licens. |
 
 ## Licens
 
-MIT – se [LICENSE](LICENSE). Fri att använda, ändra och dela, så länge
-upphovsrättsnotisen följer med.
+MIT – se [LICENSE](LICENSE). Fri att använda, ändra och dela, så länge upphovsrättsnotisen följer med.
 
 ## Kontakt
 
-Kajsa Igelström – för buggar och förslag.
+Kajsa Igelström – för frågor, buggar och förslag.
