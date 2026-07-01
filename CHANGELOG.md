@@ -6,6 +6,18 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.22.0
+- Inbyggt demoläge: en "Visa exempel"-knapp laddar en **syntetisk exempeltenta** direkt i
+  appen – alla vyer, filter och exporter fungerar. Datan är en simulerad kohort som återger
+  en riktig tentas svårighet, distraktormönster och diskriminering, men innehåller inga
+  riktiga kandidatsvar, inga identifierare och ingen frågetext (allt neutraliserat till
+  Fråga N / Alternativ A–D). Låter verktyget visas publikt utan studentdata.
+
+## 3.21.0
+- Inbyggda hjälpsidor: en "? Hjälp"-knapp öppnar en guide (läsa resultaten, de tre
+  vyerna, skapa och dela rapporten) i **både appen och den delade HTML-exporten**.
+  Gemensam textkälla, inga externa beroenden.
+
 ## 3.20.0
 - Verktyget fick namnet **Frågeluppen**. Sidhuvud, fliktitel och dokumentation uppdaterade.
 
