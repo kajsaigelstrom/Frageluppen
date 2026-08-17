@@ -40,6 +40,15 @@ Repot innehåller kod och historik — inte planering.
 - **Tagg-uppslag:** matcha på frågans **positionsnummer** (Inspera `questionNumber` =
   PDF:ens marginalnummer = Excel-kolumnen `Nr`) först. Etikettkolumnen (`Fråga`/`Namn`)
   är reserv och kan innehålla mänskliga etiketter som krockar med positionsnummer.
+- **Alternativens ordning slumpas per kandidat.** `ext_inspera_interactionAlternative` ger ett
+  positionsnummer som är stabilt per alternativ men som **inte** följer PDF-utskriftens ordning
+  (mätt på VT26-omtentan: 26 träffar av 127 = ren slumpnivå). Det går alltså inte att koppla
+  svar till PDF-alternativ via positionen – **texten + elimination är enda vägen**. Utrett och
+  förkastat 2026-08-17; föreslå inte positionsbaserad koppling igen.
+- **Ett ledigt PDF-alternativ är inte samma sak som en kopplingsmiss.** Slots byggs bara av
+  faktiskt valda alternativ, så ett alternativ som ingen valde saknar slot. Blev ingen slot
+  över är fördelningen fullständig och raden har noll svar (visas som 0 %). Flagga "ej kopplad"
+  bara när minst en svars-slot inte kunde knytas till en rad.
 - **Tre rapportvyer**, knutna till rättningsflödet: Preliminär MCQ (kriterium = MCQ-delen,
   före rättning), Slutrapport MCQ (kriterium = hela tentan, efter rättning), Totalrapport
   (hela tentan inkl. fritext/flersvar). Diskriminering = punkt-biseriell / item–total.
