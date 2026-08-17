@@ -6,6 +6,19 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.22.2
+- **Buggfix (falsk "ej kopplad"-flagga):** ett svarsalternativ som *ingen* valde flaggades som
+  okopplat – i exporterna med texten "specialtecken – ej kopplad" – i stället för att visas som
+  0 %. Orsak: alternativens uppsättning byggdes enbart av de alternativ som faktiskt valdes, så
+  ett alternativ utan svar saknade slot och blev "ledigt". Nu gäller: om varje svar kunde kopplas
+  till en rad (inga överblivna slots) är fördelningen fullständig, och ett ledigt alternativ har
+  helt enkelt noll svar. Flaggan visas bara när kopplingen verkligen är okänd.
+  På VT26:s omtenta (n=20, 44 MCQ) föll 49 felaktiga flaggor bort; ingen siffra i övrigt ändrades.
+- Orsaksetiketten för genuint okopplade alternativ är nu gemensam för kort, Excel-, PDF- och
+  HTML-export (`unmapReason`): "specialtecken – ej kopplad" bara när de överblivna alternativens
+  text saknas i exporten, annars "matchade ej svarsdata" (oftast fel/avvikande PDF inläst).
+  Tidigare påstod Excel- och PDF-exporten alltid specialtecken.
+
 ## 3.22.1
 - Robusthet: sidan laddar och "Visa exempel" fungerar även om pdf.js/xlsx-CDN:erna är
   blockerade (t.ex. på ett låst institutionsnät). Endast PDF-/Excel-inläsning kräver dem.

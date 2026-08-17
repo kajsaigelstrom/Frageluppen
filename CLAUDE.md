@@ -3,6 +3,12 @@
 Detta är **Frågeluppen**, ett pedagogiskt verktyg som analyserar MCQ-tentaresultat
 från Inspera. Läs den här filen innan du gör ändringar.
 
+## Status och backlog (utanför repot)
+Projektets **läge, backlog och beslut** ligger i Kajsas arbetsanteckningar:
+`~/Documents/worksituation/teaching/frageluppen.md`. Läs den filen vid sessionsstart,
+och **uppdatera den vid sessionens slut** (ny version, vad som byggdes, vad som återstår).
+Repot innehåller kod och historik — inte planering.
+
 ## Struktur
 - Hela verktyget är **en enda fil**: `index.html` (HTML + CSS + JS i samma fil,
   ingen byggprocess, inget ramverk). Lägg inte till en byggkedja utan att bli ombedd.

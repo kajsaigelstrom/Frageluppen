@@ -572,8 +572,8 @@ const MIN_N_DIST = 20;
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum.
    Låt filnamnet följa samma nummer (mcq_analys_v3_12_0.html). */
-const VERSION = "3.22.1";
-const UPDATED = "2026-06-30";
+const VERSION = "3.22.2";
+const UPDATED = "2026-08-17";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
    modal (rena <details>-sektioner, ingen extern kod). Tolkningsdelen först eftersom den är
@@ -1067,7 +1067,13 @@ function buildView(){
       }
     }
     orphanSlots.sort((x,y)=>y.cnt-x.cnt);
-    const unmappedPdf=[]; for(let i=0;i<nopt;i++) if(!usedPdf.has(i)) unmappedPdf.push(i);
+    // Ett ledigt PDF-alternativ betyder INTE att kopplingen misslyckats. Slots byggs bara av
+    // FAKTISKT VALDA alternativ, så ett alternativ som ingen valde saknar slot och blir ledigt.
+    // Om ingen slot blev över (orphanSlots tom) är hela fördelningen känd och det lediga
+    // alternativet är helt enkelt valt av noll – det ska visas som 0 %, inte som "ej kopplad".
+    // Bara när minst en slot inte kunde knytas till en rad är kopplingen genuint okänd.
+    const unmappedPdf=[];
+    if(orphanSlots.length) for(let i=0;i<nopt;i++) if(!usedPdf.has(i)) unmappedPdf.push(i);
     const noTextN=orphanSlots.reduce((s,o)=>s+(o.hadText?0:o.cnt),0);  // svar på textlösa specialteckenalt.
     const exportGap=orphanSlots.some(o=>!o.hadText);
     const slotAmbiguous=orphanSlots.length>0;   // minst en slot kunde inte knytas till ett PDF-alternativ
@@ -1785,6 +1791,20 @@ function drawCards(){
   updateClearBtn();
 }
 
+/* Orsaken till att ett PDF-alternativ blev okopplat – delas av kortet och alla exporter så att
+   ingen vy påstår "specialtecken" när orsaken i själva verket är en avvikande PDF. Två fall:
+   (a) alla överblivna slots saknar text i exporten = specialteckenalternativ,
+   (b) minst en överbliven slot HADE text men matchade ingen rad = fel/avvikande PDF inläst.
+   (Alternativ som helt enkelt ingen valde hamnar inte här – de har 0 svar och visas som 0 %.) */
+function unmapReason(v){
+  const orphans=v.orphanSlots||[];
+  const allNoText = orphans.length>0 && orphans.every(o=>!o.hadText);
+  return allNoText
+    ? {tag:"specialtecken – ej kopplad", roll:"Specialtecken (text saknas – ej kopplad)",
+       title:"Detta alternativ innehåller specialtecken (t.ex. Na⁺, H₂CO₃). Inspera-exporten saknar dess text, så svaren kan inte kopplas till just denna rad. Se noten under alternativen."}
+    : {tag:"matchade ej svarsdata", roll:"Ej kopplad (matchade ej svarsdata)",
+       title:"Inget av de valda svaren matchade det här PDF-alternativet. Se noten under alternativen – kontrollera att rätt PDF är inläst."};
+}
 function card(v){
   const simple = state.mode==="simple";   // Förenklad vy: bara kort + mätvärden, inga tips/tolkningar
   const excluded = isExcluded(v.seq);
@@ -1798,14 +1818,8 @@ function card(v){
     ? `<div class="exclctrl"><button type="button" class="card-exclude" data-qnum="${esc(String(v.seq))}">Exkludera frågan</button></div>` : "";
   const correctCount = v.correctIdx>=0 ? v.counts[v.correctIdx] : -1;
   const unmappedSet = new Set(v.unmappedPdf||[]);
-  // Skilj på två orsaker till okopplad slot: (a) texten saknas i exporten (specialtecken),
-  // (b) texten finns men matchade inget PDF-alternativ (oftast fel/avvikande PDF, eller parsningsfel).
-  const orphans = v.orphanSlots||[];
-  const allNoText = orphans.length>0 && orphans.every(o=>!o.hadText);
-  const unmTag = allNoText ? "specialtecken – ej kopplad" : "matchade ej svarsdata";
-  const unmTitle = allNoText
-    ? "Detta alternativ innehåller specialtecken (t.ex. Na⁺, H₂CO₃). Inspera-exporten saknar dess text, så svaren kan inte kopplas till just denna rad. Se noten under alternativen."
-    : "Inget av de valda svaren matchade det här PDF-alternativet. Se noten under alternativen – kontrollera att rätt PDF är inläst.";
+  // Orsak till okopplad rad: se unmapReason (delas med exporterna).
+  const {tag:unmTag, title:unmTitle} = unmapReason(v);
   // build one row per option with a single mutually-exclusive category
   let rows = v.opts.map((o,i)=>{
     const isUnmapped = unmappedSet.has(i);   // PDF-alternativ vars svarsslot inte kunde knytas hit (specialtecken)
@@ -1944,7 +1958,7 @@ function optRows(v){
     const cnt=v.counts[i], pct=v.n?cnt/v.n*100:0;
     const isCorrect = i===ci;
     let roll;
-    if(isUnmapped) roll="Specialtecken (text saknas – ej kopplad)";
+    if(isUnmapped) roll=unmapReason(v).roll;
     else if(isCorrect) roll="Rätt";
     else if(cnt===0) roll="Distraktor (ingen valde)";
     else roll="Distraktor";
@@ -2347,7 +2361,7 @@ function exportInteractive(){
 
   const FNS=[esc,norm,key,stat,codeSortKey,cmpArr,rpbSortVal,distColor,critLabel,modeHint,availableModeIds,refreshLists,
              activeTagItems,tagPass,filtersActive,updateClearBtn,applyFilters,clearFilters,rpbInfo,isExcluded,exclReason,
-             cueWords,cueHas,cueScan,advice,isExemplary,exemplaryReason,card,
+             cueWords,cueHas,cueScan,advice,isExemplary,exemplaryReason,unmapReason,card,
              currentView,drawCards,jumpToCard,passMetric,renderPassMetric,freeTextDist,renderFreeText,buildActionList,buildGoodList,buildTagbar,
              xExportTabs,xExportTotal,xExportRender,xExportRows,xExportCSV,xLoadXLSX,xExportXLSX,xExportPrint,openHelp,closeHelp,wireHelp,xExportInit];
   const consts = `const MIN_N_DIST=${MIN_N_DIST};const PASS_FRAC=${PASS_FRAC};const PSY=${JSON.stringify(PSY)};`
@@ -2446,7 +2460,7 @@ function exportPdf(){
     const ex=isExcluded(x.seq);
     const opts = optRows(x).map(r=>{
       if(r.isUnmapped)
-        return `<tr class="p-zero"><td class="p-pct">–</td><td>${esc(r.text)} <span class="p-pb">specialtecken – ej kopplad</span></td></tr>`;
+        return `<tr class="p-zero"><td class="p-pct">–</td><td>${esc(r.text)} <span class="p-pb">${esc(unmapReason(x).tag)}</span></td></tr>`;
       const cls = r.roll==="Rätt"?"p-correct":(r.roll.includes("vanligare")?"p-trap":(r.cnt===0?"p-zero":(r.pct<5?"p-ineff":"p-eff")));
       const pb = r.pb!==null ? ` <span class="p-pb">r_pb ${r.pb>=0?"+":""}${r.pb.toFixed(2)}</span>`:"";
       return `<tr class="${cls}"><td class="p-pct">${r.cnt===0?"0 %":r.pct.toFixed(1)+" %"}</td><td>${esc(r.text)}${pb}</td></tr>`;
