@@ -73,7 +73,7 @@
   .drop .got{font-size:12px;color:var(--accent);margin-top:7px;min-height:16px;font-family:"IBM Plex Mono",monospace}
 
   #log{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);white-space:pre-wrap;margin-top:12px;min-height:18px}
-  #qa.bad{color:var(--warn)}
+  #qa.bad,#examwarn.bad{color:var(--warn)}
 
   .summary{display:flex;flex-wrap:wrap;gap:26px;align-items:baseline}
   .summary .stat{display:flex;flex-direction:column}
@@ -424,6 +424,7 @@
       <button id="reopen" class="btn-ghost">Ändra filer</button>
     </div>
     <div id="log"></div>
+    <div id="examwarn"></div>
     <div id="qa"></div>
     <div id="pdfnote"></div>
   </div>
@@ -572,8 +573,8 @@ const MIN_N_DIST = 20;
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum.
    Låt filnamnet följa samma nummer (mcq_analys_v3_12_0.html). */
-const VERSION = "3.22.2";
-const UPDATED = "2026-08-17";
+const VERSION = "3.23.0";
+const UPDATED = "2026-09-01";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
    modal (rena <details>-sektioner, ingen extern kod). Tolkningsdelen först eftersom den är
@@ -706,6 +707,10 @@ function buildLines(items){
 async function parsePDF(buf){
   const doc = await pdfjsLib.getDocument({data:buf}).promise;
   const mcqs=[];
+  // Admin-utskrifter har ett sidhuvud per sida: "2026-08-28 13:46  <testnamn>". Testnamnet
+  // identifierar tentatillfället och används för PDF↔JSON-kontrollen (examMismatch). Äldre
+  // utskriftsformat saknar sidhuvud – då blir examName odefinierad och kontrollen hoppar över.
+  const headerCount=new Map();
   for(let p=1;p<=doc.numPages;p++){
     const page = await doc.getPage(p);
     const vp = page.getViewport({scale:1});
@@ -713,6 +718,8 @@ async function parsePDF(buf){
     const items = tc.items.filter(it=>it.str && it.str.trim().length)
       .map(it=>({ top: vp.height-it.transform[5], x0: it.transform[4], str: it.str }));
     const L = buildLines(items);
+    for(const l of L.slice(0,2)){ const hm=l.text.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}\s+(\S.*)$/);
+      if(hm){ headerCount.set(hm[1],(headerCount.get(hm[1])||0)+1); break; } }
     const valjIdx = L.map((l,i)=>l.text.includes("Välj ett alternativ")?i:-1).filter(i=>i>=0);
     if(!valjIdx.length) continue;
     // Frågerubriker = rader som börjar med ett marginalnummer. Fungerar för både
@@ -767,7 +774,58 @@ async function parsePDF(buf){
   // en avhuggen dubblett har färre. Annars: fler MCQ i PDF än i JSON + dubbla skräpkort.
   const bySeq=new Map();
   for(const m of mcqs){ const cur=bySeq.get(m.seq); if(!cur || m.opts.length>cur.opts.length) bySeq.set(m.seq, m); }
-  return [...bySeq.values()];
+  const out=[...bySeq.values()];
+  // Testnamnet läggs som egenskap på arrayen: befintlig kod (length, iteration) påverkas inte,
+  // och demoläget (ren array utan examName) triggar aldrig tillfälleskontrollen.
+  if(headerCount.size) out.examName=[...headerCount.entries()].sort((a,b)=>b[1]-a[1])[0][0];
+  return out;
+}
+
+/* ---------- PDF↔JSON-tillfälleskontroll ----------
+   Fel filpar (t.ex. ordinarie-JSON + omtenta-PDF) ger saknade kort och omatchade alternativ
+   som ser ut som läsfel. Kurskod + datum plockas ur PDF:ens sidhuvudsnamn och JSON:ens
+   assessmentRunTitle och jämförs redan vid uppladdning. Saknas uppgift på någon sida
+   (gamla utskrifter utan sidhuvud, namn utan datum) görs ingen jämförelse – hellre tyst
+   än falsklarm. */
+function examIdOf(s){
+  const t=norm(s);
+  const dates=new Set();                                        // alla datum som ÅÅÅÅMMDD
+  for(const m of t.matchAll(/(?<!\d)(20\d{2})-(\d{2})-(\d{2})(?!\d)/g)) dates.add(m[1]+m[2]+m[3]);
+  for(const m of t.matchAll(/(?<!\d)(\d{2})(\d{2})(\d{2})(?!\d)/g)){   // ÅÅMMDD, t.ex. 260813
+    if(+m[1]>=20 && +m[2]>=1 && +m[2]<=12 && +m[3]>=1 && +m[3]<=31) dates.add("20"+m[1]+m[2]+m[3]);
+  }
+  const cm=t.replace(/[_/\-.]/g," ").match(/\b(\d[A-ZÅÄÖ]{2,4}\d{2})\b/i);  // kurskod, t.ex. 8LPG10
+  return {code: cm?cm[1].toUpperCase():null, dates};
+}
+function examMismatch(pdfName, titles){
+  if(!pdfName || !titles || !titles.length) return null;
+  const P=examIdOf(pdfName);
+  if(!P.code && !P.dates.size) return null;
+  const bad=[];
+  for(const t of titles){
+    const J=examIdOf(t); let miss=false;
+    if(P.code && J.code && P.code!==J.code) miss=true;
+    if(!miss && P.dates.size && J.dates.size && ![...J.dates].some(d=>P.dates.has(d))) miss=true;
+    if(miss && !bad.includes(t)) bad.push(t);
+  }
+  if(!bad.length) return null;
+  return `PDF och JSON verkar vara från olika tentatillfällen: PDF:en är "${pdfName}" men JSON-filen ${bad.length>1?"innehåller bl.a.":"är"} "${bad[0]}". Fel filpar ger saknade frågekort och omatchade alternativ – kontrollera att båda gäller samma tenta.`;
+}
+async function checkExamMatch(){
+  const el=$("#examwarn"); if(!el) return;
+  el.className=""; el.textContent="";
+  const pdfName = state.pdfMcqs && state.pdfMcqs.examName;
+  if(!pdfName || !state.jsonFiles.length) return;
+  const titles=[];
+  try{
+    for(const f of state.jsonFiles){
+      if(typeof f.text!=="function") return;               // demolägets filstubbar
+      const m=(await f.text()).match(/"ext_inspera_assessmentRunTitle"\s*:\s*"([^"]*)"/);
+      if(m) titles.push(m[1]);
+    }
+  }catch(_){ return; }                                     // oläsbar fil hanteras av tryRun
+  const msg=examMismatch(pdfName, titles);
+  if(msg){ el.className="bad"; el.textContent="⚠ "+msg; }
 }
 
 /* ---------- JSON parsing ---------- */
@@ -2553,6 +2611,7 @@ function loadDemo(){
     state.tagsFile = {name:"exempel-teman"};
     state.jsonFiles = [{name:"exempel-resultat.json"}];
     state.activeTags = {};
+    checkExamMatch();     // rensar ev. kvarstående tillfälleskontroll-varning från riktiga filer
     render();
     collapseUpload();
   }catch(e){ if(typeof log==="function") log("Demo-fel: "+e.message); console.error(e); }
@@ -2600,11 +2659,12 @@ $("#pdf").addEventListener("change", async e=>{
   try{ state.pdfMcqs=await parsePDF(await f.arrayBuffer());
        $("#got-pdf").textContent=`✓ ${f.name} — ${state.pdfMcqs.length} MCQ`; }
   catch(err){ state.pdfMcqs=null; $("#got-pdf").textContent="✗ kunde inte läsa PDF"; log("PDF-fel: "+err.message); console.error(err); }
+  checkExamMatch();
   refreshCompute();
 });
 $("#json").addEventListener("change", e=>{
   state.jsonFiles=[...e.target.files];
-  $("#got-json").textContent=state.jsonFiles.length?`✓ ${state.jsonFiles.length} fil(er)`:""; refreshCompute();
+  $("#got-json").textContent=state.jsonFiles.length?`✓ ${state.jsonFiles.length} fil(er)`:""; checkExamMatch(); refreshCompute();
 });
 $("#tags").addEventListener("change", e=>{
   state.tagsFile=e.target.files[0]; state.activeTags={};

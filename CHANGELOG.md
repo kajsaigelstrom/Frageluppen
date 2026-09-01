@@ -6,6 +6,19 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.23.0
+- **Ny kontroll: PDF och JSON från olika tentatillfällen upptäcks redan vid uppladdning.**
+  Fel filpar (t.ex. ordinarie-tentans JSON mot omtentans PDF) gav tidigare bara sena,
+  svårtolkade symptom – "N single-best-frågor kunde inte läsas ur PDF:en" och många
+  omatchade alternativ – som såg ut som ett läsfel i PDF:en. Nu läses testnamnet ur
+  PDF:ens sidhuvud (admin-utskriftens "ÅÅÅÅ-MM-DD HH:MM <testnamn>") och jämförs med
+  JSON:ens `ext_inspera_assessmentRunTitle`: kurskod (t.ex. 8LPG10) och datum (både
+  ISO-format och ÅÅMMDD i namnet) måste stämma överens, annars visas en varning med
+  båda namnen utskrivna. Kontrollen är medvetet tyst när uppgift saknas: äldre
+  utskriftsformat utan sidhuvud (t.ex. T5 VT26), namn utan datum och demoläget
+  jämförs inte alls – hellre ingen varning än falsklarm. Ingen siffra eller
+  beräkning påverkas.
+
 ## 3.22.2
 - **Buggfix (falsk "ej kopplad"-flagga):** ett svarsalternativ som *ingen* valde flaggades som
   okopplat – i exporterna med texten "specialtecken – ej kopplad" – i stället för att visas som
