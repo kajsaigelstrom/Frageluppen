@@ -573,7 +573,7 @@ const MIN_N_DIST = 20;
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum.
    Låt filnamnet följa samma nummer (mcq_analys_v3_12_0.html). */
-const VERSION = "3.23.0";
+const VERSION = "3.24.0";
 const UPDATED = "2026-09-01";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
@@ -1062,9 +1062,32 @@ function lookupTagVals(code, seq){
       || state.tags.tagCols.map(()=> "");
 }
 
+/* ---------- JSON-läge: MCQ-kort utan PDF ---------- */
+// Bygger kortunderlag direkt ur svarsdatan när ingen PDF är laddad. Ärligt degraderat:
+// frågetexten finns inte i Inspera-exporten, och alternativ som INGEN valde finns inte alls
+// (slots byggs bara av faktiska svar) – distraktoranalysen ser därför bara valda alternativ
+// och blir mildare än med PDF. Alternativ utan text (specialtecken) tas inte med som rader;
+// de fångas av den befintliga orphan-logiken i buildView, precis som i PDF-läget när
+// elimination inte räcker. slotOf kopplar rad→slot så att textmatchningen kan hoppas över.
+function synthMcqsFromJson(J){
+  const out=[];
+  for(const qn of J.mcqSeqs){
+    const a=J.agg[qn];
+    const slots=[...a.slotN.keys()].filter(s=>a.slotText.get(s))
+      .sort((s1,s2)=>(a.slotN.get(s2)||0)-(a.slotN.get(s1)||0)
+        || String(a.slotText.get(s1)).localeCompare(String(a.slotText.get(s2)),"sv"));
+    out.push({seq:qn, code:String(qn),
+      pts:(a.max!=null?String(a.max).replace(".",",")+" p":null),
+      stem:"Frågetext ej tillgänglig utan tentans PDF. Alternativen nedan är de som valdes, flest svar först.",
+      opts:slots.map(s=>a.slotText.get(s)), slotOf:slots});
+  }
+  out.jsonMode=true;
+  return out;
+}
+
 /* ---------- join + view model ---------- */
 function buildView(){
-  const pdf=state.pdfMcqs, J=state.json;
+  const pdf=state.pdfMcqs || state.synthMcqs, J=state.json;
   // Jämför som strängar: Inspera kan koda questionNumber som tal ELLER sträng, och PDF-parsern
   // ger alltid ett tal. Set.has() typkonverterar inte, så utan String() ger en sträng-JSON noll
   // träffar mot tal-seq och hela den robusta numret-joinen faller tyst tillbaka på positionell parning.
@@ -1089,16 +1112,21 @@ function buildView(){
     //    därefter de bästa luddiga träffarna. Detta hanterar nästan identiska alternativ som bara
     //    skiljer på korta ord (D1/D2, Ökad/Minskad) som token-Jaccard annars inte kan särskilja.
     const slot2pdf=new Map(); const usedPdf=new Set();
-    const cand=[];   // [slot, pdfIdx, score]
-    for(const slot of slots){
-      const txt=a.slotText.get(slot); if(!txt) continue;
-      for(let i=0;i<nopt;i++) cand.push([slot,i,optSim(txt,P.opts[i])]);
-    }
-    cand.sort((x,y)=>y[2]-x[2]);
-    for(const [slot,idx,sc] of cand){
-      if(sc<0.34) break;                                  // under tröskeln = ingen trovärdig träff
-      if(slot2pdf.has(slot) || usedPdf.has(idx)) continue; // en-till-en
-      slot2pdf.set(slot,idx); usedPdf.add(idx);
+    if(P.slotOf){
+      // JSON-läge: raderna ÄR slotsen (synthMcqsFromJson), så kopplingen är identitet.
+      P.slotOf.forEach((s,i)=>{ slot2pdf.set(s,i); usedPdf.add(i); });
+    } else {
+      const cand=[];   // [slot, pdfIdx, score]
+      for(const slot of slots){
+        const txt=a.slotText.get(slot); if(!txt) continue;
+        for(let i=0;i<nopt;i++) cand.push([slot,i,optSim(txt,P.opts[i])]);
+      }
+      cand.sort((x,y)=>y[2]-x[2]);
+      for(const [slot,idx,sc] of cand){
+        if(sc<0.34) break;                                  // under tröskeln = ingen trovärdig träff
+        if(slot2pdf.has(slot) || usedPdf.has(idx)) continue; // en-till-en
+        slot2pdf.set(slot,idx); usedPdf.add(idx);
+      }
     }
     // 2) Elimination: en enda okopplad slot + en enda ledig PDF-position -> entydig koppling.
     //    Räddar det vanliga fallet "ett alternativ med specialtecken, resten vanlig text".
@@ -1429,11 +1457,6 @@ function showGate(spec, kind){
     stub.innerHTML = `<h3>${spec.label}</h3>`+
       `<p>${spec.hint}<br><br>Den här vyn är inte tillgänglig än. `+
       `Växla till <b>Preliminär MCQ</b> för den färdiga analysen.</p>`;
-  } else if(kind==="nopdf"){
-    stub.innerHTML = `<h3>${spec.label} – ladda tentans PDF</h3>`+
-      `<p>MCQ-korten behöver frågetext och alla svarsalternativ, som hämtas ur tentans PDF. `+
-      `Ladda upp PDF:en ovan.<br><br>`+
-      `<b>Totalrapporten</b> fungerar utan PDF – den visar alla frågor med diskriminering direkt ur JSON.</p>`;
   } else if(kind==="ungraded"){
     const J=state.json;
     stub.innerHTML = `<h3>${spec.label} – väntar på rättning</h3>`+
@@ -1451,8 +1474,9 @@ function render(){
   $("#totalreport").classList.add("hidden");
   // Grind 1: obyggd vy → platshållare.
   if(!spec.built){ showGate(spec,"coming"); return; }
-  // Grind 2: vyn kräver PDF (MCQ-kort) men ingen är laddad → be om PDF (eller hänvisa till Totalrapport).
-  if(spec.needsPdf && !state.pdfMcqs){ showGate(spec,"nopdf"); return; }
+  // Grind 2 borttagen (v3.24.0): utan PDF byggs MCQ-korten i JSON-läge ur svarsdatan
+  // (synthMcqsFromJson) i stället för att spärras. Läget markeras i #pdfnote nedan.
+  if(spec.needsPdf && !state.pdfMcqs && !state.synthMcqs) state.synthMcqs=synthMcqsFromJson(state.json);
   // Grind 3: vyn kräver färdigrättad tenta men allt är inte rättat → spärr med förklaring.
   if(spec.needsFullyGraded && !state.json.fullyGraded){ showGate(spec,"ungraded"); return; }
   $("#viewstub").classList.add("hidden");
@@ -1511,7 +1535,13 @@ function render(){
   // "Välj ett alternativ"). De utesluts korrekt från korten och visas i Totalrapporten – inget fel.
   const note=$("#pdfnote");
   if(note){
-    if(pdfExtra.length){
+    if(!state.pdfMcqs){
+      note.className="advnote";
+      note.innerHTML = `<b>JSON-läge – körning utan tentans PDF:</b> frågetexterna saknas, och alternativ `+
+        `som ingen valde finns inte i Inspera-exporten och kan varken visas eller flaggas. `+
+        `Distraktoranalysen blir därför mildare än med PDF, och alternativen visas i svarsordning, `+
+        `inte tentans ordning. Ladda upp tentans PDF för fullständiga kort.`;
+    } else if(pdfExtra.length){
       note.className="advnote";
       note.innerHTML = `PDF:en läste även ${pdfExtra.length} fråga(or) som inte är single-best i JSON `+
         `(${pdfExtra.map(x=>esc(x.seq)+": "+esc(x.type==="multi"?"flerval":x.type==="text"?"fritext":x.type)).join(", ")}). `+
@@ -2396,10 +2426,11 @@ function exportInteractive(){
     return {head, rows};
   };
   // bygg en payload per tillgänglig vy (samma grindar som appen)
+  const jsonMode = !state.pdfMcqs;
+  if(jsonMode && !state.synthMcqs) state.synthMcqs=synthMcqsFromJson(J);   // MCQ-vyer i JSON-läge
   const views=[];
   for(const spec of VIEWS){
     if(!spec.built) continue;
-    if(spec.needsPdf && !state.pdfMcqs) continue;
     if(spec.needsFullyGraded && !J.fullyGraded) continue;
     const base={id:spec.id,label:spec.label,phase:spec.phase,layout:spec.layout,criterion:spec.criterion,
       modes:spec.modes,hint:spec.hint,showExemplary:!!spec.showExemplary,
@@ -2444,7 +2475,7 @@ function exportInteractive(){
         <h1 style="font-family:Fraunces,Georgia,serif;font-weight:600;font-size:26px;margin:0 0 4px">MCQ-resultat</h1>
         <button class="helpbtn" id="helpOpen" type="button">? Hjälp</button>
       </div>
-      <p style="color:var(--muted);font-size:13px;margin:0;max-width:62ch">Interaktiv, delningsbar sammanställning av en tenta. Växla mellan rapportvyerna högst upp, filtrera och sortera. Innehåller endast aggregerade resultat (antal per alternativ, n, diskriminering) – inga kandidatsvar, ingen rådata och ingen uppladdning krävs.</p>
+      <p style="color:var(--muted);font-size:13px;margin:0;max-width:62ch">Interaktiv, delningsbar sammanställning av en tenta. Växla mellan rapportvyerna högst upp, filtrera och sortera. Innehåller endast aggregerade resultat (antal per alternativ, n, diskriminering) – inga kandidatsvar, ingen rådata och ingen uppladdning krävs.${jsonMode?`<br><b>JSON-läge:</b> rapporten är skapad utan tentans PDF – frågetexter saknas, alternativ som ingen valde visas inte, och alternativen står i svarsordning.`:""}</p>
     </header>
     <div id="helpModal" class="modal hidden"><div class="modalbox">
       <button class="modalclose" id="helpClose" type="button" title="Stäng">×</button>
@@ -2624,9 +2655,10 @@ async function tryRun(){
     log("Bearbetar JSON …");
     const objs=[]; for(const f of state.jsonFiles){ objs.push(JSON.parse(await f.text())); }
     state.json = parseJSON(objs);
+    state.synthMcqs = null;   // JSON-lägets kortunderlag byggs om från nya datan vid behov
     if(state.tagsFile){ log("Läser taggar …"); state.tags = parseTags(await state.tagsFile.arrayBuffer()); }
-    const pdfN = state.pdfMcqs ? state.pdfMcqs.length : 0;
-    log(`Klart: ${pdfN} MCQ i PDF, ${state.json.mcqSeqs.length} MCQ i JSON, ${state.json.candCount} kandidater.`);
+    const pdfPart = state.pdfMcqs ? `${state.pdfMcqs.length} MCQ i PDF` : "ingen PDF (JSON-läge)";
+    log(`Klart: ${pdfPart}, ${state.json.mcqSeqs.length} MCQ i JSON, ${state.json.candCount} kandidater.`);
     render();
   }catch(e){ log("Fel: "+e.message); console.error(e); }
 }
@@ -2635,12 +2667,12 @@ function refreshCompute(){
   const b=$("#compute"); if(b) b.disabled=!ready;
   const h=$("#computehint");
   if(h) h.textContent = ready
-    ? (state.pdfMcqs ? "Redo att beräkna." : "Redo. Utan PDF visas Totalrapporten; MCQ-korten kräver tentans PDF.")
+    ? (state.pdfMcqs ? "Redo att beräkna." : "Redo. Utan PDF visas MCQ-korten i JSON-läge (utan frågetexter) – ladda tentans PDF för fullständig analys.")
     : "Ladda upp minst en JSON-fil (PDF är valfri).";
 }
 function uploadSummary(){
   const parts=[ state.jsonFiles.length+" JSON-fil"+(state.jsonFiles.length===1?"":"er"),
-                state.pdfMcqs ? `PDF (${state.pdfMcqs.length} MCQ)` : "ingen PDF" ];
+                state.pdfMcqs ? `PDF (${state.pdfMcqs.length} MCQ)` : "ingen PDF (JSON-läge)" ];
   if(state.tagsFile) parts.push("taggar: "+state.tagsFile.name);
   return parts.join("   ·   ");
 }

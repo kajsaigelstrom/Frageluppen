@@ -6,6 +6,19 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.24.0
+- **JSON-läge: MCQ-korten fungerar nu utan tentans PDF.** Utan PDF spärrades Preliminär
+  MCQ och Slutrapport MCQ tidigare helt; nu byggs korten direkt ur svarsdatan (alternativ-
+  texterna som Inspera sparar för valda alternativ), med identisk statistik: fördelning,
+  andel rätt, r_pb per alternativ, facit och automatiska flaggor. Läget är tydligt märkt
+  som degraderat, i appen, på varje kort och i HTML-exporten: frågetexterna finns inte i
+  JSON-exporten, alternativ som **ingen** valde finns inte alls (och kan därmed varken
+  visas eller flaggas som ineffektiva distraktorer, så distraktoranalysen blir mildare än
+  med PDF), och alternativen står i svarsordning i stället för tentans ordning. Alternativ
+  utan text (specialtecken) hanteras av samma orphan-logik som i PDF-läget. Syftet är
+  sänkt tröskel vid spridning: en examinator med bara en resultat-JSON kan prova verktyget
+  direkt, och rekommenderas sedan ladda PDF:en för fullständiga kort.
+
 ## 3.23.0
 - **Ny kontroll: PDF och JSON från olika tentatillfällen upptäcks redan vid uppladdning.**
   Fel filpar (t.ex. ordinarie-tentans JSON mot omtentans PDF) gav tidigare bara sena,
