@@ -573,7 +573,7 @@ const MIN_N_DIST = 20;
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum.
    Låt filnamnet följa samma nummer (mcq_analys_v3_12_0.html). */
-const VERSION = "3.24.0";
+const VERSION = "3.24.1";
 const UPDATED = "2026-09-01";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
@@ -2638,6 +2638,7 @@ function loadDemo(){
   try{
     state.json = parseJSON([demoToInspera(DEMO_DATA.DEMO)]);
     state.pdfMcqs = DEMO_DATA.PDF;
+    state.pdfIsDemo = true;   // demons kortdata får inte matchas mot riktiga JSON-filer (se tryRun)
     state.tags = parseTagsRows(DEMO_DATA.TAGS);
     state.tagsFile = {name:"exempel-teman"};
     state.jsonFiles = [{name:"exempel-resultat.json"}];
@@ -2654,9 +2655,16 @@ async function tryRun(){
   try{
     log("Bearbetar JSON …");
     const objs=[]; for(const f of state.jsonFiles){ objs.push(JSON.parse(await f.text())); }
+    // Demons pdf-data ska inte matchas mot en riktig JSON – släpp den och kör JSON-läge
+    // (eller be om riktig PDF). Samma princip som taggstubben nedan.
+    if(state.pdfIsDemo){ state.pdfMcqs=null; state.pdfIsDemo=false; $("#got-pdf").textContent=""; }
     state.json = parseJSON(objs);
     state.synthMcqs = null;   // JSON-lägets kortunderlag byggs om från nya datan vid behov
-    if(state.tagsFile){ log("Läser taggar …"); state.tags = parseTags(await state.tagsFile.arrayBuffer()); }
+    // typeof-vakten: demoläget lämnar en filstubb ({name}) i tagsFile som saknar arrayBuffer().
+    // Riktig fil → läs; demostubb → släng den och demons taggar så att de inte appliceras på
+    // riktiga data (kraschade tidigare: "state.tagsFile.arrayBuffer is not a function").
+    if(state.tagsFile && typeof state.tagsFile.arrayBuffer==="function"){ log("Läser taggar …"); state.tags = parseTags(await state.tagsFile.arrayBuffer()); }
+    else if(state.tagsFile){ state.tagsFile=null; state.tags=null; state.activeTags={}; $("#got-tags").textContent=""; }
     const pdfPart = state.pdfMcqs ? `${state.pdfMcqs.length} MCQ i PDF` : "ingen PDF (JSON-läge)";
     log(`Klart: ${pdfPart}, ${state.json.mcqSeqs.length} MCQ i JSON, ${state.json.candCount} kandidater.`);
     render();
@@ -2691,6 +2699,7 @@ $("#pdf").addEventListener("change", async e=>{
   try{ state.pdfMcqs=await parsePDF(await f.arrayBuffer());
        $("#got-pdf").textContent=`✓ ${f.name} — ${state.pdfMcqs.length} MCQ`; }
   catch(err){ state.pdfMcqs=null; $("#got-pdf").textContent="✗ kunde inte läsa PDF"; log("PDF-fel: "+err.message); console.error(err); }
+  state.pdfIsDemo = false;
   checkExamMatch();
   refreshCompute();
 });

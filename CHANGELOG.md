@@ -6,6 +6,14 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.24.1
+- **Buggfix (demo → riktiga filer):** att klicka "Visa exempel" och därefter ladda upp
+  riktiga filer blandade demons tillstånd med de riktiga: taggfil-stubben kraschade
+  beräkningen ("state.tagsFile.arrayBuffer is not a function"), och demons syntetiska
+  PDF-kortdata låg kvar och skulle ha matchats mot den riktiga JSON:en. Nu släpps demons
+  taggar och PDF-data när riktiga filer beräknas (JSON-läge tills en riktig PDF laddas).
+  Relevant för nya användare, som ofta provar demon först.
+
 ## 3.24.0
 - **JSON-läge: MCQ-korten fungerar nu utan tentans PDF.** Utan PDF spärrades Preliminär
   MCQ och Slutrapport MCQ tidigare helt; nu byggs korten direkt ur svarsdatan (alternativ-
