@@ -54,10 +54,19 @@ inte dokumenterad här.
   förklaring i formen. Sammanfattningen följer temafiltret och gäller urvalet på en
   urvalssida. Korten har en ruta bara när något gäller just den frågan. På en riktig tenta
   med 39 flervalsfrågor: 11 kort med ruta (5 med en fråga, 6 med en formförklaring).
-- **Förebilder.** Listan över starkt diskriminerande frågor i temarapporten ersätts av frågor
-  som var lagom svåra (50–85 % rätt), skilde väl och inte har någon fråga på kortet.
+- **Förebilder.** Listan över starkt diskriminerande frågor i temarapporten ersätts av
+  flervalsfrågor som var lagom svåra (50–85 % rätt), skilde väl, inte har någon fråga på
+  kortet och inte ger några fynd i formkontrollen. Kontrollen körs därför även på tänkbara
+  förebilder. Essäfrågor märks inte som förebilder, eftersom formen inte går att kontrollera.
+- **Essäfrågor får en egen flik i temarapporten**, med ett kort per fråga: medelpoäng av max,
+  item–total-korrelation mot resten av tentan och poängfördelning. När poängen inte följer
+  resten av tentan står en fråga om bedömningsmallen på kortet, och essäfrågor med ett medel
+  över gränsen för "Lätt" sammanfattas en gång överst. Kryssrutor, temafilter, urvalssida och
+  Excel/CSV fungerar som för flervalsfrågorna. Frågetexten visas inte (PDF-läsningen tar bara
+  flervalsfrågor). Totalrapporten upprepar inte längre poängfördelningarna.
 - **Buggfix:** fritextfrågornas poängfördelning följde aldrig med i den delade rapporten när den
-  skapades från kortvyn (listan var tom vid exporten). Nu räknas den alltid om.
+  skapades från kortvyn (listan var tom vid exporten). Nu räknas den alltid om. Dessutom
+  döljs sortering, visningsläge och färgförklaring på riktigt i de flikar där de inte gäller.
 - **Licens:** koden MIT som förut, texterna CC BY 4.0 (står i README).
 - **`tools/sync-lathund.mjs`** hämtar regelkoden och rådtexterna oförändrade ur MCQ-lathunden.
   Lathunden är källan; avsnitten i `index.html` ändras aldrig för hand.

@@ -7,7 +7,7 @@ const ACTION_WORDS = /Dubbelkolla facit|dubbelkolla facit|[Uu]tesluta|Att se öv
 
 test("temarapporten har bara vyerna efter rättning", () => {
   const { evj } = fresh();
-  assert.deepEqual(evj("temaEmbed().views.map(v=>v.id)"), ["final-mcq", "total"]);
+  assert.deepEqual(evj("temaEmbed().views.map(v=>v.id)"), ["final-mcq", "essay", "total"]);
   assert.equal(evj("temaEmbed().kind"), "tema");
   assert.equal(evj("temaEmbed().subset"), null);
   assert.deepEqual(evj("temaEmbed().views[0].modes.map(m=>m.id)"), ["ask", "ask-explain"]);
@@ -74,7 +74,7 @@ test("den exporterade sidan går att köra och ritar kort utan åtgärder", () =
   assert.doesNotMatch(page.el("#summary").innerHTML, /att åtgärda|tips|automatiska flaggor/);
   assert.ok(page.el("#summary").innerHTML.includes("kandidater"));
   const tabs = page.el("#viewtabs").innerHTML;
-  assert.ok(tabs.includes("Slutrapport MCQ") && tabs.includes("Totalrapport"));
+  assert.ok(tabs.includes("Slutrapport MCQ") && tabs.includes("Essäfrågor") && tabs.includes("Totalrapport"));
   assert.ok(!tabs.includes("Preliminär"));
   assert.equal(page.el("#actionlist").innerHTML, "");
   assert.match(page.el("#goodlist").innerHTML, /fungerar som förebild|^$/);   // sedan formkontrollen: förebilder i stället för enbart diskriminering
@@ -82,7 +82,7 @@ test("den exporterade sidan går att köra och ritar kort utan åtgärder", () =
 test("totalrapporten i den exporterade sidan är fri från åtgärdsord", () => {
   const { ev } = fresh();
   const page = runHtml(ev("buildTemaReport(temaEmbed())"));
-  page.ev("state.viewIdx = 1; xExportTabs(); xExportRender();");
+  page.ev("state.viewIdx = EMBED.views.findIndex(v=>v.layout==='total'); xExportTabs(); xExportRender();");
   const t = page.el("#totalreport").innerHTML;
   assert.ok(t.includes("totaltable"));
   assert.doesNotMatch(t, ACTION_WORDS);
@@ -115,11 +115,7 @@ test("exkluderad fråga visas med orsak i temarapporten", () => {
 test("fritextfrågornas poängfördelning följer med i temarapporten", () => {
   const { ev } = fresh();
   ev("state.freeDist = []");                                    // så står den när examinatorn exporterar från kortvyn
-  const nText = ev("state.json.qMeta.filter(q => !q.isMCQ && q.max > 0).length");
+  const nText = ev("state.json.qMeta.filter(q => q.type === 'text' && q.max > 0).length");
   assert.ok(nText > 0);
-  assert.equal(ev("temaEmbed().freeDist.length"), nText);
-  const page = runHtml(ev("buildTemaReport(temaEmbed())"));
-  page.ev("state.viewIdx = 1; xExportTabs(); xExportRender();");
-  assert.ok(page.el("#totalreport").innerHTML.includes("Fritextfrågor – poängfördelning"));
-  assert.ok(!ev("JSON.stringify(temaEmbed().freeDist)").includes("cohort"));
+  assert.equal(ev("temaEmbed().views.find(v => v.layout === 'essay').essays.filter(e => e.dist.length).length"), nText);
 });

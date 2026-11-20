@@ -53,6 +53,8 @@ tentans frågor fungerade och innehåller bara sammanräknade resultat.
   som skrev dem. Den sidan fungerar likadant och kan delas upp igen.
 - Överst står det som gäller flera frågor på samma sätt, till exempel hur många som var
   mycket lätta. Korten har en ruta bara när något gäller just den frågan.
+- **Essäfrågorna** har en egen flik med ett kort per fråga: medelpoäng, diskriminering och
+  poängfördelning.
 - Har en fråga en svaghet i statistiken prövas den mot den mekaniska kontrollen ur
   **MCQ-lathunden**, och ett fynd visas när det är en trolig förklaring.
 - Statistiken visar hur frågorna fungerade i studentgruppen. Den säger inget om huruvida en

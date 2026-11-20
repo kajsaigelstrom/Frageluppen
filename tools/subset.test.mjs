@@ -4,33 +4,33 @@ import { setupDemoView } from "./fixtures.mjs";
 const fresh = () => { const a = loadApp(); setupDemoView(a.ev);
   a.ev(`globalThis.E = temaEmbed();
         globalThis.mcq = E.views[0].view.map(v => String(v.seq));
-        globalThis.txt = E.views[1].total.rows.filter(r => !r.isSingle).map(r => String(r.num));
+        globalThis.txt = E.views.find(v=>v.layout==='total').total.rows.filter(r => !r.isSingle).map(r => String(r.num));
         globalThis.S2 = subsetEmbed(E, [mcq[0], mcq[1]], {easy:85, hard:60, goodDisc:0.2, pass:65});`); return a; };
 
 test("ovalda frågor finns inte kvar någonstans", () => {
   const { ev } = fresh();
   // demons frågetexter är korta och lika ("Exempelfråga 4"), så den ovalda frågan märks med unika texter
   ev(`E.views[0].view[2].stem = "UNIK_OVALD_FRAGETEXT"; E.views[0].view[2].opts[0] = "UNIKT_OVALT_ALTERNATIV";
-      E.views[1].total.rows.find(r => String(r.num) === mcq[2]).title = "UNIK_OVALD_TITEL";
+      E.views.find(v=>v.layout==='total').total.rows.find(r => String(r.num) === mcq[2]).title = "UNIK_OVALD_TITEL";
       globalThis.S2 = subsetEmbed(E, [mcq[0], mcq[1]], E.th);`);
   assert.ok(ev("JSON.stringify(E)").includes("UNIK_OVALD_FRAGETEXT"));
   for (const where of ["JSON.stringify(S2)", "buildTemaReport(S2)"])
     for (const mark of ["UNIK_OVALD_FRAGETEXT", "UNIKT_OVALT_ALTERNATIV", "UNIK_OVALD_TITEL"]) assert.ok(!ev(where).includes(mark), where + " " + mark);
   assert.equal(ev("S2.views[0].view.length"), 2);
-  assert.equal(ev("S2.views[1].total.rows.length"), 2);
-  assert.ok(!ev("S2.views[1].total.rows.some(r => String(r.num) === mcq[2])"));
+  assert.equal(ev("S2.views.find(v=>v.layout==='total').total.rows.length"), 2);
+  assert.ok(!ev("S2.views.find(v=>v.layout==='total').total.rows.some(r => String(r.num) === mcq[2])"));
 });
 test("urvalet bär inga helhetssiffror", () => {
   const { ev, evj } = fresh();
   assert.equal(ev("S2.passSnapshot"), null);
-  const head = evj("S2.views[1].total.head");
+  const head = evj("S2.views.find(v=>v.layout==='total').total.head");
   assert.deepEqual(Object.keys(head).sort(), ["n", "nq"]);
   assert.equal(head.n, ev("E.candCount")); assert.equal(head.nq, 2);
-  assert.deepEqual(evj("S2.subset"), { n: 2, of: ev("E.views[1].total.head.nq") });
+  assert.deepEqual(evj("S2.subset"), { n: 2, of: ev("E.views.find(v=>v.layout==='total').total.head.nq") });
 });
 test("urval ur urval behåller ursprungligt antal", () => {
   const { ev, evj } = fresh();
-  assert.deepEqual(evj("subsetEmbed(S2, [mcq[1]], S2.th).subset"), { n: 1, of: ev("E.views[1].total.head.nq") });
+  assert.deepEqual(evj("subsetEmbed(S2, [mcq[1]], S2.th).subset"), { n: 1, of: ev("E.views.find(v=>v.layout==='total').total.head.nq") });
   assert.equal(ev("subsetEmbed(S2, [mcq[1], mcq[5]], S2.th).subset.n"), 1);   // en fråga som inte finns i urvalet räknas inte
 });
 test("urval med bara fritextfrågor ger tom kortvy men fungerande sida", () => {
@@ -38,11 +38,11 @@ test("urval med bara fritextfrågor ger tom kortvy men fungerande sida", () => {
   assert.ok(ev("txt.length") > 0);
   ev("globalThis.ST = subsetEmbed(E, [txt[0]], E.th)");
   assert.equal(ev("ST.views[0].view.length"), 0);
-  assert.equal(ev("ST.views[1].total.rows.length"), 1);
+  assert.equal(ev("ST.views.find(v=>v.layout==='total').total.rows.length"), 1);
   assert.ok(ev("ST.freeDist.length") <= 1);
   const page = runHtml(ev("buildTemaReport(ST)"));
   assert.ok(page.el("#cards").innerHTML.includes("Inga flervalsfrågor i urvalet. Se Totalrapporten."));
-  page.ev("state.viewIdx = 1; xExportTabs(); xExportRender();");
+  page.ev("state.viewIdx = EMBED.views.findIndex(v=>v.layout==='total'); xExportTabs(); xExportRender();");
   assert.ok(page.el("#totalreport").innerHTML.includes("totaltable"));
 });
 test("urvalet bär temarepresentantens gränser", () => {
@@ -66,7 +66,7 @@ test("urvalssidan visar urvalsraden och ingen godkäntandel", () => {
   const page = runHtml(ev("buildTemaReport(S2)"));
   assert.match(page.el("#subsetline").innerHTML, /Urval: 2 av \d+ frågor/);
   assert.equal(page.el("#passmetric").innerHTML, "");
-  page.ev("state.viewIdx = 1; xExportTabs(); xExportRender();");
+  page.ev("state.viewIdx = EMBED.views.findIndex(v=>v.layout==='total'); xExportTabs(); xExportRender();");
   assert.doesNotMatch(page.el("#totalreport").innerHTML, /-gränsen|maxpoäng/);
   const full = runHtml(ev("buildTemaReport(E)"));
   assert.equal(full.el("#subsetline").innerHTML, "");
@@ -96,6 +96,6 @@ test("korten i temarapporten har kryssruta, appens kort har det inte", () => {
   assert.ok(!ev("card(VIEW[0])").includes("selbox"));
   const page = runHtml(ev("buildTemaReport(E)"));
   assert.ok(page.el("#cards").innerHTML.includes('class="selbox"'));
-  page.ev("state.viewIdx = 1; xExportTabs(); xExportRender();");
+  page.ev("state.viewIdx = EMBED.views.findIndex(v=>v.layout==='total'); xExportTabs(); xExportRender();");
   assert.ok(page.el("#totalreport").innerHTML.includes('class="selbox"'));
 });

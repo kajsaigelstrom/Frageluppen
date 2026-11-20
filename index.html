@@ -198,6 +198,8 @@
   .askhead{font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
   .askq{font-size:14px;line-height:1.5;margin:6px 0}
   .askfact{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .ftbars{margin-top:10px}
+  .cardctrls.hidden,.legend.hidden,.modebar.hidden{display:none!important}
   .patbox{margin:14px 0;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
   .pattitle{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:17px}
   .patnote{font-size:12.5px;color:var(--muted);margin:2px 0 8px}
@@ -2143,7 +2145,7 @@ function patternSummary(view){
 }
 function renderPatterns(){
   const el=$("#patterns"); if(!el) return;
-  const rows=patternSummary(currentView({ignorePattern:true}));
+  const rows=activePatternRows();
   if(state.patternKey && !rows.some(r=>r.key===state.patternKey)){ state.patternKey=null; state.patternSeqs=null; }
   if(!rows.length){ el.innerHTML=""; return; }
   const one=r=>`<div class="patrow${r.key===state.patternKey?" on":""}"><div class="patmain"><div class="pathead">${esc(r.head)}</div>`
@@ -2156,7 +2158,7 @@ function renderPatterns(){
 }
 function togglePattern(k){
   if(state.patternKey===k){ state.patternKey=null; state.patternSeqs=null; }
-  else { const r=patternSummary(currentView({ignorePattern:true})).find(x=>x.key===k); if(!r) return;
+  else { const r=activePatternRows().find(x=>x.key===k); if(!r) return;
          state.patternKey=k; state.patternSeqs=new Set(r.seqs); }
   drawCards(); if(typeof renderSelBar==="function" && state.sel) renderSelBar();
 }
@@ -2591,6 +2593,7 @@ function filterSummary(){
   return parts.join(" · ");
 }
 function drawCards(){
+  if(isEssayView()){ drawEssays(); return; }
   if(state.mode==="ask" || state.mode==="ask-explain") renderPatterns();   // räknas om före korten: kan nollställa ett mönsterfilter som inte längre finns
   const v=currentView();
   const activeSummary=Object.keys(state.activeTags).map(col=>`${col}: ${[...state.activeTags[col]].join(", ")}`).join(" · ");
@@ -2941,6 +2944,7 @@ function xExportTabs(){
     const i=+b.dataset.vi; if(i===state.viewIdx) return;
     state.viewIdx=i; const sp=EMBED.views[i];
     state.mode = (sp.modes&&sp.modes.length) ? sp.modes[0].id : "edu";
+    state.patternKey=null; state.patternSeqs=null;
     xExportTabs(); xExportRender();
   }));
 }
@@ -2980,7 +2984,7 @@ function xExportTotal(){
     ? `<table class="totaltable"><thead><tr><th class="num">#</th><th>Fråga</th><th>Typ</th><th class="num">Max</th><th>Svårighet</th><th>Diskriminering (item–total mot ${critLabel()})</th></tr></thead><tbody>${body}</tbody></table>`
     : '<div class="panel">Inga frågor matchar filtret.</div>';
   let ft="";
-  if(state.freeDist && state.freeDist.length){
+  if(state.freeDist && state.freeDist.length && !EMBED.views.some(v=>v.layout==="essay")){
     ft='<div class="ftsection"><div class="fthead">Fritextfrågor – poängfördelning</div>'+state.freeDist.map(it=>{
       const maxCount=it.dist.reduce((m,d)=>Math.max(m,d.count),0)||1;
       const pctMean=it.max?it.mean/it.max*100:0;
@@ -3011,6 +3015,18 @@ function xExportRender(){
     return;
   }
   $("#totalreport").innerHTML="";
+  if(spec.layout==="essay"){
+    if(mb) mb.classList.add("hidden"); if(cc) cc.classList.add("hidden"); if(lg) lg.classList.add("hidden");
+    ["#nnote","#passmetric","#actionlist","#goodlist","#freetext"].forEach(s=>{const e=$(s);if(e)e.innerHTML="";});
+    const es=spec.essays, live=es.filter(e=>!e.excluded);
+    const meanPct=live.length?live.reduce((a,e)=>a+e.pct,0)/live.length:0;
+    $("#summary").innerHTML = stat(EMBED.candCount,"kandidater","","s-muted")+stat(es.length,"essäfrågor","","s-muted")
+      + stat(meanPct.toFixed(1)+" %","genomsnittligt medel av max");
+    $("#nnote").innerHTML = state.smallN ? '<div class="advnote">Litet underlag: '+EMBED.candCount+' kandidater. Tolka enskilda tal försiktigt.</div>' : "";
+    state.vm = {view: es};                          // så att temafiltret räknar essäfrågorna
+    buildTagbar(); drawEssays();
+    return;
+  }
   state.vm = {view: spec.view};
   state.vm.view.forEach(v=>{ v.advice=advice(v); });
   const view=state.vm.view, has1=v=>v.advice.l1.length, has2=v=>v.advice.l2.length;
@@ -3040,7 +3056,11 @@ function xExportRows(){
   const spec=EMBED.views[state.viewIdx];
   const tagNames = state.tags ? state.tags.tagCols.map(c=>c.name) : [];
   const aoa=[];
-  if(spec.layout==='total'){
+  if(spec.layout==='essay'){
+    aoa.push(["#","Fråga","Max","Medel","Medel %","Diskriminering (r)","Tolkning","Att fråga sig",...tagNames]);
+    essayVisible().forEach(e=>aoa.push([e.num, e.title||String(e.num), e.max, +e.mean.toFixed(2), +e.pct.toFixed(1),
+      (e.r==null?"":+e.r.toFixed(2)), thInfo(e.info,e.r).label||"", essayQuestions(e).map(q=>q.text).join(" | "), ...(e.tagVals||[])]));
+  } else if(spec.layout==='total'){
     aoa.push(["#","Fråga","Typ","Max","Svårighet","Diskriminering (r)","Tolkning",...tagNames]);
     const q=key($("#search").value);
     let rs=state.totalRows.slice();
@@ -3194,9 +3214,12 @@ i statistiken prövas inte, med ett undantag: tänkbara förebilder.</p>
 <p><b>Förebilder</b> är frågor som var lagom svåra (50–85 % rätt), skilde tydligt mellan
 studenter med höga och låga totalpoäng och inte gav några fynd i formkontrollen.</p>
 </div></details>
-<details class="helpsec"><summary>De två vyerna</summary><div class="body">
+<details class="helpsec"><summary>Vyerna</summary><div class="body">
 <p><b>Slutrapport MCQ</b> – ett kort per flervalsfråga, med diskriminering mot hela tentans poäng.</p>
-<p><b>Totalrapport</b> – alla frågor i tentans ordning, även fritext och flersvar.</p>
+<p><b>Essäfrågor</b> – ett kort per essäfråga: medelpoäng av max, hur väl poängen på frågan följer
+studentens poäng på resten av tentan (r), och hur många som fick varje poäng. Frågetexten visas
+inte. När poängen inte följer resten av tentan står en fråga om bedömningsmallen på kortet.</p>
+<p><b>Totalrapport</b> – alla frågor i tentans ordning, även flersvar.</p>
 </div></details>
 <details class="helpsec"><summary>Välj ut frågor till en egen sida</summary><div class="body">
 <p>Bocka för frågor på korten eller i Totalrapporten. <b>Markera alla visade</b> väljer allt som
@@ -3272,6 +3295,25 @@ function temaEmbed(){
   }
   state.disc=sd; state.optDisc=sod; state.vm=svm;   // återställ appens tillstånd
   if(!views.length) return null;
+  // Essäfrågorna (fritext) får en egen flik med ett kort per fråga. Bara sammanräknade tal: medel, item–total-
+  // korrelation och antal studenter per poäng. Frågetexten finns inte (PDF-läsningen tar bara flervalsfrågor).
+  { const disc=computeDiscrimination(J,{criterion:'whole',excluded:state.excluded}), fd=freeTextDist()||[];
+    const essays=[];
+    J.qMeta.forEach((m,i)=>{
+      if(m.type!=="text" || !(m.max>0)) return;
+      const scores=J.cohortScores.map(row=>row[i]), n=scores.length, r=disc[m.num];
+      const mean=n?scores.reduce((a,b)=>a+b,0)/n:0, d=fd.find(f=>String(f.num)===String(m.num));
+      essays.push({seq:String(m.num), num:m.num, title:m.title||"", max:m.max, n, mean, pct:m.max?mean/m.max*100:0,
+        r:(r===null||r===undefined)?null:r, info:neutralInfo(polyInfo(scores,r,m.max), r),
+        dist:d?d.dist:[], tagVals:lookupTagVals(m.title,m.num), excluded:isExcluded(m.num), reason:exclReason(m.num)});
+    });
+    if(essays.length){
+      const view={id:"essay", label:"Essäfrågor", phase:"Efter rättning", layout:"essay", criterion:"whole", modes:[],
+        hint:"Ett kort per essäfråga: medelpoäng, hur väl poängen följer resten av tentan, och hur poängen fördelade sig.", essays};
+      const at=views.findIndex(v=>v.layout==="total");
+      if(at<0) views.push(view); else views.splice(at,0,view);
+    }
+  }
 
   const tags = state.tags ? {tagCols: state.tags.tagCols.map(c=>({i:c.i, name:c.name}))} : null;
   const snap = (J.qMeta && J.cohortScores) ? Object.assign(passMetric(state.excluded), {ungradedPts: J.ungradedPts||0}) : null;
@@ -3292,12 +3334,16 @@ function subsetEmbed(embed, sel, th){
       v.total.rows = v.total.rows.filter(r=>S.has(String(r.num)));
       v.total.rows.forEach(r=>found.add(String(r.num)));
       v.total.head = { n:v.total.head.n, nq:v.total.rows.length };
+    } else if(v.layout==="essay"){
+      v.essays = v.essays.filter(e=>S.has(String(e.seq)));
+      v.essays.forEach(e=>found.add(String(e.seq)));
     } else if(Array.isArray(v.view)){
       if(!origN) origN = v.view.length;
       v.view = v.view.filter(c=>S.has(String(c.seq)));
       v.view.forEach(c=>found.add(String(c.seq)));
     }
   }
+  out.views = out.views.filter(v=>v.layout!=="essay" || v.essays.length);   // ingen tom essäflik
   out.passSnapshot = null;
   out.freeDist = (out.freeDist||[]).filter(f=>S.has(String(f.num)));
   out.excluded = (out.excluded||[]).filter(e=>S.has(String(e[0])));
@@ -3314,7 +3360,8 @@ function totalVisibleRows(){
   return rows.filter(r=>tagPass(r.tagVals));
 }
 function selVisible(){
-  return EMBED.views[state.viewIdx].layout==="total" ? totalVisibleRows().map(r=>String(r.num)) : currentView().map(v=>String(v.seq));
+  const lay=EMBED.views[state.viewIdx].layout;
+  return lay==="total" ? totalVisibleRows().map(r=>String(r.num)) : lay==="essay" ? essayVisible().map(e=>String(e.seq)) : currentView().map(v=>String(v.seq));
 }
 function renderSelBar(){
   const n=state.sel.size, sv=$("#sel-save"), cl=$("#sel-clear");
@@ -3328,6 +3375,74 @@ function saveSubset(){
   if(!state.sel.size) return;
   downloadText(`temarapport_urval_${stamp()}.html`, buildTemaReport(subsetEmbed(EMBED, state.sel, state.th)), "text/html;charset=utf-8");
 }
+/* ---------- Essäfrågor i temarapporten ---------- */
+const ESSAY_TEXT = {
+  mall: "Poängen på frågan följer inte resten av tentan. Bedömer mallen det ni avsåg att pröva?",
+  elatt: "Är det väntat för de här målen, eller skiljer bedömningsmallen för lite mellan svaren?"
+};
+function isEssayView(){ return typeof EMBED!=="undefined" && !!EMBED && EMBED.views[state.viewIdx] && EMBED.views[state.viewIdx].layout==="essay"; }
+function essayQuestions(e){
+  if(e.excluded || !(e.n>=30) || e.r===null || e.r===undefined) return [];
+  return e.r < -0.10 ? [{key:"mall", text:ESSAY_TEXT.mall}] : [];     // samma gräns som etiketten "negativ" (polyInfo)
+}
+function essayPatterns(list){
+  const live=(list||[]).filter(e=>!e.excluded), N=live.length;
+  if(!N) return [];
+  const easy=live.filter(e=>e.n>=MIN_N_DIST && e.pct>=state.th.easy);
+  return easy.length ? [{key:"elatt", seqs:easy.map(e=>String(e.seq)),
+    head:`${easy.length} av ${N} essäfrågor hade ett medel på minst ${thFmt("easy")} % av maxpoängen.`, ask:ESSAY_TEXT.elatt, sub:""}] : [];
+}
+function essayVisible(opts){
+  opts=opts||{};
+  const q=key($("#search").value);
+  let v=EMBED.views[state.viewIdx].essays.slice();
+  if(q) v=v.filter(e=> key(String(e.num)).includes(q) || key(e.title||"").includes(q));
+  v=v.filter(e=>tagPass(e.tagVals));
+  if(state.patternSeqs && !opts.ignorePattern) v=v.filter(e=>state.patternSeqs.has(String(e.seq)));
+  return v;
+}
+function essayCard(e){
+  const info=thInfo(e.info, e.r), fmt=x=>String(+x.toFixed(2)).replace(".",",");
+  const tema=(typeof EMBED!=="undefined" && EMBED && EMBED.kind==="tema");
+  const sel = tema ? `<label class="selwrap" title="Välj frågan till en egen sida"><input type="checkbox" class="selbox" data-seq="${esc(String(e.seq))}"${(state.sel && state.sel.has(String(e.seq)))?" checked":""}></label>` : "";
+  const nm=(e.title && e.title!==String(e.num)) ? `<span class="qtitle">${esc(e.title)}</span>` : "";
+  const tags=(e.tagVals||[]).filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join("");
+  let badge="";
+  if(!e.excluded && e.n>=MIN_N_DIST){
+    if(e.pct<state.th.hard) badge=`<span class="badge hard">Svår</span>`;
+    else if(e.pct>=state.th.easy) badge=`<span class="badge easy">Lätt</span>`;
+  }
+  const maxCount=e.dist.reduce((m,d)=>Math.max(m,d.count),0)||1;
+  const bars=e.dist.map(d=>{ const w=Math.max(d.count/maxCount*100,2), pc=e.n?d.count/e.n*100:0;
+    return `<div class="ftrow"><div class="ftpts">${fmt(d.pts)} p</div><div class="ftbarwrap"><div class="ftbar" style="width:${w}%"></div></div><div class="ftcnt">${d.count} <small>(${pc.toFixed(0)} %)</small></div></div>`; }).join("");
+  const qs=essayQuestions(e);
+  const ask = qs.length ? `<div class="askbox"><div class="askhead">Att fråga sig</div>${qs.map(q=>`<div class="askq">${esc(q.text)}</div>`).join("")}</div>` : "";
+  const excl = e.excluded ? `<div class="exclbanner"><span class="exclmark">Exkluderad ur tentan</span>${e.reason?`<span class="exclreasontag">${esc(e.reason)}</span>`:""}</div>` : "";
+  return `<div class="q ftcard${e.excluded?" excluded":""}" id="card-${esc(String(e.seq))}">
+    <div class="top">
+      <div class="code">${sel}Fråga ${esc(String(e.num))}${nm}<span class="pts">${fmt(e.max)} p</span><span class="fttag">Essä</span>${tags}</div>
+      <div class="metrics">${badge}
+        <div class="pc">medel ${fmt(e.mean)} av ${fmt(e.max)} <small>(${e.pct.toFixed(0)} %, n=${e.n})</small></div>
+        <div class="rpb ${info.cls}" title="${esc(info.tip||"")}">${esc(info.value)}${info.label?` · ${esc(info.label)}`:""}</div>
+      </div>
+    </div>
+    ${excl}
+    <div class="ftbars">${bars}</div>
+    ${e.excluded?"":ask}
+  </div>`;
+}
+function drawEssays(){
+  renderPatterns();
+  const all=EMBED.views[state.viewIdx].essays, v=essayVisible();
+  const activeSummary=Object.keys(state.activeTags).map(col=>`${col}: ${[...state.activeTags[col]].join(", ")}`).join(" · ");
+  $("#count").textContent = `Visar ${v.length} av ${all.length} essäfrågor` + (activeSummary?` · ${activeSummary}`:"");
+  $("#cards").innerHTML = v.map(essayCard).join("") || `<div class="panel">Inga essäfrågor matchar filtret.</div>`;
+  updateClearBtn();
+}
+/* Mönsterraderna för den vy som visas (flervalskort eller essäkort), räknade på de frågor som syns. */
+function activePatternRows(){
+  return isEssayView() ? essayPatterns(essayVisible({ignorePattern:true})) : patternSummary(currentView({ignorePattern:true}));
+}
 /* Funktioner och konstanter som den fristående rapporten behöver. Listorna används både när appen bygger
    rapporten och när rapporten själv bygger en urvalssida – därför måste de innehålla sig själva. */
 function temaFns(){
@@ -3338,6 +3453,7 @@ function temaFns(){
              setThreshold,thresholdsCustom,resetThresholds,thFmt,thresholdsText,settingsHtml,renderThCustom,wireSettings,thInfo,neutralInfo,
              temaFns,temaConsts,buildTemaReport,downloadText,stamp,
              cardQuestions,patternSummary,renderPatterns,togglePattern,
+             isEssayView,essayQuestions,essayPatterns,essayVisible,essayCard,drawEssays,activePatternRows,
              lathundKontrollInit,splitStem,formFindings,formFor,renderForm,isForebild,
              subsetEmbed,totalVisibleRows,selVisible,renderSelBar,selRedraw,selAllVisible,selClear,saveSubset,
              xExportTabs,xExportTotal,xExportRender,xExportRows,xExportCSV,xLoadXLSX,xExportXLSX,xExportPrint,openHelp,closeHelp,wireHelp,xExportInit];
@@ -3346,7 +3462,7 @@ function temaConsts(){
   return `const MIN_N_DIST=${MIN_N_DIST};const TH_DEFAULT=${JSON.stringify(TH_DEFAULT)};const TH_RANGE=${JSON.stringify(TH_RANGE)};const TH_LABEL=${JSON.stringify(TH_LABEL)};const PSY=${JSON.stringify(PSY)};`
     + `const TW=${JSON.stringify(TW)};const CUE_ABS=${JSON.stringify(CUE_ABS)};const CUE_HEDGE=${JSON.stringify(CUE_HEDGE)};`
     + `const FORM_META=${JSON.stringify(FORM_META)};const FORM_REGLER=${JSON.stringify(FORM_REGLER)};const FORM_CUE=${JSON.stringify(FORM_CUE)};const FORM_EXPLAINS=${JSON.stringify(FORM_EXPLAINS)};`
-    + `const ASK_SUMMARY=${JSON.stringify(ASK_SUMMARY)};const SUM_TEXT=${JSON.stringify(SUM_TEXT)};const SUM_LEAD=${JSON.stringify(SUM_LEAD)};const ASK_ORDER=${JSON.stringify(ASK_ORDER)};const ASK_TEXT=${JSON.stringify(ASK_TEXT)};const ASK_PSY=${JSON.stringify(ASK_PSY)};`
+    + `const ESSAY_TEXT=${JSON.stringify(ESSAY_TEXT)};const ASK_SUMMARY=${JSON.stringify(ASK_SUMMARY)};const SUM_TEXT=${JSON.stringify(SUM_TEXT)};const SUM_LEAD=${JSON.stringify(SUM_LEAD)};const ASK_ORDER=${JSON.stringify(ASK_ORDER)};const ASK_TEXT=${JSON.stringify(ASK_TEXT)};const ASK_PSY=${JSON.stringify(ASK_PSY)};`
     + `const HELP_HTML=${JSON.stringify(HELP_TEMA_HTML)};const HELP_TEMA_HTML=HELP_HTML;`;
 }
 /* Bygger hela den fristående temarapporten som en HTML-sträng. Använder bara embed, funktionslistan

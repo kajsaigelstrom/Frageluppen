@@ -98,7 +98,7 @@ test("sammanfattningen följer temafiltret", () => {
 test("Totalrapporten har ingen mönstersammanfattning, urvalssidan har sin egen", () => {
   const { ev } = fresh();
   const page = runHtml(ev("buildTemaReport(temaEmbed())"));
-  page.ev("state.viewIdx = 1; xExportTabs(); xExportRender();");
+  page.ev("state.viewIdx = EMBED.views.findIndex(v=>v.layout==='total'); xExportTabs(); xExportRender();");
   assert.equal(page.el("#patterns").innerHTML, "");
   const easy = page.evj("EMBED.views[0].view.filter(v => v.pcorr >= 90).slice(0,2).map(v => String(v.seq))");
   const other = page.ev("String(EMBED.views[0].view.find(v => v.pcorr < 90).seq)");
