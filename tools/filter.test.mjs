@@ -14,7 +14,7 @@ test("svårighet och diskriminering delas in efter gränserna under Inställning
   const { ev, evj } = fresh();
   const f = o => evj(`mkFacets(${JSON.stringify(o)})`);
   assert.equal(f({ typ: "single", pct: 95, info: { label: "god", cls: "rpb-good" }, r: 0.25 }).svar, "latt");
-  assert.equal(f({ typ: "single", pct: 70, info: { label: "god", cls: "rpb-good" }, r: 0.25 }).svar, "lagom");
+  assert.equal(f({ typ: "single", pct: 70, info: { label: "god", cls: "rpb-good" }, r: 0.25 }).svar, "medel");
   assert.equal(f({ typ: "single", pct: 40, info: { label: "god", cls: "rpb-good" }, r: 0.25 }).svar, "svar");
   ev("setThreshold('easy', 70)");
   assert.equal(f({ typ: "single", pct: 70, info: { label: "god" }, r: 0.25 }).svar, "latt");

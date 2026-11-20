@@ -2198,7 +2198,7 @@ function renderForm(f, cls){
       + (f.varfor?`<div class="formvarfor">${esc(f.varfor)}</div>`:"")
       + (f.ref?`<div class="formref">${esc(f.ref)}</div>`:"") + `</details>` : "") + `</div>`;
 }
-/* Förebild = lagom svår (50–85 % rätt), skiljer väl, inget i statistiken som ger en fråga på kortet, och inga fynd
+/* Förebild = medelsvår (50–85 % rätt), skiljer väl, inget i statistiken som ger en fråga på kortet, och inga fynd
    i formkontrollen utöver lathundens tips. En fråga med formfynd ska inte hållas fram som förebild (Kajsa 20 nov
    2026: annars förvirrar vi lärarna), så kontrollen körs även på tänkbara förebilder. Utan frågetext går det inte
    att kontrollera, och då märks ingen förebild. */
@@ -2655,7 +2655,7 @@ function buildGoodList(){
   if(!items.length){ el.innerHTML=""; return; }
   el.innerHTML = `<div class="goodbox"><div class="goodhead">${items.length} fråga(or) ${tema ? "som fungerar som förebild" : "som skiljer starka från svaga väl"}</div>`
     + (tema
-        ? `<div class="goodnote">Lagom svåra (50–85 % rätt), skilde tydligt mellan studenter med höga och låga totalpoäng, och utan fynd i formkontrollen ur MCQ-lathunden.</div>`
+        ? `<div class="goodnote">Medelsvåra (50–85 % rätt), skilde tydligt mellan studenter med höga och låga totalpoäng, och utan fynd i formkontrollen ur MCQ-lathunden.</div>`
         : `<div class="goodnote">Diskriminerar väl i den här kohorten – det är evidens, inte bevis. Bekräfta att det beror på att frågan testar rätt sak, inte på en form-ledtråd, innan du återanvänder den.</div>`)
     + items.map(v=>`<button class="goodrow" data-seq="${esc(String(v.seq))}"><span class="acode">${esc(v.code)}</span>
         <span class="greason">${tema ? `r<sub>pb</sub> +${v.rpb.toFixed(2)}` : exemplaryReason(v)}</span>
@@ -2673,7 +2673,7 @@ function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",
    säger vad ett klick ger. Gränserna för Lätt, Svår och God är de under Inställningar. */
 const FACETS = [
   {key:"typ",   label:"Frågetyp",       values:[["single","MCQ"],["text","Essä"],["multi","Flersvar"]]},
-  {key:"svar",  label:"Svårighet",      values:[["latt","Lätt"],["lagom","Lagom"],["svar","Svår"]]},
+  {key:"svar",  label:"Svårighet",      values:[["latt","Lätt"],["medel","Medel"],["svar","Svår"]]},
   {key:"disk",  label:"Diskriminering", values:[["neg","Negativ"],["lag","Låg"],["acc","Acceptabel"],["god","God"],["mgod","Mycket god"],["na","Ej mätbar"]]},
   {key:"titta", label:"Att titta på",   values:[["fraga",""],["forebild","Förebild"],["excl","Exkluderad"]]}
 ];
@@ -2705,7 +2705,7 @@ function mkFacets(o){
   if(o.fraga) titta.push("fraga");
   if(o.forebild) titta.push("forebild");
   if(o.excluded) titta.push("excl");
-  return { typ:o.typ, svar: pct>=state.th.easy ? "latt" : pct<state.th.hard ? "svar" : "lagom",
+  return { typ:o.typ, svar: pct>=state.th.easy ? "latt" : pct<state.th.hard ? "svar" : "medel",
            disk: discBucket(o.info, o.r), titta };
 }
 function facetsOfMcq(v){
@@ -2976,7 +2976,7 @@ function card(v){
               + ((state.mode==="ask-explain" && PSY[q.psy]) ? `<div class="askpsy">${esc(PSY[q.psy])}</div>` : "") + `</div>`; }).join("") : "")
       + (expl.length ? `<div class="askhead${qs.length?" askhead2":""}">Möjlig förklaring i frågans form</div>` + expl.join("") : "")
       + `</div>` : "";
-    if(isForebild(v)) advHtml += `<div class="forebild">✓ Fungerar som förebild: lagom svår, skiljer väl mellan studenter med höga och låga totalpoäng, och utan fynd i formkontrollen.</div>`;
+    if(isForebild(v)) advHtml += `<div class="forebild">✓ Fungerar som förebild: medelsvår, skiljer väl mellan studenter med höga och låga totalpoäng, och utan fynd i formkontrollen.</div>`;
   }
   if(excluded) advHtml="";   // exkluderad fråga: ingen åtgärdsruta – beslutet är taget, talen visas som dokumentation
   return `<div class="q ${flag?'flag':''}${excluded?' excluded':''}" id="card-${esc(String(v.seq))}">
@@ -3277,7 +3277,7 @@ function xExportRender(){
   $("#summary").innerHTML = stat(EMBED.candCount,"kandidater","","s-muted")+stat(view.length,"MCQ-frågor","","s-muted")
     + (nExcl?stat(nExcl,"exkluderade","Dragna ur poängsättningen – visas kvar men bidrar inte till total, diskriminering eller godkäntgränsen."):"")
     + stat(meanPc.toFixed(1)+" %","genomsnittlig andel rätt")
-    + (state.smallN||!showExe?"":stat(nExe,"förebilder","Lagom svåra, skiljer väl och utan fynd i formkontrollen."))
+    + (state.smallN||!showExe?"":stat(nExe,"förebilder","Medelsvåra, skiljer väl och utan fynd i formkontrollen."))
     + (state.tags?stat(state.tags.tagCols.map(c=>c.name).join(" · "),"taggkolumner","","s-muted"):"");
   $("#nnote").innerHTML = state.smallN ? '<div class="advnote">Litet underlag: '+EMBED.candCount+' kandidater. Tolka enskilda procenttal försiktigt.</div>' : "";
   const modes=(spec.modes&&spec.modes.length)?spec.modes:[{id:"edu",label:"Alla frågor"}];
@@ -3458,7 +3458,7 @@ samlingsalternativ. Ett fynd visas bara när det är en trolig förklaring till 
 exempel att rätt svar är mycket längre än distraktorerna i en fråga som nästan alla klarade.
 Under "Ur MCQ-lathunden" står lathundens råd inför nästa gång och källan. Frågor utan svaghet
 i statistiken prövas inte, med ett undantag: tänkbara förebilder.</p>
-<p><b>Förebilder</b> är frågor som var lagom svåra (50–85 % rätt), skilde tydligt mellan
+<p><b>Förebilder</b> är frågor som var medelsvåra (50–85 % rätt), skilde tydligt mellan
 studenter med höga och låga totalpoäng och inte gav några fynd i formkontrollen.</p>
 </div></details>
 <details class="helpsec"><summary>Vyerna</summary><div class="body">

@@ -48,6 +48,8 @@ inte dokumenterad här.
   Samma rad finns i alla flikar, i examinatorns vyer och i temarapporten, och valen följer med
   mellan flikarna. Mönstersammanfattningen, förebildslistan, åtgärdslistan, "Markera alla
   visade" och Excel/CSV följer filtret. Frågetyperna heter nu MCQ, Flersvar och Essä i tabellen.
+  Svårighetsgruppen heter Lätt, Medel och Svår, och förebilder beskrivs som medelsvåra, så att
+  texten inte antyder att en viss svårighetsgrad är ett mål i sig.
 - **Den inbyggda exempeltentan ("Visa exempel") är borttagen.** Den syntetiska tentan finns kvar
   hos testerna. Verktygets fil blev omkring 45 kB mindre, och därmed även filen till examinatorn.
 - **Godkäntstatistiken visas inte längre i vyerna eller i temarapporten** (panelen "Nått
@@ -74,7 +76,7 @@ inte dokumenterad här.
   urvalssida. Korten har en ruta bara när något gäller just den frågan. På en riktig tenta
   med 39 flervalsfrågor: 11 kort med ruta (5 med en fråga, 6 med en formförklaring).
 - **Förebilder.** Listan över starkt diskriminerande frågor i temarapporten ersätts av
-  flervalsfrågor som var lagom svåra (50–85 % rätt), skilde väl, inte har någon fråga på
+  flervalsfrågor som var medelsvåra (50–85 % rätt), skilde väl, inte har någon fråga på
   kortet och inte ger några fynd i formkontrollen. Kontrollen körs därför även på tänkbara
   förebilder. Essäfrågor märks inte som förebilder, eftersom formen inte går att kontrollera.
 - **Essäfrågor får en egen flik i temarapporten**, med ett kort per fråga: medelpoäng av max,
