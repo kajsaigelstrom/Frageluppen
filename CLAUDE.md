@@ -88,7 +88,10 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
   distraktor). Lathundens råd är det enda undantaget från "aldrig åtgärder" i temarapporten,
   och bara i utfällningen "Ur MCQ-lathunden". Appens egna vyer använder `cueScan` och är orörda.
 - **Essäfrågorna** (typ `text`) har en egen flik i temarapporten (`layout: "essay"`, `essayCard`).
-  Bara sammanräknade tal. Inga förebilder och ingen formkontroll för essäfrågor.
+  Bara sammanräknade tal. Inga förebilder och ingen formkontroll för essäfrågor. Frågetexten
+  läses ur PDF:en med `parseEssayLines` (ren funktion, testas med påhittade rader): allt
+  mellan rubriken vid vänstermarginalen och raden "Skriv ditt svar här". Den ligger som
+  `pdfMcqs.essays` och i paketet som `pdf.essays`.
 - **Förebilder kräver en ren formkontroll** (inga fynd utöver lathundens tips). Håll aldrig fram
   en fråga som förebild utan att den har gått igenom kontrollen.
 - **Sammanfattning före kort.** En regel vars budskap är detsamma för varje fråga den träffar

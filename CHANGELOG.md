@@ -62,8 +62,11 @@ inte dokumenterad här.
   item–total-korrelation mot resten av tentan och poängfördelning. När poängen inte följer
   resten av tentan står en fråga om bedömningsmallen på kortet, och essäfrågor med ett medel
   över gränsen för "Lätt" sammanfattas en gång överst. Kryssrutor, temafilter, urvalssida och
-  Excel/CSV fungerar som för flervalsfrågorna. Frågetexten visas inte (PDF-läsningen tar bara
-  flervalsfrågor). Totalrapporten upprepar inte längre poängfördelningarna.
+  Excel/CSV fungerar som för flervalsfrågorna. Totalrapporten upprepar inte längre
+  poängfördelningarna.
+- **Essäfrågornas text läses ur tentans PDF** (allt mellan frågerubriken och svarsrutan, även
+  över sidbrytning) och visas på essäkorten. Texten följer med i kurssamordnarens fil. På en
+  riktig tenta lästes 30 av 30 essäfrågor, och flervalsfrågornas inläsning är oförändrad.
 - **Buggfix:** fritextfrågornas poängfördelning följde aldrig med i den delade rapporten när den
   skapades från kortvyn (listan var tom vid exporten). Nu räknas den alltid om. Dessutom
   döljs sortering, visningsläge och färgförklaring på riktigt i de flikar där de inte gäller.

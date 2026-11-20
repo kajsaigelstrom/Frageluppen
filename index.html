@@ -862,6 +862,42 @@ function buildLines(items){
              text: norm(l.items.map(i=>i.str).join(" ")) };
   });
 }
+/* Essäfrågornas text. I Insperas utskrift står rubriken ("1 Fråga A1.1 (1,5 p)") vid vänstermarginalen, frågetexten
+   indragen under den, och sedan svarsrutan ("Skriv ditt svar här. …"). Texten = allt mellan rubriken och svarsrutan.
+   En fråga kan fortsätta på nästa sida. pages = en lista per sida med rader {x0, top, text} (från buildLines).
+   Ren funktion, så att den går att testa utan pdf.js. */
+function parseEssayLines(pages){
+  const RE_SKRIV=/^Skriv (?:ditt|dina) svar här/i;
+  const noise=t=> RE_PG.test(t) || /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}\s/.test(t) || t.startsWith("Utskrift");
+  const found=[]; let cur=null, headX=Infinity;
+  for(const L of (pages||[])){
+    // Rubriker sitter vid vänstermarginalen; indragna rader som råkar börja med en siffra är text.
+    const cand=L.map((l,i)=>{ const m=l.text.match(RE_HEAD); return m?{i, seq:+m[1], x0:l.x0}:null; }).filter(Boolean);
+    if(cand.length) headX=Math.min(headX, ...cand.map(h=>h.x0));
+    const headAt=new Map(cand.filter(h=>h.x0<=headX+8).map(h=>[h.i,h]));
+    L.forEach((l,i)=>{
+      const t=l.text;
+      if(noise(t)) return;
+      if(headAt.has(i)){ cur={seq:headAt.get(i).seq, head:t, parts:[], mcq:false}; return; }
+      if(!cur) return;
+      if(t.includes("Välj ett alternativ")){ cur.mcq=true; return; }
+      if(RE_TOT.test(t)){ cur=null; return; }
+      if(RE_SKRIV.test(t)){
+        if(!cur.mcq){
+          const cm=cur.head.match(RE_CODE), pm=cur.head.match(RE_PTS);
+          const first=cur.head.replace(/^\d{1,3}\s+/,"").replace(/^Fråga\s+[A-E]\d+\.\d+\s*(?:\([^)]*\))?\s*:?\s*/,"");
+          const stem=norm([first].concat(cur.parts).join(" "));
+          if(stem) found.push({seq:cur.seq, code: cm?cm[1]:String(cur.seq), pts: pm?pm[1]:null, stem});
+        }
+        cur=null; return;
+      }
+      cur.parts.push(t);
+    });
+  }
+  const bySeq=new Map();                       // en fråga, en text (längst vinner om något lästs två gånger)
+  for(const e of found){ const c=bySeq.get(e.seq); if(!c || e.stem.length>c.stem.length) bySeq.set(e.seq, e); }
+  return [...bySeq.values()];
+}
 async function parsePDF(buf){
   const doc = await pdfjsLib.getDocument({data:buf}).promise;
   const mcqs=[];
@@ -869,6 +905,7 @@ async function parsePDF(buf){
   // identifierar tentatillfället och används för PDF↔JSON-kontrollen (examMismatch). Äldre
   // utskriftsformat saknar sidhuvud – då blir examName odefinierad och kontrollen hoppar över.
   const headerCount=new Map();
+  const pageLines=[];                           // alla sidors rader, för essäfrågornas text (parseEssayLines)
   for(let p=1;p<=doc.numPages;p++){
     const page = await doc.getPage(p);
     const vp = page.getViewport({scale:1});
@@ -876,6 +913,7 @@ async function parsePDF(buf){
     const items = tc.items.filter(it=>it.str && it.str.trim().length)
       .map(it=>({ top: vp.height-it.transform[5], x0: it.transform[4], str: it.str }));
     const L = buildLines(items);
+    pageLines.push(L);
     for(const l of L.slice(0,2)){ const hm=l.text.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}\s+(\S.*)$/);
       if(hm){ headerCount.set(hm[1],(headerCount.get(hm[1])||0)+1); break; } }
     const valjIdx = L.map((l,i)=>l.text.includes("Välj ett alternativ")?i:-1).filter(i=>i>=0);
@@ -936,6 +974,7 @@ async function parsePDF(buf){
   // Testnamnet läggs som egenskap på arrayen: befintlig kod (length, iteration) påverkas inte,
   // och demoläget (ren array utan examName) triggar aldrig tillfälleskontrollen.
   if(headerCount.size) out.examName=[...headerCount.entries()].sort((a,b)=>b[1]-a[1])[0][0];
+  try{ out.essays=parseEssayLines(pageLines); }catch(_){ out.essays=[]; }   // essätexterna är ett tillägg: får aldrig stoppa inläsningen
   return out;
 }
 
@@ -1135,7 +1174,7 @@ function buildPackage({jsonObjs, pdfMcqs, tagRows}){
     examWarning: examMismatch(pdfName, titles) || null,
     data: (()=>{ let off=0;                                   // löpnumren löper över alla filer (en fil per ort)
       return jsonObjs.map(o=>{ const m=minimizeInspera(o, off); off+=m.ext_inspera_candidates.length; return m; }); })(),
-    pdf: pdfMcqs ? {examName:pdfName, items:[...pdfMcqs]} : null,
+    pdf: pdfMcqs ? {examName:pdfName, items:[...pdfMcqs], essays:[...(pdfMcqs.essays||[])]} : null,
     tagRows: tagRows || null };
 }
 function isPackage(obj){ return !!obj && typeof obj==="object" && !Array.isArray(obj) && obj.format===PKG_FORMAT; }
@@ -1152,6 +1191,8 @@ function openPackage(pkg){
     if(!Array.isArray(pkg.pdf.items) || pkg.pdf.items.some(x=>!isPlainObj(x))) throw bad();
     pdfMcqs=[...pkg.pdf.items];
     if(pkg.pdf.examName) pdfMcqs.examName=pkg.pdf.examName;
+    if(pkg.pdf.essays!==undefined && (!Array.isArray(pkg.pdf.essays) || pkg.pdf.essays.some(x=>!isPlainObj(x)))) throw bad();
+    pdfMcqs.essays=[...(pkg.pdf.essays||[])];
   }
   if(pkg.tagRows && (!Array.isArray(pkg.tagRows) || pkg.tagRows.some(r=>!Array.isArray(r)))) throw bad();
   return { jsonObjs:pkg.data, pdfMcqs, tagRows:pkg.tagRows||null, examWarning:pkg.examWarning||null };
@@ -3217,8 +3258,7 @@ studenter med höga och låga totalpoäng och inte gav några fynd i formkontrol
 <details class="helpsec"><summary>Vyerna</summary><div class="body">
 <p><b>Slutrapport MCQ</b> – ett kort per flervalsfråga, med diskriminering mot hela tentans poäng.</p>
 <p><b>Essäfrågor</b> – ett kort per essäfråga: medelpoäng av max, hur väl poängen på frågan följer
-studentens poäng på resten av tentan (r), och hur många som fick varje poäng. Frågetexten visas
-inte. När poängen inte följer resten av tentan står en fråga om bedömningsmallen på kortet.</p>
+studentens poäng på resten av tentan (r), och hur många som fick varje poäng. När poängen inte följer resten av tentan står en fråga om bedömningsmallen på kortet.</p>
 <p><b>Totalrapport</b> – alla frågor i tentans ordning, även flersvar.</p>
 </div></details>
 <details class="helpsec"><summary>Välj ut frågor till en egen sida</summary><div class="body">
@@ -3296,14 +3336,15 @@ function temaEmbed(){
   state.disc=sd; state.optDisc=sod; state.vm=svm;   // återställ appens tillstånd
   if(!views.length) return null;
   // Essäfrågorna (fritext) får en egen flik med ett kort per fråga. Bara sammanräknade tal: medel, item–total-
-  // korrelation och antal studenter per poäng. Frågetexten finns inte (PDF-läsningen tar bara flervalsfrågor).
+  // korrelation och antal studenter per poäng, plus frågetexten ur PDF:en när den gick att läsa.
   { const disc=computeDiscrimination(J,{criterion:'whole',excluded:state.excluded}), fd=freeTextDist()||[];
     const essays=[];
     J.qMeta.forEach((m,i)=>{
       if(m.type!=="text" || !(m.max>0)) return;
       const scores=J.cohortScores.map(row=>row[i]), n=scores.length, r=disc[m.num];
       const mean=n?scores.reduce((a,b)=>a+b,0)/n:0, d=fd.find(f=>String(f.num)===String(m.num));
-      essays.push({seq:String(m.num), num:m.num, title:m.title||"", max:m.max, n, mean, pct:m.max?mean/m.max*100:0,
+      const txt=((state.pdfMcqs && state.pdfMcqs.essays) || []).find(x=>String(x.seq)===String(m.num));
+      essays.push({seq:String(m.num), num:m.num, title:m.title||"", stem:(txt && txt.stem) || "", max:m.max, n, mean, pct:m.max?mean/m.max*100:0,
         r:(r===null||r===undefined)?null:r, info:neutralInfo(polyInfo(scores,r,m.max), r),
         dist:d?d.dist:[], tagVals:lookupTagVals(m.title,m.num), excluded:isExcluded(m.num), reason:exclReason(m.num)});
     });
@@ -3396,7 +3437,7 @@ function essayVisible(opts){
   opts=opts||{};
   const q=key($("#search").value);
   let v=EMBED.views[state.viewIdx].essays.slice();
-  if(q) v=v.filter(e=> key(String(e.num)).includes(q) || key(e.title||"").includes(q));
+  if(q) v=v.filter(e=> key(String(e.num)).includes(q) || key(e.title||"").includes(q) || key(e.stem||"").includes(q));
   v=v.filter(e=>tagPass(e.tagVals));
   if(state.patternSeqs && !opts.ignorePattern) v=v.filter(e=>state.patternSeqs.has(String(e.seq)));
   return v;
@@ -3427,6 +3468,7 @@ function essayCard(e){
       </div>
     </div>
     ${excl}
+    ${e.stem?`<div class="stem">${esc(e.stem)}</div>`:""}
     <div class="ftbars">${bars}</div>
     ${e.excluded?"":ask}
   </div>`;
