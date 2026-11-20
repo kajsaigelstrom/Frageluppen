@@ -41,6 +41,13 @@ inte dokumenterad här.
   flervalsfrågorna att se över, exkludering på kortet och PDF till rättarna) och **Se hela
   rapporten** (vyerna efter rättning, med Temarapport och Excel; kräver färdig rättning).
   De tre filrutorna för Insperas filer finns bara hos kurssamordnaren.
+- **Filterraden.** En rad knappar per grupp: tema (ur taggfilen), frågetyp, svårighet,
+  diskriminering och "att titta på" (fråga på kortet eller att se över, förebild, exkluderad).
+  Flera val i samma grupp breddar urvalet, val i olika grupper smalnar av det, och varje knapp
+  visar hur många frågor ett klick ger. Valda filter står på en egen rad och tas bort med ✕.
+  Samma rad finns i alla flikar, i examinatorns vyer och i temarapporten, och valen följer med
+  mellan flikarna. Mönstersammanfattningen, förebildslistan, åtgärdslistan, "Markera alla
+  visade" och Excel/CSV följer filtret. Frågetyperna heter nu MCQ, Flersvar och Essä i tabellen.
 - **Den inbyggda exempeltentan ("Visa exempel") är borttagen.** Den syntetiska tentan finns kvar
   hos testerna. Verktygets fil blev omkring 45 kB mindre, och därmed även filen till examinatorn.
 - **Godkäntstatistiken visas inte längre i vyerna eller i temarapporten** (panelen "Nått

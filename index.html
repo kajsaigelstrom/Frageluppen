@@ -97,6 +97,10 @@
   .chip:hover{border-color:var(--accent)}
   .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .chip .c{opacity:.7;font-family:"IBM Plex Mono",monospace;margin-left:5px}
+  .chip.zero:not(.on){opacity:.45}
+  .filtsel{display:flex;flex-wrap:wrap;gap:7px;align-items:center;padding-top:6px;border-top:1px dashed var(--line)}
+  .fchip{font-size:12px;border-radius:20px;padding:3px 10px;cursor:pointer;font-weight:600;background:#faf6ea;border:1px solid #c9b06a;color:#5a4410}
+  .fchip:hover{background:#f3ead0}
   #count{font-size:12px;color:var(--muted);margin:10px 2px 0}
 
   .q{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin:14px 0}
@@ -610,7 +614,7 @@ function log(m){ logEl.textContent = m; }
 const TH_DEFAULT = { easy:90, hard:60, goodDisc:0.20, pass:65 };
 const TH_RANGE   = { easy:[70,100], hard:[30,70], goodDisc:[0.10,0.30], pass:[50,100] };
 const TH_LABEL   = { easy:"Lätt från (% rätt)", hard:"Svår under (% rätt)", goodDisc:"God diskriminering från (r)", pass:"Godkäntgräns (%)" };
-const state = { pdfMcqs:null, jsonFiles:[], tags:null, activeTags:{}, mode:"edu", view:"pre-mcq", excluded:new Map(), th:Object.assign({},TH_DEFAULT), prep:false, embedded:false };
+const state = { pdfMcqs:null, jsonFiles:[], tags:null, activeTags:{}, facets:{}, mode:"edu", view:"pre-mcq", excluded:new Map(), th:Object.assign({},TH_DEFAULT), prep:false, embedded:false };
 function setThreshold(key, value){
   if(!Object.prototype.hasOwnProperty.call(TH_RANGE,key)) return false;
   if(value===null || value===undefined || (typeof value==="string" && value.trim()==="")) return false;
@@ -813,6 +817,15 @@ som PDF till rättarna.</p>
 mot hela tentans poäng, och Totalrapport med även essäfrågor och flersvar. Härifrån skapas
 <b>Temarapporten</b> till temagrupperna och exporten till Excel. Kräver färdig rättning.</p>
 <p>Godkäntstatistik visas inte i vyerna.</p>
+</div></details>
+<details class="helpsec"><summary>Filtrera</summary><div class="body">
+<p>Filterraden har en rad knappar per grupp: <b>tema</b> (ur taggfilen), <b>frågetyp</b>,
+<b>svårighet</b>, <b>diskriminering</b> och <b>att titta på</b>. Flera val i samma grupp breddar
+urvalet, till exempel Lätt eller Svår. Val i olika grupper smalnar av det, till exempel ett tema
+och Svår. Siffran på en knapp säger hur många frågor ett klick ger, med de andra valen som de är.</p>
+<p>Valen står under knapparna och tas bort ett i taget med ✕, eller alla med <b>Rensa filter</b>.
+De följer med när du byter flik. Gränserna för Lätt, Svår och God diskriminering är de under
+Inställningar.</p>
 </div></details>
 <details class="helpsec"><summary>Temarapporten</summary><div class="body">
 <p>Temarapporten innehåller flervalsfrågorna, essäfrågorna och en totalrapport, men ingen triage
@@ -2486,6 +2499,20 @@ function freeTextDist(){
   return out;
 }
 /* ---------- Totalrapport (vy 3): alla frågor i tentans ordning, type-medveten ---------- */
+/* Appens Totalrapport: en rad per fråga med det som filterraden behöver. */
+function appTotalRows(){
+  const J=state.json; if(!J || !J.qMeta || !J.cohortScores) return [];
+  const n=J.candCount;
+  return J.qMeta.map((m,i)=>{
+    const a=J.agg[m.num], r=state.disc?state.disc[m.num]:null;
+    const scores=J.cohortScores.map(row=>row[i]);
+    // diskriminering: dikotom (MCQ) via rpbInfo, polytom via polyInfo
+    const info = m.type==="single" ? rpbInfo({n:a?a.n:0, ncorr:a?a.ncorr:0, rpb:r}) : polyInfo(scores, r, m.max);
+    const pct = m.type==="single" ? (a&&a.n?a.ncorr/a.n*100:0) : ((m.max&&n) ? scores.reduce((s,v)=>s+v,0)/n/m.max*100 : 0);
+    const tagVals = (typeof lookupTagVals==="function") ? lookupTagVals(m.title, m.num) : [];
+    return {m,i,a,r,scores,info,pct,tagVals, f:mkFacets({typ:m.type, pct, info, r, excluded:isExcluded(m.num)})};
+  });
+}
 function renderTotal(){
   const J=state.json, host=$("#totalreport"); if(!host) return;
   const n=J.candCount;
@@ -2501,20 +2528,16 @@ function renderTotal(){
     `<span class="stat"><b>${(+maxRed.toFixed(1))}</b><span>maxpoäng${nExcl?` (av ${(+J.maxTotal.toFixed(1))})`:""}</span></span>`+
 
     `</div>`;
-  const TYPE={single:["MCQ","single"], multi:["Flerval","multi"], text:["Fritext","text"]};
-  // Sök används inte i totalrapporten (rutan är dold där) – filtrering sker enbart på tema/taggar.
-  let metaRows = J.qMeta.map((m,i)=>({m,i}));
-  if(typeof lookupTagVals==="function") metaRows = metaRows.filter(({m})=> tagPass(lookupTagVals(m.title, m.num)));
-  const rows = metaRows.map(({m,i})=>{
-    const a=J.agg[m.num], r=state.disc?state.disc[m.num]:null;
-    const scores=J.cohortScores.map(row=>row[i]);
+  const TYPE={single:["MCQ","single"], multi:["Flersvar","multi"], text:["Essä","text"]};
+  // Sök används inte i totalrapporten (rutan är dold där) – filtrering sker på filterraden.
+  const allRows = appTotalRows();
+  const metaRows = allRows.filter(x=>tagPass(x.tagVals) && facetPass(x.f));
+  const rows = metaRows.map(({m,i,a,r,scores,info,pct})=>{
     const [tlabel,tcls]=TYPE[m.type]||TYPE.text;
     // svårighet
     let diff;
-    if(m.type==="single"){ const pc=a&&a.n?a.ncorr/a.n*100:0; diff=`${pc.toFixed(0)} % rätt`; }
-    else { const mean=n?scores.reduce((s,v)=>s+v,0)/n:0; const pct=m.max?mean/m.max*100:0; diff=`${(+mean.toFixed(2))} / ${m.max} <span style="color:var(--muted)">(${pct.toFixed(0)} %)</span>`; }
-    // diskriminering: dikotom (MCQ) via rpbInfo, polytom via polyInfo
-    const info = m.type==="single" ? rpbInfo({n:a?a.n:0, ncorr:a?a.ncorr:0, rpb:r}) : polyInfo(scores, r, m.max);
+    if(m.type==="single"){ diff=`${pct.toFixed(0)} % rätt`; }
+    else { const mean=n?scores.reduce((s,v)=>s+v,0)/n:0; diff=`${(+mean.toFixed(2))} / ${m.max} <span style="color:var(--muted)">(${pct.toFixed(0)} %)</span>`; }
     const code = esc(m.title || String(m.num));
     const ex = isExcluded(m.num);
     const exTag = ex ? ` <span class="trexcltag" title="${esc(exclReason(m.num)||"Exkluderad ur tentan")}">exkl.</span>` : "";
@@ -2533,8 +2556,8 @@ function renderTotal(){
         : `<button type="button" class="card-exclude tr-exclude" data-qnum="${esc(String(m.num))}">Exkludera</button>`) + `</td>`+
     `</tr>`;
   }).join("");
-  const filtered = metaRows.length!==J.qMeta.length;
-  const countLine = filtered ? `<div class="trcount">Visar ${metaRows.length} av ${J.qMeta.length} frågor</div>` : "";
+  const filtered = metaRows.length!==allRows.length;
+  const countLine = filtered ? `<div class="trcount">Visar ${metaRows.length} av ${allRows.length} frågor</div>` : "";
   const tableHtml = metaRows.length
     ? `<table class="totaltable"><thead><tr>`+
       `<th class="num">#</th><th>Fråga</th><th>Typ</th><th class="num">Max</th><th>Svårighet</th>`+
@@ -2607,7 +2630,7 @@ function jumpToCard(seq){
 }
 function buildActionList(){
   const el=$("#actionlist");
-  const items=state.vm.view.filter(v=>v.advice.l1.length && !isExcluded(v.seq))
+  const items=currentView({allModes:true, ignorePattern:true}).filter(v=>v.advice && v.advice.l1.length && !isExcluded(v.seq))   // följer filterraden
     .sort((a,b)=>cmpArr(codeSortKey(a.code),codeSortKey(b.code)));
   if(!items.length){
     el.innerHTML = state.smallN
@@ -2628,7 +2651,7 @@ function buildActionList(){
 function buildGoodList(){
   const el=$("#goodlist"); if(!el) return;
   const tema = state.mode==="ask" || state.mode==="ask-explain";
-  const items=state.vm.view.filter(v=>(tema ? isForebild(v) : isExemplary(v)) && !isExcluded(v.seq)).sort((a,b)=>b.rpb-a.rpb);
+  const items=currentView({allModes:true, ignorePattern:true}).filter(v=>(tema ? isForebild(v) : isExemplary(v)) && !isExcluded(v.seq)).sort((a,b)=>b.rpb-a.rpb);   // följer filterraden
   if(!items.length){ el.innerHTML=""; return; }
   el.innerHTML = `<div class="goodbox"><div class="goodhead">${items.length} fråga(or) ${tema ? "som fungerar som förebild" : "som skiljer starka från svaga väl"}</div>`
     + (tema
@@ -2643,50 +2666,144 @@ function buildGoodList(){
 function stat(b,s,t,cls){ return `<div class="stat${cls?` ${cls}`:""}"${t?` title="${esc(t)}"`:""}><b class="nums">${esc(b)}</b><span>${esc(s)}</span></div>`; }
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
-/* Delat filter (sök + taggar) som gäller aktiv vy. Persisterar mellan vy 1↔2 och Totalrapporten.
-   Fungerar både i appen (activeView/renderTotal) och i den exporterade filen (bara MCQ-layout). */
-function activeTagItems(){
-  if(typeof activeView==="function" && activeView().layout==="total" && state.json && state.json.qMeta && typeof lookupTagVals==="function")
-    return state.json.qMeta.map(m=>({tagVals: lookupTagVals(m.title, m.num)}));
-  return state.vm ? state.vm.view : [];
+/* ---------- Filterraden ----------
+   Grupper: tema (taggfilens kolumner), frågetyp, svårighet, diskriminering och "att titta på". Samma rad i alla
+   flikar och i temarapporten, och valen följer med mellan flikarna. Inom en grupp breddar flera val urvalet (eller),
+   mellan grupper smalnar de av (och). Varje knapp räknar frågorna givet de ANDRA gruppernas val, så att siffran
+   säger vad ett klick ger. Gränserna för Lätt, Svår och God är de under Inställningar. */
+const FACETS = [
+  {key:"typ",   label:"Frågetyp",       values:[["single","MCQ"],["text","Essä"],["multi","Flersvar"]]},
+  {key:"svar",  label:"Svårighet",      values:[["latt","Lätt"],["lagom","Lagom"],["svar","Svår"]]},
+  {key:"disk",  label:"Diskriminering", values:[["neg","Negativ"],["lag","Låg"],["acc","Acceptabel"],["god","God"],["mgod","Mycket god"],["na","Ej mätbar"]]},
+  {key:"titta", label:"Att titta på",   values:[["fraga",""],["forebild","Förebild"],["excl","Exkluderad"]]}
+];
+function isTemaPage(){ return typeof EMBED!=="undefined" && !!EMBED && EMBED.kind==="tema"; }
+function facetLabel(key, val){
+  if(key==="titta" && val==="fraga") return isTemaPage() ? "Fråga på kortet" : "Att se över";
+  const g=FACETS.find(x=>x.key===key), v=g && g.values.find(x=>x[0]===val);
+  return v ? v[1] : val;
 }
-function tagPass(tagVals){
-  const cols=Object.keys(state.activeTags);
+function facetTitle(key, val){
+  if(key==="svar") return val==="latt" ? `Minst ${thFmt("easy")} % rätt (essä: medel av max)` : val==="svar" ? `Under ${thFmt("hard")} % rätt (essä: medel av max)` : "Mellan gränserna för Svår och Lätt";
+  if(key==="disk" && val==="god") return `Från ${thFmt("goodDisc")} till 0,30`;
+  return "";
+}
+/* Diskrimineringsgrupp ur den etikett som visas (rpbInfo/polyInfo, efter thInfo), så att filtret och kortet säger samma sak. */
+function discBucket(info, r){
+  const L=String((info && info.label) || "");
+  if((info && info.cls==="rpb-na") || L==="för få svar" || L==="ej mätbar" || L==="ingen spridning" || r===null || r===undefined) return "na";
+  if(L==="negativ" || (L==="dubbelkolla facit" && r<0)) return "neg";
+  if(L.startsWith("låg") || L==="dubbelkolla facit") return "lag";
+  if(L==="acceptabel") return "acc";
+  if(L==="god") return "god";
+  if(L==="mycket god") return "mgod";
+  return r<0.10 ? "lag" : r<state.th.goodDisc ? "acc" : r<0.30 ? "god" : "mgod";     // "osäker": efter värdet
+}
+function mkFacets(o){
+  const pct=o.pct||0;
+  const titta=[];
+  if(o.fraga) titta.push("fraga");
+  if(o.forebild) titta.push("forebild");
+  if(o.excluded) titta.push("excl");
+  return { typ:o.typ, svar: pct>=state.th.easy ? "latt" : pct<state.th.hard ? "svar" : "lagom",
+           disk: discBucket(o.info, o.r), titta };
+}
+function facetsOfMcq(v){
+  const tema=isTemaPage(), ex=isExcluded(v.seq);
+  return mkFacets({typ:"single", pct:v.pcorr, info:rpbInfo(v), r:v.rpb, excluded:ex,
+    fraga: !ex && (tema ? cardQuestions(v).length>0 : !!((v.advice||advice(v)).l1.length)),
+    forebild: tema && isForebild(v)});
+}
+function facetsOfEssay(e){
+  return mkFacets({typ:"text", pct:e.pct, info:thInfo(e.info,e.r), r:e.r, excluded:e.excluded, fraga:!e.excluded && essayQuestions(e).length>0});
+}
+function facetsOfTotalRow(r){
+  return mkFacets({typ:r.typeCls, pct: r.isSingle ? r.diffPc : r.diffPct, info:thInfo(r.info,r.r), r:r.r, excluded:r.excluded});
+}
+function facetPass(f, skip){
+  return Object.keys(state.facets||{}).every(k=>{
+    if(k===skip) return true;
+    const sel=state.facets[k]; if(!sel || !sel.size) return true;
+    const val=f[k]; return Array.isArray(val) ? val.some(x=>sel.has(x)) : sel.has(val);
+  });
+}
+function tagPass(tagVals, skipCol){
+  const cols=Object.keys(state.activeTags).filter(c=>c!==skipCol);
   if(!cols.length || !state.tags) return true;
-  return cols.every(col=>{ const ci=state.tags.tagCols.findIndex(c=>c.name===col); return ci>=0 && state.activeTags[col].has(tagVals[ci]); });
+  return cols.every(col=>{ const ci=state.tags.tagCols.findIndex(c=>c.name===col); return ci>=0 && state.activeTags[col].has((tagVals||[])[ci]); });
 }
-function filtersActive(){ const s=$("#search"); return (!!s && s.value.trim()!=="") || Object.keys(state.activeTags).length>0 || !!state.patternKey; }
+function anyFacet(){ return Object.values(state.facets||{}).some(s=>s && s.size); }
+function filtersActive(){ const s=$("#search"); return (!!s && s.value.trim()!=="") || Object.keys(state.activeTags).length>0 || anyFacet() || !!state.patternKey; }
 function updateClearBtn(){ const b=$("#clearfilter"); if(b) b.classList.toggle("hidden", !filtersActive()); }
 function applyFilters(){
   buildTagbar(); updateClearBtn();
+  if(typeof EMBED!=="undefined" && EMBED){ const sp=EMBED.views[state.viewIdx];
+    if(sp && sp.layout==="total"){ xExportTotal(); return; } }
   const isTotal = (typeof activeView==="function") && activeView().layout==="total";
   if(isTotal){ if(typeof renderTotal==="function") renderTotal(); }
-  else if(state.vm) drawCards();
+  else if(state.vm){ if(!isEssayView() && typeof refreshLists==="function") refreshLists(); drawCards(); }
 }
-function clearFilters(){ const s=$("#search"); if(s) s.value=""; state.activeTags={}; state.patternKey=null; state.patternSeqs=null; applyFilters(); }
-
+function clearFilters(){ const s=$("#search"); if(s) s.value=""; state.activeTags={}; state.facets={}; state.patternKey=null; state.patternSeqs=null; applyFilters(); }
+function toggleFacet(key, val){
+  const sel = state.facets[key] || (state.facets[key]=new Set());
+  if(sel.has(val)) sel.delete(val); else sel.add(val);
+  if(!sel.size) delete state.facets[key];
+  applyFilters();
+}
+function toggleTag(col, val){
+  const sel = state.activeTags[col] || (state.activeTags[col]=new Set());
+  if(sel.has(val)) sel.delete(val); else sel.add(val);
+  if(!sel.size) delete state.activeTags[col];
+  applyFilters();
+}
+/* Frågorna i den flik som visas, efter sök och mönsterfilter men före tema- och gruppfilter: underlaget för räkningen. */
+function filterBase(){
+  const emb=(typeof EMBED!=="undefined" && EMBED) ? EMBED.views[state.viewIdx] : null;
+  if(emb && emb.layout==="essay") return essayVisible({noFacets:true}).map(e=>({tagVals:e.tagVals||[], f:facetsOfEssay(e)}));
+  if(emb && emb.layout==="total") return totalVisibleRows({noFacets:true}).map(r=>({tagVals:r.tagVals||[], f:facetsOfTotalRow(r)}));
+  if(!emb && typeof activeView==="function" && activeView().layout==="total") return appTotalRows().map(x=>({tagVals:x.tagVals, f:x.f}));
+  if(!state.vm || !state.vm.view) return [];
+  return currentView({noFacets:true}).map(v=>({tagVals:v.tagVals||[], f:facetsOfMcq(v)}));
+}
+/* Grupperna med räknade knappar. Tema och "att titta på" visas så fort något finns; de andra grupperna bara när
+   de har minst två värden eller ett val. Ett värde som inte finns i fliken visas bara om det är valt. */
+function filterGroups(){
+  const base=filterBase(), out=[];
+  if(state.tags) state.tags.tagCols.forEach((col,ci)=>{
+    const all=new Map(), hit=new Map();
+    base.forEach(x=>{ const v=x.tagVals[ci]; if(!v) return; all.set(v,(all.get(v)||0)+1);
+      if(tagPass(x.tagVals,col.name) && facetPass(x.f)) hit.set(v,(hit.get(v)||0)+1); });
+    const sel=state.activeTags[col.name]||new Set();
+    const vals=[...new Set([...all.keys(),...sel])].sort((a,b)=>a.localeCompare(b,'sv'));
+    if(vals.length) out.push({key:"tag:"+col.name, label:col.name, tag:col.name,
+      values:vals.map(v=>({val:v, label:v, n:hit.get(v)||0, on:sel.has(v)}))});
+  });
+  for(const g of FACETS){
+    const all=new Map(), hit=new Map();
+    base.forEach(x=>{ const vs=[].concat(x.f[g.key]);
+      vs.forEach(v=>{ if(v==null) return; all.set(v,(all.get(v)||0)+1); });
+      if(tagPass(x.tagVals) && facetPass(x.f,g.key)) vs.forEach(v=>{ if(v!=null) hit.set(v,(hit.get(v)||0)+1); }); });
+    const sel=state.facets[g.key]||new Set();
+    const vals=g.values.map(x=>x[0]).filter(v=>all.has(v) || sel.has(v));
+    // "Att titta på" är ja/nej per värde och visas så fort något finns; de andra behöver minst två värden för att skilja.
+    if(g.key==="titta" ? !vals.length : (vals.length<2 && !sel.size)) continue;
+    out.push({key:g.key, label:g.label, values:vals.map(v=>({val:v, label:facetLabel(g.key,v), title:facetTitle(g.key,v), n:hit.get(v)||0, on:sel.has(v)}))});
+  }
+  return out;
+}
 function buildTagbar(){
   const bar=$("#tagbar"); if(!bar) return;
-  if(!state.tags || !state.tags.tagCols.length){ bar.innerHTML=""; return; }
-  let html="";
-  const items=activeTagItems();
-  state.tags.tagCols.forEach((col,ci)=>{
-    const counts=new Map();
-    items.forEach(v=>{ const val=v.tagVals[ci]; if(val) counts.set(val,(counts.get(val)||0)+1); });
-    if(!counts.size) return;
-    const vals=[...counts.keys()].sort((a,b)=>a.localeCompare(b,'sv'));
-    const sel=state.activeTags[col.name]||new Set();
-    html += `<div class="tagrow"><span class="tagrow-label">${esc(col.name)}</span>`
-      + vals.map(t=>`<span class="chip ${sel.has(t)?'on':''}" data-col="${esc(col.name)}" data-tag="${esc(t)}">${esc(t)}<span class="c">${counts.get(t)}</span></span>`).join("")
-      + `</div>`;
-  });
+  const groups=filterGroups();
+  let html = groups.map(g=>`<div class="tagrow"><span class="tagrow-label">${esc(g.label)}</span>`
+    + g.values.map(v=>`<span class="chip ${v.on?'on':''}${v.n?'':' zero'}" ${g.tag!==undefined?`data-col="${esc(g.tag)}"`:`data-facet="${esc(g.key)}"`} data-val="${esc(v.val)}"${v.title?` title="${esc(v.title)}"`:""}>${esc(v.label)}<span class="c">${v.n}</span></span>`).join("")
+    + `</div>`).join("");
+  const chosen=[];
+  Object.keys(state.activeTags).forEach(col=>[...state.activeTags[col]].forEach(v=>chosen.push(`<span class="fchip" data-col="${esc(col)}" data-val="${esc(v)}">${esc(v)} ✕</span>`)));
+  FACETS.forEach(g=>[...(state.facets[g.key]||[])].forEach(v=>chosen.push(`<span class="fchip" data-facet="${esc(g.key)}" data-val="${esc(v)}">${esc(facetLabel(g.key,v))} ✕</span>`)));
+  if(chosen.length) html += `<div class="filtsel"><span class="tagrow-label">Valda filter</span>${chosen.join("")}</div>`;
   bar.innerHTML=html;
-  bar.querySelectorAll(".chip").forEach(ch=>ch.addEventListener("click",()=>{
-    const col=ch.dataset.col, t=ch.dataset.tag;
-    const sel = state.activeTags[col] || (state.activeTags[col]=new Set());
-    if(sel.has(t)) sel.delete(t); else sel.add(t);
-    if(sel.size===0) delete state.activeTags[col];
-    applyFilters();
+  bar.querySelectorAll(".chip,.fchip").forEach(ch=>ch.addEventListener("click",()=>{
+    if(ch.dataset.facet) toggleFacet(ch.dataset.facet, ch.dataset.val); else toggleTag(ch.dataset.col, ch.dataset.val);
   }));
 }
 
@@ -2696,7 +2813,7 @@ function currentView(opts){
   const q=key($("#search").value), sort=$("#sort").value;
   if(q) v=v.filter(x=> key(x.stem).includes(q) || x.opts.some(o=>key(o).includes(q)) || x.code.toLowerCase().includes(q));
   if(!opts.allModes && state.mode==="action" && !q) v=v.filter(x=>x.advice && x.advice.l1.length && !isExcluded(x.seq));
-  v=v.filter(x=>tagPass(x.tagVals));
+  if(!opts.noFacets) v=v.filter(x=>tagPass(x.tagVals) && facetPass(facetsOfMcq(x)));
   if(state.patternSeqs && !opts.ignorePattern) v=v.filter(x=>state.patternSeqs.has(String(x.seq)));   // "Visa frågorna" i mönstersammanfattningen
   if(sort==="pc-asc") v.sort((a,b)=>a.pcorr-b.pcorr || cmpArr(codeSortKey(a.code),codeSortKey(b.code)));
   else if(sort==="pc-desc") v.sort((a,b)=>b.pcorr-a.pcorr || cmpArr(codeSortKey(a.code),codeSortKey(b.code)));
@@ -2933,7 +3050,7 @@ function exportXlsx(opts){
   // Diskriminering mot HELA tentans poäng (reducerad om frågor exkluderats) – item–total / punkt-biseriell.
   const disc = computeDiscrimination(J, {criterion:"whole", excluded:state.excluded});
   const tagCols = state.tags ? state.tags.tagCols.map(c=>c.name) : [];
-  const TYPE={single:"MCQ", multi:"Flerval", text:"Fritext"};
+  const TYPE={single:"MCQ", multi:"Flersvar", text:"Essä"};
 
   // Standard: hela tentan. Anropas exportXlsx({tagFiltered:true}) (Totalrapportens Excel-knapp)
   // begränsas arbetsboken till de frågor som matchar aktivt tema-/taggfilter – samma urval som
@@ -3054,7 +3171,7 @@ function viewerInit(){
 /* ---------- Exporterad-fil-runtime (vyväxling) ----------
    Dessa körs ENDAST i den exporterade HTML:en (där EMBED finns). Wrappern definierar
    activeView() och renderTotal() så att de bakade hjälparna (availableModeIds, applyFilters,
-   activeTagItems …) hittar rätt vy. Varje vys data är förberäknad och inbakad – ingen omräkning,
+   filterBase …) hittar rätt vy. Varje vys data är förberäknad och inbakad – ingen omräkning,
    inga per-kandidat-data. */
 function xExportTabs(){
   const host=$("#viewtabs"); if(!host) return;
@@ -3099,7 +3216,7 @@ function xExportTotal(){
       +`<td><span class="trbadge ${r.info.cls}" title="${esc(r.info.tip)}">${esc(r.info.value)}</span> <span style="font-size:11.5px;color:var(--muted)">${esc(r.info.label||"")}</span></td>`
       +`</tr>`;
   }).join("");
-  const filtered=rows.length!==state.totalRows.length;
+  const filtered=rows.length!==state.totalRows.length;   // rows = totalVisibleRows(): sök, tema och filterraden
   const countLine=filtered?`<div class="trcount">Visar ${rows.length} av ${state.totalRows.length} frågor</div>`:"";
   const table = rows.length
     ? `<table class="totaltable"><thead><tr><th class="num">#</th><th>Fråga</th><th>Typ</th><th class="num">Max</th><th>Svårighet</th><th>Diskriminering (item–total mot ${critLabel()})</th></tr></thead><tbody>${body}</tbody></table>`
@@ -3131,7 +3248,7 @@ function xExportRender(){
     ["#summary","#nnote","#passmetric","#patterns","#actionlist","#goodlist","#count","#cards","#freetext"].forEach(s=>{const e=$(s);if(e)e.innerHTML="";});
     state.patternKey=null; state.patternSeqs=null;
     state.totalRows = spec.total.rows;
-    state.vm = {view: state.totalRows};          // så att buildTagbar/activeTagItems använder raderna
+    state.vm = {view: state.totalRows};
     buildTagbar(); updateClearBtn(); xExportTotal();
     return;
   }
@@ -3311,6 +3428,15 @@ distraktor som fler valde än rätt svar.</p>
 studentgruppen. Den säger inget om huruvida en fråga ligger på rätt nivå i förhållande till
 kursplanen.</p>
 </div></details>
+<details class="helpsec"><summary>Filtrera</summary><div class="body">
+<p>Filterraden har en rad knappar per grupp: <b>tema</b> (ur taggfilen), <b>frågetyp</b>,
+<b>svårighet</b>, <b>diskriminering</b> och <b>att titta på</b>. Flera val i samma grupp breddar
+urvalet, till exempel Lätt eller Svår. Val i olika grupper smalnar av det, till exempel ett tema
+och Svår. Siffran på en knapp säger hur många frågor ett klick ger, med de andra valen som de är.</p>
+<p>Valen står under knapparna och tas bort ett i taget med ✕, eller alla med <b>Rensa filter</b>.
+De följer med när du byter flik. Gränserna för Lätt, Svår och God diskriminering är de under
+Inställningar.</p>
+</div></details>
 <details class="helpsec"><summary>Mönster i frågorna</summary><div class="body">
 <p>Överst står det som gäller flera frågor på samma sätt: hur många som var mycket lätta och i hur
 många ett alternativ valdes av nästan ingen. Varje rad står en gång,
@@ -3376,7 +3502,7 @@ function temaEmbed(){
   const totalPayload = () => {
     const disc=computeDiscrimination(J,{criterion:'whole',excluded:state.excluded});
     const n=J.candCount;
-    const TYPE={single:["MCQ","single"],multi:["Flerval","multi"],text:["Fritext","text"]};
+    const TYPE={single:["MCQ","single"],multi:["Flersvar","multi"],text:["Essä","text"]};
     const rows=J.qMeta.map((m,i)=>{
       const a=J.agg[m.num], r=disc[m.num];
       const scores=J.cohortScores.map(row=>row[i]);
@@ -3474,11 +3600,12 @@ function subsetEmbed(embed, sel, th){
   return out;
 }
 /* Urvalet i temarapporten (körs bara där). state.sel = Set med frågenummer som strängar, gemensamt för vyerna. */
-function totalVisibleRows(){
+function totalVisibleRows(opts){
+  opts=opts||{};
   const q=key($("#search").value);
   let rows=state.totalRows.slice();
   if(q) rows=rows.filter(r=> key(String(r.num)).includes(q)||key(r.title||"").includes(q)||key(r.typeLabel).includes(q));
-  return rows.filter(r=>tagPass(r.tagVals));
+  return opts.noFacets ? rows : rows.filter(r=>tagPass(r.tagVals) && facetPass(facetsOfTotalRow(r)));
 }
 function selVisible(){
   const lay=EMBED.views[state.viewIdx].layout;
@@ -3518,7 +3645,7 @@ function essayVisible(opts){
   const q=key($("#search").value);
   let v=EMBED.views[state.viewIdx].essays.slice();
   if(q) v=v.filter(e=> key(String(e.num)).includes(q) || key(e.title||"").includes(q) || key(e.stem||"").includes(q));
-  v=v.filter(e=>tagPass(e.tagVals));
+  if(!opts.noFacets) v=v.filter(e=>tagPass(e.tagVals) && facetPass(facetsOfEssay(e)));
   if(state.patternSeqs && !opts.ignorePattern) v=v.filter(e=>state.patternSeqs.has(String(e.seq)));
   return v;
 }
@@ -3569,7 +3696,7 @@ function activePatternRows(){
    rapporten och när rapporten själv bygger en urvalssida – därför måste de innehålla sig själva. */
 function temaFns(){
   return [esc,norm,key,stat,codeSortKey,cmpArr,rpbSortVal,distColor,critLabel,modeHint,availableModeIds,refreshLists,
-             activeTagItems,tagPass,filtersActive,updateClearBtn,applyFilters,clearFilters,rpbInfo,isExcluded,exclReason,
+             isTemaPage,facetLabel,facetTitle,discBucket,mkFacets,facetsOfMcq,facetsOfEssay,facetsOfTotalRow,facetPass,anyFacet,toggleFacet,toggleTag,filterBase,filterGroups,tagPass,filtersActive,updateClearBtn,applyFilters,clearFilters,rpbInfo,isExcluded,exclReason,
              cueWords,cueHas,cueScan,advice,askQuestions,isExemplary,exemplaryReason,unmapReason,card,
              currentView,drawCards,jumpToCard,passMetric,renderPassMetric,freeTextDist,renderFreeText,buildActionList,buildGoodList,buildTagbar,
              setThreshold,thresholdsCustom,resetThresholds,thFmt,thresholdsText,settingsHtml,renderThCustom,wireSettings,thInfo,neutralInfo,
@@ -3584,7 +3711,7 @@ function temaConsts(){
   return `const MIN_N_DIST=${MIN_N_DIST};const TH_DEFAULT=${JSON.stringify(TH_DEFAULT)};const TH_RANGE=${JSON.stringify(TH_RANGE)};const TH_LABEL=${JSON.stringify(TH_LABEL)};const PSY=${JSON.stringify(PSY)};`
     + `const TW=${JSON.stringify(TW)};const CUE_ABS=${JSON.stringify(CUE_ABS)};const CUE_HEDGE=${JSON.stringify(CUE_HEDGE)};`
     + `const FORM_META=${JSON.stringify(FORM_META)};const FORM_REGLER=${JSON.stringify(FORM_REGLER)};const FORM_CUE=${JSON.stringify(FORM_CUE)};const FORM_EXPLAINS=${JSON.stringify(FORM_EXPLAINS)};`
-    + `const ESSAY_TEXT=${JSON.stringify(ESSAY_TEXT)};const ASK_SUMMARY=${JSON.stringify(ASK_SUMMARY)};const SUM_TEXT=${JSON.stringify(SUM_TEXT)};const SUM_LEAD=${JSON.stringify(SUM_LEAD)};const ASK_ORDER=${JSON.stringify(ASK_ORDER)};const ASK_TEXT=${JSON.stringify(ASK_TEXT)};const ASK_PSY=${JSON.stringify(ASK_PSY)};`
+    + `const FACETS=${JSON.stringify(FACETS)};const ESSAY_TEXT=${JSON.stringify(ESSAY_TEXT)};const ASK_SUMMARY=${JSON.stringify(ASK_SUMMARY)};const SUM_TEXT=${JSON.stringify(SUM_TEXT)};const SUM_LEAD=${JSON.stringify(SUM_LEAD)};const ASK_ORDER=${JSON.stringify(ASK_ORDER)};const ASK_TEXT=${JSON.stringify(ASK_TEXT)};const ASK_PSY=${JSON.stringify(ASK_PSY)};`
     + `const HELP_HTML=${JSON.stringify(HELP_TEMA_HTML)};const HELP_TEMA_HTML=HELP_HTML;`;
 }
 /* Bygger hela den fristående temarapporten som en HTML-sträng. Använder bara embed, funktionslistan
@@ -3594,7 +3721,7 @@ function buildTemaReport(EMBED){
   const FNS=temaFns(), consts=temaConsts();
   const wrapper = `const EMBED=${JSON.stringify(EMBED)};`
     + `const $=s=>document.querySelector(s);`
-    + `const state={vm:{view:[]},json:{candCount:EMBED.candCount},smallN:EMBED.smallN,tags:EMBED.tags,activeTags:{},`
+    + `const state={vm:{view:[]},json:{candCount:EMBED.candCount},smallN:EMBED.smallN,tags:EMBED.tags,activeTags:{},facets:{},`
     + `mode:EMBED.mode,viewIdx:EMBED.viewIdx,totalRows:[],passSnapshot:EMBED.passSnapshot,freeDist:EMBED.freeDist,excluded:new Map(EMBED.excluded||[]),th:Object.assign({},TH_DEFAULT,EMBED.th||{}),sel:new Set()};`
     + `const activeView=()=>EMBED.views[state.viewIdx];`
     + `const renderTotal=()=>xExportTotal();`

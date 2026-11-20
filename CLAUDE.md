@@ -102,6 +102,11 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
   `pdfMcqs.essays` och i paketet som `pdf.essays`.
 - **Förebilder kräver en ren formkontroll** (inga fynd utöver lathundens tips). Håll aldrig fram
   en fråga som förebild utan att den har gått igenom kontrollen.
+- **Filterraden** (`FACETS`, `filterGroups`, `buildTagbar`) är en och samma i alla flikar och i
+  temarapporten. Varje fliks synlighetsfunktion (`currentView`, `essayVisible`, `totalVisibleRows`,
+  `appTotalRows` i `renderTotal`) filtrerar med `tagPass` + `facetPass`; `{noFacets:true}` ger
+  underlaget för räkningen. Diskrimineringsgruppen tas ur den etikett som visas (`discBucket`),
+  så att filter och kort aldrig säger olika saker.
 - **Sammanfattning före kort.** En regel vars budskap är detsamma för varje fråga den träffar
   (mycket lätt, alternativ som nästan ingen valde) hör hemma i
   "Mönster i frågorna" (`patternSummary`, `ASK_SUMMARY`), inte på korten. Korten
