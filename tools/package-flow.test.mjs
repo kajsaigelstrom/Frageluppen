@@ -49,5 +49,5 @@ test("kvittot räknar kandidater över flera filer och visar varning", () => {
   assert.equal(k0.mcqPdf, null); assert.equal(k0.hasTags, false); assert.equal(k0.warning, null);
 });
 test("ett paket kan inte förberedas en gång till", () => {
-  assert.throws(() => ev("prepReceipt({jsonObjs:[pk], pdfMcqs:null, tagRows:null})"), /redan ett tentapaket/);
+  assert.throws(() => ev("prepReceipt({jsonObjs:[pk], pdfMcqs:null, tagRows:null})"), /redan en fil till examinatorn/);
 });

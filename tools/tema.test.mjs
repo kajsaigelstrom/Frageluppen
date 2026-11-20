@@ -73,7 +73,7 @@ test("den exporterade sidan går att köra och ritar kort utan åtgärder", () =
   assert.ok(cards.includes("Att fråga sig"));
   assert.doesNotMatch(cards, ACTION_WORDS);
   assert.doesNotMatch(page.el("#summary").innerHTML, /att åtgärda|tips|automatiska flaggor/);
-  assert.ok(page.el("#summary").innerHTML.includes("kandidater"));
+  assert.ok(page.el("#summary").innerHTML.includes("studenter"));
   const tabs = page.el("#viewtabs").innerHTML;
   assert.ok(!tabs.includes("reptab") && tabs.includes("Välj frågetyp i filtret"));
   assert.ok(!tabs.includes("Preliminär"));

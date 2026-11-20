@@ -18,6 +18,17 @@ inte dokumenterad här.
   följer resten av tentan, frågan "Stämmer facit och poängregeln?" (för essäfrågor gäller
   bedömningsmallen). Mönsterraderna säger "MCQ-frågor" och "essäfrågor" så att de inte blandas
   ihop. Excel och CSV ur temarapporten har en rad per synlig fråga med kolumnen Typ.
+- **Textgenomgång ur tre läsares perspektiv** (kurssamordnaren, examinatorn före och efter
+  rättning, temagruppens representant). Samma sak heter nu samma sak: "att se över" (inte "att
+  åtgärda"), "exkludera" (inte "utesluta"), "facit" (inte "nyckel"), "studenter" (inte
+  "kandidater"), "poängen på flervalsdelen" (inte "MCQ-delsumman"), "essä" och "flersvar" (inte
+  "fritext" och "flerval"). Kurssamordnaren får veta att filen görs två gånger med nya filer från
+  Inspera och vad PDF och taggfil ger examinatorn, och ser inte längre Inställningar. Examinatorn
+  uppmanas inte längre att ladda upp en PDF som hen inte har, och PDF (examinatorns) beskrivs
+  överallt som eget arbetsunderlag. Temarapportens hjälp förklarar distraktor, starka och svaga
+  studenter och "Fråga på kortet", nämner inte taggfil eller godkäntandel, och säger att
+  rapporten innehåller frågetexterna och rätt svar. Sidhuvudet säger "frågeanalys" i stället för
+  "MCQ-analys". Kortens utfall är oförändrat (kontrollerat mot sparat utgångsläge).
 - **Temarapport ersätter den interaktiva HTML-exporten.** Rapporten till temagrupperna
   innehåller bara frågorna efter rättning och ingen triage:
   inga åtgärdsrutor, ingen åtgärdslista och inga uppmaningar i etiketter eller verktygstips.
@@ -48,7 +59,7 @@ inte dokumenterad här.
 - **Examinatorns flöde i två steg.** Under fliken Examinator finns en enda filruta, där filen
   från kurssamordnaren väljs (den går också att öppna med ett dubbelklick). Sedan väljer
   examinatorn mellan **Hitta problemfrågor före betygssättning** (en egen vy med bara
-  flervalsfrågorna att se över, exkludering på kortet och PDF till rättarna) och **Se hela
+  flervalsfrågorna att se över, exkludering på kortet och examinatorns egen PDF) och **Se hela
   rapporten** (alla frågor efter rättning, med Temarapport, Översiktstabell och Excel; kräver
   färdig rättning).
   De tre filrutorna för Insperas filer finns bara hos kurssamordnaren.

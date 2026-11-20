@@ -435,15 +435,15 @@
 <div class="wrap">
   <header>
     <div class="titlerow">
-      <h1>Frågeluppen — MCQ-analys för Inspera-tentor</h1>
+      <h1>Frågeluppen — frågeanalys för Inspera-tentor</h1>
       <span class="devpill">Under utveckling</span>
       <button class="helpbtn" id="helpOpen" type="button">? Hjälp</button>
       <button class="linkbtn" id="settings-open" type="button">Inställningar</button>
     </div>
     <div id="settings" class="hidden"></div>
     <div id="th-custom" class="hidden"></div>
-    <p class="subtitle">Visar svarsfördelning per alternativ, andel rätt och diskriminering – hur väl varje fråga skiljer starka från svaga studenter.</p>
-    <p>Kurssamordnaren skapar en fil ur Insperas resultat. Examinatorn väljer filen, hittar problemfrågor före betygssättningen och skapar efter rättningen en rapport till temagrupperna. Allt körs lokalt i din webbläsare; inga data laddas upp.</p>
+    <p class="subtitle">Visar hur tentans frågor fungerade: svarsfördelning, andel rätt och diskriminering, alltså hur väl varje fråga skiljer studenter med höga totalpoäng från studenter med låga.</p>
+    <p>Kurssamordnaren skapar en fil ur Insperas resultat. Examinatorn väljer filen, hittar problemfrågor före betygssättningen och skapar efter rättningen en Temarapport till temagrupperna. Allt körs lokalt i din webbläsare; inga data laddas upp.</p>
     <p class="devnote">Verktyget utvecklas fortfarande och kan innehålla fel – dubbelkolla viktiga slutsatser. Hittar du en bugg eller har förslag, hör av dig till <b>Kajsa Igelström</b>.</p>
   </header>
 
@@ -468,7 +468,7 @@
     <div id="uploadfull">
     <div id="prephead" class="prephead hidden">
       <h2>Förbered tentan</h2>
-      <p>Släpp filerna från Inspera och spara en fil till examinatorn. Fritextsvar, rättarnamn, tider, extratid, betyg och alla id tas bort. Inga resultat visas här.</p>
+      <p>Släpp filerna från Inspera och spara en fil till examinatorn. Studenternas skrivna svar, rättarnamn, tider, extratid, betyg och alla id tas bort, och kandidatnumren ersätts av löpnummer. Inga resultat visas här.</p>
     </div>
     <div id="exambox" class="drop exambox hidden">
       <label>Filen från kurssamordnaren</label>
@@ -498,17 +498,17 @@
       </div>
       <div class="drop" id="d-tags">
         <label>3 · Taggar (Excel) – valfritt</label>
-        <div class="hint">Kolumner: Nummer, Namn, Tema…</div>
+        <div class="hint">En rad per fråga. Kolumnen <b>Nummer</b> eller <b>Namn</b> (frågans kod) pekar ut frågan, och varje övrig kolumn, till exempel <b>Tema</b>, blir ett filter i rapporten.</div>
         <input type="file" id="tags" accept=".xlsx,.xls">
         <div class="got" id="got-tags"></div>
       </div>
     </div>
     <div class="computebar">
       <button id="prep-save" class="btn-primary hidden" type="button" disabled>Spara examinatorns fil</button>
-      <span class="computehint" id="computehint">Ladda upp minst en JSON-fil (PDF är valfri).</span>
+      <span class="computehint" id="computehint"></span>
     </div>
     <div id="prep-receipt" class="hidden"></div>
-    <div id="prep-note" class="hidden">Du sparar <b>en fil som examinatorn öppnar med ett dubbelklick</b>. Skicka den till examinatorn, före rättningen och en gång till efter rättningen. Filen är minimerad, inte anonym. Varje rad är en students poängmönster och kan på en liten omtenta kännas igen av den som vet vilka som skrev. Behandla filen som tentamaterial och dela den bara med examinatorn. Den innehåller också tentans frågor.</div>
+    <div id="prep-note" class="hidden">Du sparar <b>en fil som examinatorn öppnar med ett dubbelklick</b>. Gör det två gånger per tenta: direkt efter tentan, så att examinatorn kan hitta problemfrågor före betygssättningen, och en gång till när allt är rättat, då med nya filer från Inspera. Filen är minimerad, inte anonym. Varje rad är en students poängmönster och kan på en liten omtenta kännas igen av den som vet vilka som skrev. Behandla filen som tentamaterial och dela den bara med examinatorn. Den innehåller också tentans frågor.</div>
     </div>
     <div id="uploadmini" class="uploadmini hidden">
       <span class="minicheck">✓</span>
@@ -525,7 +525,7 @@
     <div class="steptitle">Vad vill du göra?</div>
     <div class="stepgrid">
       <button id="step-triage" class="stepbtn" type="button"><b>Hitta problemfrågor före betygssättning</b><span>Flervalsfrågor som kan behöva rättas i facit eller exkluderas. Går att göra innan essäfrågorna är rättade.</span></button>
-      <button id="step-report" class="stepbtn" type="button"><b>Se hela rapporten</b><span>Alla frågor efter rättningen, med export till temagrupperna och till Excel.</span></button>
+      <button id="step-report" class="stepbtn" type="button"><b>Se hela rapporten</b><span>Alla frågor efter rättningen: flervalsfrågor, essäfrågor och flersvarsfrågor. Härifrån skapas Temarapporten till temagrupperna, översiktstabellen och exporten till Excel.</span></button>
     </div>
     <div id="step-report-note" class="stepnote"></div>
   </div>
@@ -560,7 +560,7 @@
         <span class="cb-sep"></span>
         <span class="lbl">Exportera</span>
         <button class="expbtn" id="exp-xlsx">Excel</button>
-        <button class="expbtn" id="exp-pdf" title="Innehåller åtgärdsförslag. Examinatorns eget dokument, inte för utskick till lärare.">PDF (examinatorns)</button>
+        <button class="expbtn" id="exp-pdf" title="Flervalsfrågorna som visas, med åtgärdsförslag. Examinatorns eget arbetsunderlag, inte återkoppling till lärare. Till temagrupperna går Temarapporten.">PDF (examinatorns)</button>
         <button class="expbtn" id="exp-html" title="Rapport till temagrupperna: frågor i stället för åtgärder, bara sammanräknade resultat.">Temarapport</button>
         <button class="expbtn" id="exp-overview" title="Tabell med en rad per fråga, alla frågetyper, att skriva ut eller skicka vidare. Följer filtret.">Översiktstabell</button>
       </div>
@@ -663,7 +663,7 @@ function modeHint(m){ return m==="ask"
   : m==="ask-explain"
   ? "Som Rapport, och dessutom en förklaring av måttet bakom varje fråga."
   : m==="action"
-  ? "Triage visar bara frågor som kan behöva åtgärd – övriga är dolda. Växla för att se alla."
+  ? "Triage visar bara frågorna att se över. Övriga är dolda. Växla till Alla frågor för att se dem."
   : m==="simple"
   ? "Förenklad vy: bara korten med mätvärden – tolkningar och tips är dolda."
   : "Visar alla frågor med tolkningar och tips."; }
@@ -676,7 +676,7 @@ const VIEWS = [
   { id:"pre-mcq",   label:"Preliminär MCQ",  phase:"Innan rättning", criterion:"mcq",
     layout:"mcq",   needsFullyGraded:false, needsPdf:true,  built:true,  showFreetext:false, showPassMetric:false, showExemplary:false,
     modes:[{id:"edu",label:"Alla frågor"},{id:"action",label:"Triage"}],
-    hint:"Diskriminering (r<sub>pb</sub>) mot MCQ-delsumman – det enda kriterium som finns innan fritext är rättad. För att hitta trasiga frågor att rätta i facit eller exkludera före betygsättning." },
+    hint:"Flervalsfrågor som kan behöva rättas i facit eller exkluderas före betygssättningen. Diskrimineringen (r<sub>pb</sub>) räknas mot poängen på flervalsdelen, eftersom essäfrågorna inte är rättade än." },
   // Hela rapporten är en sida med alla frågetyper (Kajsa 20 nov 2026). Frågetyp väljs i filtret, och översikten
   // i tabellform är en egen export (exportOverview).
   { id:"final",     label:"Hela rapporten",  phase:"Efter rättning", criterion:"whole",
@@ -688,7 +688,7 @@ function activeView(){ return VIEWS.find(v=>v.id===state.view) || VIEWS[0]; }
 function critLabel(){
   const c = (typeof activeView==="function") ? activeView().criterion
           : (typeof EMBED!=="undefined" && EMBED ? EMBED.criterion : "mcq");
-  return c==="whole" ? "hela tentans poäng" : "MCQ-delsumman";
+  return c==="whole" ? "poäng på hela tentan" : "poäng på flervalsdelen";
 }
 /* Polytom item–total-tolkning (fler-svars och fritext): n≥30 + spridning i poängen.
    Minoritetsgrindar gäller bara dikotoma frågor, så de ersätts här av en variansgrind. */
@@ -714,7 +714,7 @@ function polyInfo(scores, r, max, typ){
   else if(r>=0.10){cls="rpb-mid";label="acceptabel";}
   else {cls="rpb-lowconf";label="låg";}
   return {cls,value:`r ${fmt}`,label,
-    tip:`Korrigerad item–total-korrelation mot ${critLabel()} (exkl. frågan) – hur väl poängen på frågan följer studentens prestation i stort. 0,20+ god, 0,30+ mycket god. n=${n}.`};
+    tip:`Korrigerad item–total-korrelation mot studentens ${critLabel()} (exkl. frågan) – hur väl poängen på frågan följer studentens prestation i stort. 0,20+ god, 0,30+ mycket god. n=${n}.`};
 }
 function stepViews(){
   return VIEWS.filter(v=> state.step==="triage" ? v.id==="pre-mcq" : state.step==="report" ? v.id!=="pre-mcq" : true);
@@ -788,24 +788,29 @@ const HELP_HTML = `
 <details class="helpsec" open><summary>Så läser du resultaten</summary><div class="body">
 <p><b>Andel rätt (svårighetsgrad).</b> Hur stor andel som svarade rätt. Lågt = svår fråga,
 högt = lätt. Nästan alla rätt säger lite om hur frågan skiljer studenter åt; nästan ingen
-rätt kan tyda på fel nyckel eller missvisande formulering.</p>
+rätt kan tyda på fel i facit eller missvisande formulering.</p>
 <p><b>Diskriminering (r<sub>pb</sub>).</b> Sambandet mellan att ha rätt på frågan och att ha
-hög total poäng – hur väl frågan skiljer starka från svaga studenter. <b>Positivt och högt</b>
+hög totalpoäng – hur väl frågan skiljer studenter med höga totalpoäng från studenter med låga.
+I verktyget kallas de kort starka och svaga studenter. <b>Positivt och högt</b>
 är bra. <b>Nära noll</b> = skiljer inte åt. <b>Negativt</b> = svaga klarar den oftare än starka,
-ett varningstecken – kontrollera nyckel, formulering och distraktorer. Håll muspekaren över
-värdet för tolkning.</p>
+ett varningstecken – kontrollera facit, formulering och distraktorer. Håll muspekaren över
+värdet för tolkning. Före betygssättningen räknas totalpoängen på flervalsdelen, i hela
+rapporten på hela tentan.</p>
 <p><b>Distraktorfärger.</b> För varje alternativ visas andelen som valde det:
 rätt svar; <b>effektiv</b> distraktor (≥ 5 %, gör sitt jobb); <b>mindre effektiv</b> (&lt; 5 %)
 och <b>ineffektiv</b> (0 %, ingen valde) – knappt lockande, överväg omskrivning;
 <b>vanligare än rätt svar</b> – fler valde en distraktor än det rätta alternativet, undersök
 om det är en vanlig missuppfattning eller ett fel i frågan.</p>
+<p><b>Essä- och flersvarsfrågor.</b> Korten visar medelpoäng av max, hur många som fick varje
+poäng, och hur väl poängen på frågan följer studentens poäng på resten av tentan (r). De finns
+bara i hela rapporten, eftersom de kräver färdig rättning.</p>
 </div></details>
 <details class="helpsec"><summary>Examinatorns två vägar</summary><div class="body">
 <p>När filen från kurssamordnaren är vald finns två vägar.</p>
 <p><b>Hitta problemfrågor före betygssättning</b> – flervalsfrågor som kan behöva rättas i facit
 eller exkluderas, med diskriminering mot flervalsdelens poäng. Går att göra innan essäfrågorna
-är rättade. En fråga exkluderas med knappen på kortet, och allt räknas då om. Listan kan sparas
-som PDF till rättarna.</p>
+är rättade. En fråga exkluderas med knappen på kortet, och allt räknas då om. <b>PDF
+(examinatorns)</b> sparar listan med åtgärdsförslagen som ditt eget arbetsunderlag.</p>
 <p><b>Se hela rapporten</b> – alla frågor efter rättningen på en sida: flervalsfrågor (MCQ),
 essäfrågor och flersvarsfrågor, med diskriminering mot hela tentans poäng. Frågetyp väljs i
 filtret. Essä- och flersvarsfrågor exkluderas med knappen på sitt kort, precis som
@@ -814,8 +819,9 @@ flervalsfrågorna. Härifrån skapas <b>Temarapporten</b> till temagrupperna, <b
 <p>Godkäntstatistik visas inte i vyerna.</p>
 </div></details>
 <details class="helpsec"><summary>Filtrera</summary><div class="body">
-<p>Filterraden har en rad knappar per grupp: <b>tema</b> (ur taggfilen), <b>frågetyp</b>,
-<b>svårighet</b>, <b>diskriminering</b> och <b>att titta på</b>. Flera val i samma grupp breddar
+<p>Filterraden har en rad knappar per grupp: <b>tema</b> (ur taggfilen, om kurssamordnaren lade
+med den), <b>frågetyp</b>, <b>svårighet</b>, <b>diskriminering</b> och <b>att titta på</b> (frågor att
+se över och exkluderade frågor). Flera val i samma grupp breddar
 urvalet, till exempel Lätt eller Svår. Val i olika grupper smalnar av det, till exempel ett tema
 och Svår. Siffran på en knapp säger hur många frågor ett klick ger, med de andra valen som de är.</p>
 <p>Valen står under knapparna och tas bort ett i taget med ✕, eller alla med <b>Rensa filter</b>.
@@ -827,12 +833,14 @@ Inställningar.</p>
 men ingen triage och inga åtgärdsförslag. Överst står det som gäller flera frågor på samma sätt, och korten har en
 ruta bara när något gäller just den frågan. Mottagaren kan bocka för frågor och spara en egen
 sida med bara dem, att ge vidare till den som skrev frågorna. Rapporten innehåller bara
-sammanräknade resultat – aldrig enskilda kandidatsvar.</p>
-<p><b>PDF (examinatorns)</b> innehåller åtgärdsförslagen och är inte tänkt att skickas till lärare.</p>
+sammanräknade resultat, aldrig enskilda studenters svar. Den innehåller också frågetexterna och rätt svar.</p>
+<p>Temarapporten är det som går till temagrupperna. <b>PDF (examinatorns)</b> innehåller
+åtgärdsförslagen och är ditt eget arbetsunderlag, inte återkoppling till lärare. Filen från
+kurssamordnaren skickas aldrig vidare.</p>
 </div></details>
 <details class="helpsec"><summary>Inställningar</summary><div class="body">
 <p>Under <b>Inställningar</b> högst upp kan gränserna för märkningarna Lätt och Svår och för god
-diskriminering ändras. De ändrar bara etiketter och vilka kort som får en kommentar, aldrig
+diskriminering ändras. De ändrar bara märkningar och vilka kort som får en kommentar, aldrig
 mätvärdena. Avviker en gräns från standard står det överst på sidan, och temarapporten bär med
 sig dina gränser.</p>
 </div></details>
@@ -841,10 +849,12 @@ sig dina gränser.</p>
 filpanelen. Sidan öppnar hos kurssamordnaren, eftersom det är hen som hämtar filerna ur Inspera.
 En länk som slutar på <code>#examinator</code> öppnar examinatorns ingång direkt.</p>
 <p><b>Kurssamordnaren</b> släpper resultatfilerna från Inspera, tentans PDF och taggfilen om den
-finns, och sparar <b>en fil till examinatorn</b>. Det görs två gånger per tenta, direkt efter
-tentan och efter rättningen. Fritextsvar, rättarnamn, tider, extratid, betyg och alla id tas
-bort, och kandidatnumren ersätts av löpnummer. Inga resultat visas för kurssamordnaren.</p>
-<p><b>Examinatorn</b> väljer filen under fliken Examinator, eller öppnar den med ett dubbelklick,
+finns, och sparar <b>en fil till examinatorn</b>. Det görs två gånger per tenta: direkt efter
+tentan, och en gång till när allt är rättat, då med nya filer från Inspera. Studenternas skrivna
+svar, rättarnamn, tider, extratid, betyg och alla id tas bort, och kandidatnumren ersätts av
+löpnummer. Inga resultat visas för kurssamordnaren. Utan tentans PDF får examinatorn inga
+frågetexter, och utan taggfil inget filter på tema.</p>
+<p><b>Examinatorn</b> väljer filen i ingången Examinator, eller öppnar den med ett dubbelklick,
 och väljer sedan vad hen vill göra.</p>
 <p>Filen är minimerad, inte anonym: varje rad är en students poängmönster. Behandla den som
 tentamaterial och skicka den inte vidare.</p>
@@ -1132,7 +1142,7 @@ function optPbis(optData, val){
 }
 /* computeDiscrimination(model, {criterion}) → {qn: r}
    Kärnan i flervy-arkitekturen: statistiken är frikopplad från kriteriet.
-   criterion:'mcq'   → varje MCQ:s 0/1-poäng mot MCQ-delsumman (korrigerad). Allt som finns
+   criterion:'mcq'   → varje MCQ:s 0/1-poäng mot flervalsdelens summa (korrigerad). Allt som finns
                        FÖRE rättning. Identisk med tidigare inline-beräkning (verifierad).
    criterion:'whole' → varje frågas poäng (MCQ 0/1, fritext 0..max) mot hela tentans poäng
                        (korrigerad item-rest). Kräver färdigrättad tenta. Vy 2 + 3.
@@ -1166,9 +1176,9 @@ function computeDiscrimination(model, {criterion, excluded}){
 }
 /* computeOptDisc(model, {criterion}) → {qn: Map(slot → r)}
    Per-alternativ point-biserial (valde slot 0/1 mot korrigerad total) per aktivt kriterium.
-   'mcq' återanvänder förberäknade a.optRpb (mot MCQ-delsumman, identiskt med tidigare);
+   'mcq' återanvänder förberäknade a.optRpb (mot flervalsdelens summa, identiskt med tidigare);
    'whole' räknar om mot hela tentans poäng – så vy 2:s distraktorbedömningar är konsekventa
-   med dess headline-r_pb. Endast kandidater som svarade med enkelval ingår (då slot är definierad). */
+   med dess headline-r_pb. Endast studenter som svarade med enkelval ingår (då slot är definierad). */
 function computeOptDisc(model, {criterion, excluded}){
   const ex = excluded || new Set();
   const out={};
@@ -1211,7 +1221,7 @@ function computeOptDisc(model, {criterion, excluded}){
 /* Läser en fil som JSON och ger ett begripligt fel i stället för webbläsarens engelska. */
 function parseJsonFile(text, name){
   try{ return JSON.parse(text); }
-  catch(_){ throw new Error(`Filen "${name||"okänd"}" går inte att läsa. Kontrollera att det är resultatfilen (JSON) från Inspera eller ett tentapaket.`); }
+  catch(_){ throw new Error(`Filen "${name||"okänd"}" går inte att läsa. Kontrollera att det är resultatfilen (JSON) från Inspera.`); }
 }
 function isPlainObj(o){ return !!o && typeof o==="object" && !Array.isArray(o); }
 function minimizeInspera(obj, offset){
@@ -1259,10 +1269,10 @@ function buildPackage({jsonObjs, pdfMcqs, tagRows}){
 }
 function isPackage(obj){ return !!obj && typeof obj==="object" && !Array.isArray(obj) && obj.format===PKG_FORMAT; }
 function openPackage(pkg){
-  if(!isPackage(pkg)) throw new Error("Filen är inget tentapaket.");
+  if(!isPackage(pkg)) throw new Error("Det här är inte en fil från kurssamordnaren.");
   if(Number(pkg.formatVersion)>PKG_VERSION)
     throw new Error("Paketet är gjort i en nyare version av Frågeluppen. Uppdatera verktyget och försök igen.");
-  const bad = () => new Error("Tentapaketet går inte att läsa. Be kurssamordnaren göra ett nytt.");
+  const bad = () => new Error("Filen från kurssamordnaren går inte att läsa. Be kurssamordnaren göra en ny.");
   if(!Array.isArray(pkg.data) || !pkg.data.length) throw bad();
   if(pkg.data.some(d=>!isPlainObj(d) || !Array.isArray(d.ext_inspera_candidates)
        || d.ext_inspera_candidates.some(c=>!isPlainObj(c) || !isPlainObj(c.result)))) throw bad();
@@ -1312,10 +1322,10 @@ function resolveInputs(objs, loaded){
 }
 /* Kvittot kurssamordnaren ser innan paketet sparas – aldrig några resultat. */
 function prepReceipt({jsonObjs, pdfMcqs, tagRows}){
-  if(jsonObjs.some(isPackage)) throw new Error("Det här är redan ett tentapaket. Släpp resultatfilerna från Inspera i stället.");
+  if(jsonObjs.some(isPackage)) throw new Error("Det här är redan en fil till examinatorn. Släpp resultatfilerna från Inspera i stället.");
   if(jsonObjs.some(o=>!isPlainObj(o))) throw new Error("Resultatfilen har inte det format som Inspera exporterar.");
   let n=0; for(const d of jsonObjs){ const l=(d && (d.ext_inspera_candidates || d.candidates)) || []; n+=l.length; }
-  if(!n) throw new Error("Hittar inga kandidater i resultatfilen. Är det rätt fil från Inspera?");
+  if(!n) throw new Error("Hittar inga studenter i resultatfilen. Är det rätt fil från Inspera?");
   const titles = jsonObjs.map(o=>o && o.ext_inspera_assessmentRunTitle).filter(Boolean);
   return { examName:titles[0]||null, candCount:n, mcqPdf: pdfMcqs ? pdfMcqs.length : null,
            hasTags: !!(tagRows && tagRows.length), warning: examMismatch(pdfMcqs && pdfMcqs.examName, titles) || null };
@@ -1327,7 +1337,7 @@ function parseJSON(jsonObjs){
     const list = d.ext_inspera_candidates || d.candidates || [];
     for(const c of list){ const r=c.result||c; if(r && r.ext_inspera_questions) cands.push(r); }
   }
-  if(!cands.length) throw new Error("Inga kandidater i JSON.");
+  if(!cands.length) throw new Error("Hittar inga studenter i resultatfilen.");
   const order = cands[0].ext_inspera_questions.map(q=>q.ext_inspera_questionNumber);
   const agg={};
   // slotN/slotCorr/slotText: aggregat per svars-SLOT (alternativets simpleChoice-id) i stället för per
@@ -1459,7 +1469,7 @@ function lookupTagVals(code, seq){
       || state.tags.tagCols.map(()=> "");
 }
 
-/* ---------- JSON-läge: MCQ-kort utan PDF ---------- */
+/* ---------- Utan PDF: MCQ-kort ur svarsdatan ---------- */
 // Bygger kortunderlag direkt ur svarsdatan när ingen PDF är laddad. Ärligt degraderat:
 // frågetexten finns inte i Inspera-exporten, och alternativ som INGEN valde finns inte alls
 // (slots byggs bara av faktiska svar) – distraktoranalysen ser därför bara valda alternativ
@@ -1636,7 +1646,7 @@ function rpbInfo(v){
   const negNote=(r<0)?` Värdet är svagt negativt men inom bruset (ej under −${sig.toFixed(2)}), så det är inte ett tydligt tecken på felregistrerat facit – snarare ingen diskriminering.`:"";
   const sigNote=(r>=0 && r<sig)?` Obs: under signifikansgränsen (~${sig.toFixed(2)} vid n=${n}) – inte säkert skilt från noll.`:"";
   return {state:"ok",cls,label,value:`r_pb ${fmt}`,badge,
-    tip:`Korrelation mellan rätt på frågan och studentens totala ${critLabel()} (exkl. frågan). Mått på hur väl frågan skiljer starka från svaga studenter. 0,20+ god, 0,30+ mycket god.${negNote}${sigNote} (n=${n}, tak ≈ ${cmax.toFixed(2)}.)`};
+    tip:`Korrelation mellan rätt på frågan och studentens ${critLabel()} (exkl. frågan). Mått på hur väl frågan skiljer starka från svaga studenter. 0,20+ god, 0,30+ mycket god.${negNote}${sigNote} (n=${n}, tak ≈ ${cmax.toFixed(2)}.)`};
 }
 /* sortable rpb: shown values sort by value; non-interpretable go last */
 function rpbSortVal(v){
@@ -1649,7 +1659,7 @@ function rpbSortVal(v){
 const PSY = {
   "rpb-neg":"Punkt-biseriell korrelation (r_pb) mäter om de som svarar rätt på frågan också tenderar att ha hög poäng på tentan i stort. Ett tydligt negativt värde betyder det omvända: de starkaste studenterna svarar oftare fel. Det är ovanligt och pekar nästan alltid på att facit är felregistrerat eller att frågan är vilseledande – inte på att studenterna är dåliga. Gränsen för \"tydligt\" sätts till två standardfel under noll (≈ 2/√n), så enstaka slumpavvikelser flaggas inte.",
   "dist-pos":"Varje svarsalternativ får ett eget r_pb. För rätt svar vill man ha ett positivt värde (starka väljer det). För en distraktor vill man tvärtom ha ett negativt värde – då lockar den främst svaga studenter, vilket är dess syfte. När en distraktor i stället har tydligt positivt r_pb väljer de starka studenterna den, vilket antyder att den kan vara försvarbart rätt eller att frågan är tvetydig.",
-  "hard":"Vid måltestning (kriterierelaterad bedömning) är låg andel rätt inte automatiskt ett fel – ribban kan vara medvetet högt satt. Det blir ett problem först när frågan dessutom inte skiljer starka från svaga studenter: då mäter den varken måluppfyllelse eller förmåga, och resultatet ligger nära ren gissning. En svår fråga med god diskriminering är tvärtom ett utmärkt item och bör behållas.",
+  "hard":"Vid måltestning (kriterierelaterad bedömning) är låg andel rätt inte automatiskt ett fel – ribban kan vara medvetet högt satt. Det blir ett problem först när frågan dessutom inte skiljer starka från svaga studenter: då mäter den varken måluppfyllelse eller förmåga, och resultatet ligger nära ren gissning. En svår fråga med god diskriminering fungerar tvärtom väl.",
   "misconception":"Att fler väljer ett visst felalternativ än rätt svar kan se alarmerande ut, men om de som valde det hade lägre totalpoäng är det troligen en genuin, utbredd missuppfattning snarare än ett fel i frågan. Sådana frågor är pedagogiskt värdefulla – de pekar ut exakt var undervisningen kan behöva förstärkas.",
   "distractor-eff":"En distraktors uppgift är att locka studenter som inte behärskar stoffet. Ett alternativ som nästan ingen väljer (under 5 % av alla svarande) bidrar lite till frågans förmåga att skilja studenter åt. Det bedöms bara när minst åtta studenter svarat fel – annars ser en lätt fråga, där få överhuvudtaget svarar fel, alltid ut att ha svaga distraktorer. Det är inget fel i efterhand, men något att förbättra till nästa gång.",
   "target-vs-norm":"Vid måltestning är målet att mäta om studenten nått ett kriterium, inte att rangordna studenter mot varandra (normbaserad bedömning). Därför är en lätt fråga som de flesta klarar helt legitim – den bekräftar att målet är uppnått. Låg diskriminering är väntad och oproblematisk här. Avvägningen läraren gör är mellan att mäta måluppfyllelse och att frågan ändå ger information; båda kan vara giltiga syften."
@@ -1743,7 +1753,7 @@ function advice(v){
   let facitDone=false;
   if(rpbOk && r < -sig){
     out.l1.push({cls:"adv-red", action:"Dubbelkolla facit", psy:"rpb-neg",
-      why:`Studenter med hög totalpoäng svarade tydligt oftare fel än de med låg totalpoäng. Det är det starkaste tecknet på felregistrerat facit eller en vilseledande fråga. Överväg att rätta facit eller utesluta frågan innan du sätter betyg.`});
+      why:`Studenter med hög totalpoäng svarade tydligt oftare fel än de med låg totalpoäng. Det är det starkaste tecknet på felregistrerat facit eller en vilseledande fråga. Överväg att rätta facit eller exkludera frågan innan du sätter betyg.`});
     facitDone=true;
   }
   if(!facitDone && rpbOk && v.bestDistIdx>=0 && v.bestDistPbis!==null && v.bestDistPbis>sig && r<sig){
@@ -1751,7 +1761,7 @@ function advice(v){
     const moreOrEqual = correctCnt>=0 && v.counts[v.bestDistIdx]>=correctCnt;
     out.l1.push({cls:"adv-red", action:"Dubbelkolla facit", psy:"dist-pos",
       why: moreOrEqual
-        ? `Minst lika många valde «${X}» som det svar som rättats som rätt, och «${X}» samvarierar tydligare med hög totalpoäng än rätt svar gör. «${X}» kan vara försvarbart rätt, facit kan vara fel, eller frågan tvetydig. Överväg att godkänna «${X}» också, rätta facit, eller utesluta frågan.`
+        ? `Minst lika många valde «${X}» som det svar som rättats som rätt, och «${X}» samvarierar tydligare med hög totalpoäng än rätt svar gör. «${X}» kan vara försvarbart rätt, facit kan vara fel, eller frågan tvetydig. Överväg att godkänna «${X}» också, rätta facit, eller exkludera frågan.`
         : `Färre valde «${X}» än rätt svar, men de som valde «${X}» var oftare starka studenter – ovanligt och värt att kontrollera. Överväg om «${X}» också kan vara rätt, eller om frågan är tvetydig.`});
     facitDone=true;
   }
@@ -1759,7 +1769,7 @@ function advice(v){
   const goodDisc = rpbOk && r>=state.th.goodDisc;
   if(distOk && veryHard && !goodDisc && !facitDone){
     out.l1.push({cls:"adv-orange", action:"Se över frågan", psy:"hard",
-      why:`Få svarade rätt – nära ren gissningsnivå – och frågan skiljer inte starka från svaga studenter. Den kan vara otydlig eller felaktig; överväg att utesluta den. (En svår fråga som ändå skiljer väl behålls.)`});
+      why:`Få svarade rätt – nära ren gissningsnivå – och frågan skiljer inte starka från svaga studenter. Den kan vara otydlig eller felaktig; överväg att exkludera den. (En svår fråga som ändå skiljer väl behålls.)`});
   }
 
   // ===== Till nästa gång =====
@@ -2308,7 +2318,7 @@ function render(){
     if(eh){ const ok=!!(state.json && state.json.fullyGraded); eh.disabled=!ok;
       eh.title = ok ? "Rapport till temagrupperna: frågor i stället för åtgärder, bara sammanräknade resultat."
                     : "Temarapporten kräver färdig rättning."; }
-    // I vyn för problemfrågor finns bara listan till rättarna (PDF). Export till temagrupper och Excel hör till hela rapporten.
+    // I vyn för problemfrågor finns bara examinatorns egen PDF. Export till temagrupper och Excel hör till hela rapporten.
     const tri = state.step==="triage", hx=$("#exp-xlsx"), hp=$("#exp-pdf"), ho=$("#exp-overview");
     if(eh) eh.classList.toggle("hidden", tri); if(hx) hx.classList.toggle("hidden", tri); if(ho) ho.classList.toggle("hidden", tri); if(hp) hp.classList.remove("hidden"); }
   const results=$("#results"); results.classList.remove("hidden");
@@ -2348,7 +2358,7 @@ function render(){
   const nEss = state.scored.filter(e=>e.typ==="text").length, nMul = state.scored.filter(e=>e.typ==="multi").length;
   const nExclAll = nExcl + state.scored.filter(e=>e.excluded).length;
   $("#summary").innerHTML =
-    stat(state.json.candCount,"kandidater","","s-muted") +
+    stat(state.json.candCount,"studenter","","s-muted") +
     stat(view.length,"MCQ-frågor","","s-muted") +
     (nEss?stat(nEss,"essäfrågor","","s-muted"):"") +
     (nMul?stat(nMul,"flersvarsfrågor","","s-muted"):"") +
@@ -2357,10 +2367,10 @@ function render(){
     (state.smallN||!showExe?"":stat(nExe,"stark diskriminering","Skiljer starka från svaga väl (hög item–total-korrelation) utan automatiska flaggor. Diskriminering är evidens, inte bevis – bekräfta att frågan testar rätt sak innan du återanvänder den.")) +
     (state.smallN?"":stat(nClean,"inga automatiska flaggor","Inga flaggor från de automatiska kontrollerna (statistik, distraktorer, vanliga ledtrådar). Inget kvalitetsintyg – innehåll, måluppfyllelse och subtilare ledtrådar syns inte här.")) +
     stat(nTips,"tips") +
-    stat(nAction,"att åtgärda","",nAction>0?"s-act-on":"s-act-off") +
+    stat(nAction,"att se över","",nAction>0?"s-act-on":"s-act-off") +
     (state.tags?stat(state.tags.tagCols.map(c=>c.name).join(" · "),"taggkolumner","","s-muted"):"");
   $("#nnote").innerHTML = state.smallN
-    ? `<div class="advnote">Litet underlag: ${esc(state.json.candCount)} kandidater. Andel rätt och svarsfördelning visas, men diskriminering (r<sub>pb</sub>) och automatiska omdömen om svårighet och distraktorer kräver fler svar (riktmärke n ≥ 30). Tolka enskilda procenttal försiktigt – ett svar väger ${Math.round(100/Math.max(1,state.json.candCount))} procentenheter.</div>`
+    ? `<div class="advnote">Litet underlag: ${esc(state.json.candCount)} studenter. Andel rätt och svarsfördelning visas, men diskriminering (r<sub>pb</sub>) och automatiska omdömen om svårighet och distraktorer kräver fler svar (riktmärke n ≥ 30). Tolka enskilda procenttal försiktigt – ett svar väger ${Math.round(100/Math.max(1,state.json.candCount))} procentenheter.</div>`
     : "";
   const qa=$("#qa"); qa.className="";
   const gapN = view.filter(v=>v.exportGap).length;
@@ -2368,7 +2378,7 @@ function render(){
   if(mismatch || qaFails){ qa.className="bad";
     let msg="OBS: ";
     if(jsonOnly.length){
-      msg += `${jsonOnly.length} single-best-fråga(or) kunde inte läsas ur PDF:en, så deras kort saknas (nr ${jsonOnly.join(", ")}). Kontrollera PDF-formateringen för dessa – andel rätt och r_pb finns ändå i översiktstabellen och i Excel. `;
+      msg += `${jsonOnly.length} flervalsfråga(or) kunde inte läsas ur PDF:en, så deras kort saknas (nr ${jsonOnly.join(", ")}). Kontrollera PDF-formateringen för dessa – andel rätt och r_pb finns ändå i översiktstabellen och i Excel. `;
     }
     if(gapN) msg+=`${gapN} fråga(or) har alternativ med specialtecken (t.ex. Na⁺, H₂CO₃) vars text saknas i Inspera-exporten – deras svarsfördelning kan inte visas. `;
     if(otherFails) msg+=`${otherFails} fråga(or) hade svar som inte säkert kunde matchas mot ett PDF-alternativ (markerade). `;
@@ -2381,14 +2391,14 @@ function render(){
   if(note){
     if(!state.pdfMcqs){
       note.className="advnote";
-      note.innerHTML = `<b>JSON-läge – körning utan tentans PDF:</b> frågetexterna saknas, och alternativ `+
+      note.innerHTML = `<b>Filen saknar tentans PDF:</b> frågetexterna saknas, och alternativ `+
         `som ingen valde finns inte i Inspera-exporten och kan varken visas eller flaggas. `+
         `Distraktoranalysen blir därför mildare än med PDF, och alternativen visas i svarsordning, `+
-        `inte tentans ordning. Ladda upp tentans PDF för fullständiga kort.`;
+        `inte tentans ordning. Be kurssamordnaren göra en ny fil med tentans PDF för fullständiga kort.`;
     } else if(pdfExtra.length){
       note.className="advnote";
-      note.innerHTML = `PDF:en läste även ${pdfExtra.length} fråga(or) som inte är single-best i JSON `+
-        `(${pdfExtra.map(x=>esc(x.seq)+": "+esc(x.type==="multi"?"flerval":x.type==="text"?"fritext":x.type)).join(", ")}). `+
+      note.innerHTML = `${pdfExtra.length} fråga(or) ser i PDF:en ut som flervalsfrågor men är det inte enligt resultaten `+
+        `(${pdfExtra.map(x=>esc(x.seq)+": "+esc(x.type==="multi"?"flersvar":x.type==="text"?"essä":x.type)).join(", ")}). `+
         `De visas som essä- eller flersvarskort i hela rapporten.`;
     } else note.innerHTML="";
   }
@@ -2543,7 +2553,7 @@ function overviewHtml(payload, rows, filt, credit){
       +`<td>${esc(r.typeLabel)}</td><td class="num">${r.max}</td><td>${diff}</td>`
       +`<td>${esc(r.info.value)} <span class="mut">${esc(r.info.label||"")}</span></td></tr>`;
   }).join("");
-  const sub=[`${h.n} kandidater`, rows.length===h.nq ? `${h.nq} frågor` : `${rows.length} av ${h.nq} frågor`]
+  const sub=[`${h.n} studenter`, rows.length===h.nq ? `${h.nq} frågor` : `${rows.length} av ${h.nq} frågor`]
     .concat(h.maxRed!==undefined ? [`maxpoäng ${h.maxRed}${h.nExcl?` av ${h.maxTotal} (${h.nExcl} exkluderade)`:""}`] : [])
     .concat([new Date().toLocaleDateString('sv-SE')]).join(" · ");
   return `<!DOCTYPE html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Översiktstabell</title><style>
@@ -2606,11 +2616,11 @@ function buildActionList(){
     .sort((a,b)=>cmpArr(codeSortKey(a.code),codeSortKey(b.code)));
   if(!items.length){
     el.innerHTML = state.smallN
-      ? `<div class="actionnote">För få svar för att automatiskt peka ut åtgärder. Granska fördelningarna och innehållet under Alla frågor.</div>`
-      : `<div class="actionempty">✓ Inga frågor flaggade för åtgärd.</div>`;
+      ? `<div class="actionnote">För få svar för att automatiskt peka ut frågor att se över. Granska fördelningarna och innehållet under Alla frågor.</div>`
+      : `<div class="actionempty">✓ Inga frågor att se över.</div>`;
     return;
   }
-  el.innerHTML = `<div class="actionhead">${items.length} fråga(or) att åtgärda</div>`+
+  el.innerHTML = `<div class="actionhead">${items.length} fråga(or) att se över</div>`+
     items.map(v=>{
       const a=v.advice.l1[0];
       return `<button class="actionrow ${a.cls}" data-seq="${esc(String(v.seq))}">
@@ -3142,14 +3152,14 @@ function xExportRender(){
   const nEss=sc.filter(e=>e.typ==="text").length, nMul=sc.filter(e=>e.typ==="multi").length;
   const showExe=!!spec.showExemplary;
   const nExe=showExe?scored.filter(isForebild).length:0;
-  $("#summary").innerHTML = stat(EMBED.candCount,"kandidater","","s-muted")
+  $("#summary").innerHTML = stat(EMBED.candCount,"studenter","","s-muted")
     + (view.length?stat(view.length,"MCQ-frågor","","s-muted"):"")
     + (nEss?stat(nEss,"essäfrågor","","s-muted"):"") + (nMul?stat(nMul,"flersvarsfrågor","","s-muted"):"")
     + (nExcl?stat(nExcl,"exkluderade","Dragna ur poängsättningen – visas kvar men bidrar inte till total eller diskriminering."):"")
     + (view.length?stat(meanPc.toFixed(1)+" %", sc.length?"genomsnittlig andel rätt, MCQ":"genomsnittlig andel rätt"):"")
     + (state.smallN||!showExe||!view.length?"":stat(nExe,"förebilder","Medelsvåra, skiljer väl och utan fynd i formkontrollen."))
     + (state.tags?stat(state.tags.tagCols.map(c=>c.name).join(" · "),"taggkolumner","","s-muted"):"");
-  $("#nnote").innerHTML = state.smallN ? '<div class="advnote">Litet underlag: '+EMBED.candCount+' kandidater. Tolka enskilda procenttal försiktigt.</div>' : "";
+  $("#nnote").innerHTML = state.smallN ? '<div class="advnote">Litet underlag: '+EMBED.candCount+' studenter. Tolka enskilda procenttal försiktigt.</div>' : "";
   const modes=(spec.modes&&spec.modes.length)?spec.modes:[{id:"edu",label:"Alla frågor"}];
   if(!modes.some(m=>m.id===state.mode)) state.mode=modes[0].id;
   $("#modeseg").innerHTML=modes.map(m=>`<button class="modebtn ${m.id===state.mode?'on':''}" data-mode="${esc(m.id)}">${esc(m.label)}</button>`).join("");
@@ -3252,7 +3262,7 @@ function xExportInit(){
 }
 
 /* Temarapporten bakar BARA aggregat (antal per alternativ, n, r_pb, poängfördelningar, taggar,
-   översiktstabellens rader) – inga kandidatsvar, ingen rådata, ingen parser, ingen uppladdning.
+   översiktstabellens rader) – inga enskilda svar, ingen rådata, ingen parser, ingen uppladdning.
    Renderingslogiken återanvänds från appen via toString(). */
 /* Temarapporten visar mätvärden utan uppmaningar: etiketten "dubbelkolla facit" blir en ren
    beskrivning, och förklaringen klipps före första uppmaningen. */
@@ -3274,9 +3284,11 @@ const HELP_TEMA_HTML = `
 <p><b>Diskriminering (r<sub>pb</sub>).</b> Sambandet mellan att ha rätt på frågan och att ha hög
 poäng på hela tentan, alltså hur väl frågan skiljer studenter med höga totalpoäng från studenter
 med låga. Positivt och högt betyder att frågan skiljer väl. Nära noll betyder att den inte skiljer.
-Negativt betyder att studenter med låga totalpoäng oftare svarade rätt. Håll muspekaren över
-värdet för en förklaring.</p>
-<p><b>Färgerna på alternativen.</b> För varje alternativ visas andelen som valde det: rätt svar,
+Negativt betyder att studenter med låga totalpoäng oftare svarade rätt. I rapporten kallas
+studenter med höga totalpoäng ibland kort för starka och studenter med låga för svaga. Håll
+muspekaren över värdet för en förklaring.</p>
+<p><b>Färgerna på alternativen.</b> En distraktor är ett felaktigt svarsalternativ. För varje
+alternativ visas andelen som valde det: rätt svar,
 distraktor som minst 5 % valde, distraktor som färre än 5 % valde, distraktor som ingen valde, och
 distraktor som fler valde än rätt svar.</p>
 <p><b>Statistiken och kursplanen.</b> Statistiken visar hur frågorna fungerade i den här
@@ -3284,8 +3296,10 @@ studentgruppen. Den säger inget om huruvida en fråga ligger på rätt nivå i 
 kursplanen.</p>
 </div></details>
 <details class="helpsec"><summary>Filtrera</summary><div class="body">
-<p>Filterraden har en rad knappar per grupp: <b>tema</b> (ur taggfilen), <b>frågetyp</b>,
-<b>svårighet</b>, <b>diskriminering</b> och <b>att titta på</b>. Flera val i samma grupp breddar
+<p>Filterraden har en rad knappar per grupp: <b>tema</b>, <b>frågetyp</b>,
+<b>svårighet</b>, <b>diskriminering</b> och <b>att titta på</b>. Under att titta på väljer
+<b>Fråga på kortet</b> de frågor som har en ruta Att fråga sig, och där finns också förebilder och
+exkluderade frågor. Flera val i samma grupp breddar
 urvalet, till exempel Lätt eller Svår. Val i olika grupper smalnar av det, till exempel ett tema
 och Svår. Siffran på en knapp säger hur många frågor ett klick ger, med de andra valen som de är.</p>
 <p>Valen står under knapparna och tas bort ett i taget med ✕, eller alla med <b>Rensa filter</b>.
@@ -3331,7 +3345,7 @@ Med ett filter valt kommer bara de frågor som syns med.</p>
 visas just nu, så filtrera först på ett tema för att välja hela temat. <b>Spara sida med valda
 frågor</b> ger en ny fristående fil med bara de frågorna, som går att ge vidare till den som
 skrev dem. Den sidan fungerar som den här och kan delas upp igen.</p>
-<p>En urvalssida visar inte godkäntandel eller andra siffror för hela tentan.</p>
+<p>En urvalssida visar inga siffror för hela tentan, till exempel maxpoäng.</p>
 </div></details>
 <details class="helpsec"><summary>Inställningar</summary><div class="body">
 <p>Under <b>Inställningar</b> kan gränserna för märkningarna Lätt och Svår och för god diskriminering
@@ -3339,8 +3353,11 @@ skrev dem. Den sidan fungerar som den här och kan delas upp igen.</p>
 en gräns avviker från standard står det överst på sidan.</p>
 </div></details>
 <details class="helpsec"><summary>Vad rapporten innehåller</summary><div class="body">
-<p>Bara sammanräknade resultat: antal svar per alternativ, antal svarande, andel rätt och
-diskriminering. Inga enskilda studenters svar finns i filen.</p>
+<p>Bara sammanräknade resultat: antal svar per alternativ, antal svarande, andel rätt,
+diskriminering och, för essä- och flersvarsfrågor, medelpoäng och poängfördelning. Inga enskilda
+studenters svar finns i filen. Rapporten innehåller också frågetexterna och rätt svar.</p>
+<p>En fråga som examinatorn har tagit bort ur poängsättningen står kvar, märkt <b>Exkluderad ur
+tentan</b>, så att den som skrev den kan se hur den fungerade.</p>
 </div></details>`;
 
 function temaEmbed(){
@@ -3671,7 +3688,7 @@ function exportPdf(){
    @media print{body{margin:12mm}}
   </style></head><body>
    <h1>MCQ-analys</h1>
-   <p class="sub">${esc(filterSummary())} · ${v.length} frågor · ${state.json.candCount} kandidater · ${stamp().replace('_',' ')}</p>
+   <p class="sub">${esc(filterSummary())} · ${v.length} frågor · ${state.json.candCount} studenter · ${stamp().replace('_',' ')}</p>
    ${rows||"<p>Inga frågor i urvalet.</p>"}
    <script>window.onload=function(){setTimeout(function(){window.print();},250);}<\/script>
   </body></html>`;
@@ -3707,14 +3724,14 @@ async function tryRun(){
       else if(state.tagsFromPackage){ state.tags=null; state.activeTags={}; }
       state.tagsFromPackage = false;
     }
-    const pdfPart = state.pdfMcqs ? `${state.pdfMcqs.length} MCQ i PDF` : "ingen PDF (JSON-läge)";
-    log(`Klart: ${pdfPart}, ${state.json.mcqSeqs.length} MCQ i JSON, ${state.json.candCount} kandidater.`);
+    log(`Klart: ${state.json.candCount} studenter och ${state.json.qMeta.length} frågor, varav ${state.json.mcqSeqs.length} flervalsfrågor.`
+      + (state.pdfMcqs ? "" : " Tentans PDF är inte med, så frågetexterna visas inte."));
   }catch(e){ state.json=null; log("Fel: "+e.message); console.error(e); }
 }
 function refreshCompute(){
   const h=$("#computehint");
   if(h) h.textContent = "";
-  if(state.prep){ if(h) h.textContent = "PDF och taggfil är valfria."; refreshPrep(); }
+  if(state.prep){ if(h) h.textContent = "Resultatfilen behövs. PDF och taggfil är valfria, men utan PDF får examinatorn inga frågetexter och utan taggfil inget filter på tema."; refreshPrep(); }
 }
 /* ---------- Förbered tentan (kurssamordnarens steg) ---------- */
 function setPrep(on){
@@ -3722,6 +3739,7 @@ function setPrep(on){
   const tog=(sel,hide)=>{ const e=$(sel); if(e) e.classList.toggle("hidden", hide); };
   tog("#prephead",!on); tog("#prep-save",!on); tog("#prep-receipt",!on); tog("#prep-note",!on);
   tog("#drops",!on); tog("#exambox",on);
+  tog("#settings-open",!!on); if(on){ tog("#settings",true); }      // gränserna gäller analysen, som kurssamordnaren aldrig ser
   { const a=$("#role-exam"), b=$("#role-prep"), h=$("#rolehint");
     if(a) a.classList.toggle("on", !on); if(b) b.classList.toggle("on", !!on);
     if(h) h.textContent = on ? "Skapa filen till examinatorn."
@@ -3753,9 +3771,9 @@ async function refreshPrep(){
   try{
     const k=prepReceipt(await prepInputs());
     box.innerHTML = `<b>${esc(k.examName||"Tenta utan namn")}</b><br>`
-      + `${k.candCount} kandidater · `
+      + `${k.candCount} studenter · `
       + (k.mcqPdf!=null ? `${k.mcqPdf} flervalsfrågor lästa ur PDF:en` : "ingen PDF") + " · "
-      + (k.hasTags ? "taggfil med" : "ingen taggfil")
+      + (k.hasTags ? "taggfilen är med" : "ingen taggfil")
       + (k.warning ? `<br><span class="warn">⚠ ${esc(k.warning)}</span>` : "");
   }catch(e){ b.disabled=true; box.innerHTML=`<span class="warn">⚠ ${esc(e.message)}</span>`; }
 }
@@ -3767,9 +3785,9 @@ async function saveExaminerFile(){
   }catch(e){ log("Fel: "+e.message); console.error(e); }
 }
 function uploadSummary(){
-  const parts=[ (state.fromPackage && state.json) ? `kurssamordnarens fil (${state.json.candCount} kandidater)`
+  const parts=[ (state.fromPackage && state.json) ? `kurssamordnarens fil (${state.json.candCount} studenter)`
                   : state.jsonFiles.length+" JSON-fil"+(state.jsonFiles.length===1?"":"er"),
-                state.pdfMcqs ? `PDF (${state.pdfMcqs.length} MCQ)` : "ingen PDF (JSON-läge)" ];
+                state.pdfMcqs ? `tentans PDF med ${state.pdfMcqs.length} flervalsfrågor` : "utan tentans PDF" ];
   if(state.tagsFile) parts.push("taggar: "+state.tagsFile.name);
   else if(state.tagsFromPackage) parts.push("taggar ur filen");
   return parts.join("   ·   ");
@@ -3787,7 +3805,7 @@ $("#pdf").addEventListener("change", async e=>{
   const f=e.target.files[0]; if(!f) return;
   $("#got-pdf").textContent="läser …";
   try{ state.pdfMcqs=await parsePDF(await f.arrayBuffer());
-       $("#got-pdf").textContent=`✓ ${f.name} — ${state.pdfMcqs.length} MCQ`; }
+       $("#got-pdf").textContent=`✓ ${f.name} — ${state.pdfMcqs.length} flervalsfrågor lästa`; }
   catch(err){ state.pdfMcqs=null; $("#got-pdf").textContent="✗ kunde inte läsa PDF"; log("PDF-fel: "+err.message); console.error(err); }
   state.pdfFromPackage = false;
   checkExamMatch();
@@ -3827,7 +3845,7 @@ $("#reopen").addEventListener("click", expandUpload);
       const n=$("#embnote"); if(!n) return;
       let pk={}; try{ pk=JSON.parse(emb.text)||{}; }catch(_){}
       n.classList.remove("hidden");
-      n.innerHTML = `<b>${esc(pk.examName||"Tenta")}</b> · ${state.json.candCount} kandidater`
+      n.innerHTML = `<b>${esc(pk.examName||"Tenta")}</b> · ${state.json.candCount} studenter`
         + (pk.created?` · förberedd ${esc(pk.created)}`:"")
         + `<br>Den här filen har en rad per student. Den är minimerad men inte anonym. Behandla den som tentamaterial och skicka den inte vidare. Det som ska till temagrupperna är <b>Temarapporten</b>.`;
     });

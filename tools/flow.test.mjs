@@ -57,7 +57,7 @@ test("problemfrågor före betygssättning: en egen vy med bara flervalsfrågorn
   assert.ok(!tabs.includes("Slutrapport") && !tabs.includes("Totalrapport"));
   assert.equal(el("#exp-html").classList.contains("hidden"), true);          // export till temagrupper hör till hela rapporten
   assert.equal(el("#exp-xlsx").classList.contains("hidden"), true);
-  assert.equal(el("#exp-pdf").classList.contains("hidden"), false);          // listan till rättarna
+  assert.equal(el("#exp-pdf").classList.contains("hidden"), false);          // examinatorns eget arbetsunderlag
 });
 test("hela rapporten: en sida efter rättning, med export", async () => {
   const { ev, el } = fresh();
