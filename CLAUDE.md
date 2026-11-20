@@ -81,12 +81,14 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
   och ändras aldrig för hand. Med `LATHUND_DIR` satt jämför testerna mot lathunden. Lathundens
   regelkod har MIT-licens som resten av repot; texterna (råd, motiveringar, hjälptexter) har
   CC BY 4.0.
-- **Lathundens råd är det enda undantaget från "aldrig åtgärder" i temarapporten**, och bara i
-  utfällningen "Ur MCQ-lathunden" under ett formfynd. Formfynd visas på kortet bara under en
-  fråga de kan förklara (`FORM_EXPLAINS`); utan mönster i utfallet ligger de i den hopfällda
-  rutan "Formkontroll". Appens egna vyer använder fortfarande `cueScan` och är orörda.
+- **Formkontrollen körs bara på frågor med en svaghet i statistiken, och ett fynd visas bara där
+  det är en trolig förklaring** (`FORM_EXPLAINS`, Kajsas beslut 20 nov 2026). Inga formfynd
+  på frågor som fungerar, inga rader per formregel, ingen "hela kontrollen"-ruta. Regler med
+  prio `tips` i lathunden används inte (undantag: bästa-svar-markören vid försvarbar
+  distraktor). Lathundens råd är det enda undantaget från "aldrig åtgärder" i temarapporten,
+  och bara i utfällningen "Ur MCQ-lathunden". Appens egna vyer använder `cueScan` och är orörda.
 - **Sammanfattning före kort.** En regel vars budskap är detsamma för varje fråga den träffar
-  (mycket lätt, alternativ som nästan ingen valde, återkommande formfynd) hör hemma i
+  (mycket lätt, alternativ som nästan ingen valde) hör hemma i
   "Mönster i frågorna" (`patternSummary`, `ASK_SUMMARY`), inte på korten. Korten
   (`cardQuestions`) bär bara det som måste läsas i frågans eget innehåll.
 - **Temarapporten måste kunna bygga sig själv** (urvalssidan skapas inne i den exporterade

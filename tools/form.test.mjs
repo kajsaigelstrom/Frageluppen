@@ -49,13 +49,36 @@ test("formfyndet visas som förklaring under en fråga på kortet", () => {
   assert.ok(html.includes('class="askform"'));
   assert.ok(html.split('class="askform"')[1].split("</details>")[0].includes("Ur MCQ-lathunden"));
 });
-test("formfynd utan statistiskt mönster visas inte på kortet, bara i den hopfällda formkontrollen", () => {
+test("formkontrollen körs inte alls på en fråga utan statistisk svaghet", () => {
   const { ev } = fresh();
+  ev("globalThis.CALLS = 0; { const kor = KONTROLL.kor; KONTROLL.kor = function(){ CALLS++; return kor.apply(this, arguments); }; }");
   const html = ev(`card(mk({n:90, counts:[60,12,10,8], rpb:0.35, opts:[${JSON.stringify(LONG)},"Hypotyreos","Depression","Sömnapné"]}))`);
-  assert.ok(!html.includes('class="askform"'));
+  assert.equal(ev("CALLS"), 0);
+  assert.ok(!html.includes("Rätt svar sticker ut.") && !html.includes("askbox") && !html.includes("Ur MCQ-lathunden"));
+  ev(`card(mk({n:80, counts:[76,2,1,1], rpb:0.05, opts:[${JSON.stringify(LONG)},"Hypotyreos","Depression","Sömnapné"]}))`);
+  assert.ok(ev("CALLS") > 0);
+});
+test("en mycket lätt fråga får formfyndet som möjlig förklaring på kortet", () => {
+  const { ev } = fresh();
+  const html = ev(`card(mk({n:80, counts:[76,2,1,1], rpb:0.05, opts:[${JSON.stringify(LONG)},"Hypotyreos","Depression","Sömnapné"]}))`);
+  assert.ok(html.includes("Möjlig förklaring"));
+  assert.ok(html.includes("Nästan alla svarade rätt."));
+  assert.ok(html.includes("Rätt svar sticker ut."));
+  assert.match(html, /tecken, den längsta distraktorn/);
   assert.ok(!html.includes("Att fråga sig"));
-  assert.match(html, /<details class="formall">/);
-  assert.ok(html.split('<details class="formall">')[1].includes("Rätt svar sticker ut."));
+  // utan formfynd: ingen ruta alls
+  assert.ok(!ev("card(mk({n:80, counts:[76,2,1,1], rpb:0.05}))").includes("askbox"));
+});
+test("regler som bara är tips används aldrig som förklaring", () => {
+  const { evj } = fresh();
+  const tips = evj("Object.keys(FORM_REGLER).filter(r => FORM_REGLER[r].prio === 'tips')");
+  const used = new Set(evj("Object.values(FORM_EXPLAINS).flat()"));
+  assert.deepEqual(tips.filter(r => used.has(r) && r !== "markor"), []);
+  assert.deepEqual(evj("FORM_EXPLAINS.forsvar.includes('markor')"), true);     // enda undantaget: bästa-svar-markör vid försvarbar distraktor
+  // väl uppbyggda parallella alternativ (2 × 2) ger ingen förklaring trots att tipsregeln "ojämna inledningar" slår
+  const sym = `mk({n:80, counts:[76,2,1,1], rpb:0.05, stem:"Vilken dos är lämpligast?", opts:["1000 mg 2 gånger per dygn","1000 mg 3 gånger per dygn","1500 mg 3 gånger per dygn","1500 mg 2 gånger per dygn"]})`;
+  assert.ok(evj(`rules(${sym})`).includes("inledning2"));
+  assert.deepEqual(evj(`formFor(${sym}, askQuestions(${sym}))`), {});
 });
 test("ett fynd visas bara under en fråga det kan förklara", () => {
   const { evj } = fresh();
@@ -77,22 +100,22 @@ test("högst tre formfynd per kort", () => {
   assert.ok(evj(`rules(${many})`).length > 3);
   assert.ok(evj(`Object.values(formFor(${many}, askQuestions(${many}))).flat().length`) <= 3);
 });
-test("förebild: lagom svår, skiljer väl, utan formfynd och utan frågor", () => {
+test("förebild: lagom svår, skiljer väl och ingen fråga på kortet", () => {
   const { ev } = fresh();
   assert.equal(ev("isForebild(mk({n:90, counts:[65,9,8,8], rpb:0.35}))"), true);
-  assert.equal(ev(`isForebild(mk({n:90, counts:[65,9,8,8], rpb:0.35, opts:[${JSON.stringify(LONG)},"Hypotyreos","Depression","Sömnapné"]}))`), false);
   assert.equal(ev("isForebild(mk({n:90, counts:[81,3,3,3], rpb:0.35}))"), false);     // 90 % rätt, för lätt
   assert.equal(ev("isForebild(mk({n:90, counts:[40,20,15,15], rpb:0.35}))"), false);  // 44 % rätt, för svår
   assert.equal(ev("isForebild(mk({n:90, counts:[65,9,8,8], rpb:0.15}))"), false);     // skiljer för svagt
   assert.equal(ev("isForebild(mk({n:25, counts:[18,3,2,2], rpb:0.35}))"), false);     // för litet underlag
-  assert.equal(ev("isForebild(mk({n:90, counts:[65,9,8,8], rpb:0.35, stem:''}))"), false);   // ingen text att kontrollera
   const html = ev("card(mk({n:90, counts:[65,9,8,8], rpb:0.35}))");
   assert.ok(html.includes("Fungerar som förebild"));
+  assert.ok(!html.includes("formkontrollen"));
 });
-test("frågan kan kopieras i lathundens fältordning", () => {
+test("kortet har ingen kopiera-knapp och ingen formkontroll-ruta", () => {
   const { ev } = fresh();
-  const t = ev("questionAsText(mk())");
-  assert.equal(t, "Vinjett:\nEn 45-årig kvinna söker för trötthet sedan tre månader.\n\nStam:\nVilken är den mest sannolika orsaken?\n\nRätt svar:\nJärnbrist\n\nDistraktorer:\nHypotyreos\nDepression\nSömnapné");
+  for (const v of ["mk()", "mk({n:80, counts:[76,2,1,1], rpb:0.05})", "mk({rpb:-0.4, counts:[50,20,15,15]})"])
+    assert.ok(!/copyq|formall|Kopiera frågan|Formkontroll och/.test(ev(`card(${v})`)), v);
+  assert.equal(ev("typeof questionAsText"), "undefined");
 });
 test("appens egna kort påverkas inte", () => {
   const { ev } = fresh();
@@ -102,14 +125,15 @@ test("appens egna kort påverkas inte", () => {
 });
 test("den exporterade rapporten och en urvalssida har formkontrollen med sig", () => {
   const { ev } = fresh();
-  ev(`globalThis.E = temaEmbed(); E.views[0].view[0].stem = "En 45-årig kvinna söker för trötthet. Vilken är den mest sannolika orsaken?";
-      E.views[0].view[0].opts[E.views[0].view[0].correctIdx] = ${JSON.stringify(LONG)};`);
+  ev(`globalThis.E = temaEmbed(); globalThis.iE = E.views[0].view.findIndex(v => v.pcorr >= 90);
+      E.views[0].view[iE].stem = "En 45-årig kvinna söker för trötthet. Vilken är den mest sannolika orsaken?";
+      E.views[0].view[iE].opts[E.views[0].view[iE].correctIdx] = ${JSON.stringify(LONG)};`);
   const page = runHtml(ev("buildTemaReport(E)"));
   assert.equal(page.ev("typeof KONTROLL.kor"), "function");
-  assert.ok(page.el("#cards").innerHTML.includes('<details class="formall">'));
+  assert.ok(page.el("#cards").innerHTML.includes("Möjlig förklaring"));
   assert.ok(page.el("#cards").innerHTML.includes("Rätt svar sticker ut."));
-  assert.match(page.el("#goodlist").innerHTML, /förebild|^$/);
-  const child = runHtml(page.ev("buildTemaReport(subsetEmbed(EMBED, [String(EMBED.views[0].view[0].seq)], state.th))"));
+  assert.ok(!page.el("#cards").innerHTML.includes("formall"));
+  const child = runHtml(page.ev("buildTemaReport(subsetEmbed(EMBED, [String(EMBED.views[0].view[" + ev("iE") + "].seq)], state.th))"));
   assert.ok(child.el("#cards").innerHTML.includes("Rätt svar sticker ut."));
 });
 test("lathundens källa syns där råden visas", () => {
@@ -121,19 +145,11 @@ test("kontrollen i Frågeluppen är densamma som i MCQ-lathunden", { skip: !proc
   const html = fs.readFileSync(INDEX, "utf8");
   assert.equal(apply(html, build(process.env.LATHUND_DIR)), html);
 });
-test("frågan om ett alternativ som nästan ingen valde kräver ett formfynd som kan förklara det", () => {
-  const { ev, evj } = fresh();
+test("ett alternativ som nästan ingen valde får en förklaring bara när formen ger en", () => {
+  const { ev } = fresh();
   const dead = "n:100, rpb:0.3, counts:[70,20,9,1]";
-  assert.deepEqual(evj(`askQuestions(mk({${dead}})).map(q => q.key)`), []);                       // ren form: tyst
-  const abs = `mk({${dead}, opts:["Järnbrist","Hypotyreos","Depression","Alltid sömnapné"]})`;
-  assert.deepEqual(evj(`askQuestions(${abs}).map(q => q.key)`), ["distraktor"]);
-  assert.ok(evj(`formFor(${abs}, askQuestions(${abs})).distraktor`).some(f => f.regel === "absolut"));
-  assert.deepEqual(evj(`askQuestions(mk({${dead}, stem:""})).map(q => q.key)`), ["distraktor"]);   // ingen text att kontrollera: som förut
-  ev("ASK_NEEDS_FORM.length = 0");                                                                 // regeln går att stänga av
-  assert.deepEqual(evj(`askQuestions(mk({${dead}})).map(q => q.key)`), ["distraktor"]);
-});
-test("en tystad distraktorfråga tränger inte undan en annan fråga och hindrar inte förebild", () => {
-  const { ev, evj } = fresh();
-  assert.equal(ev("isForebild(mk({n:100, rpb:0.35, counts:[70,20,9,1]}))"), true);
-  assert.deepEqual(evj("askQuestions(mk({n:100, rpb:0.05, counts:[92,6,1,1]})).map(q => q.key)"), ["latt"]);
+  assert.ok(!ev(`card(mk({${dead}}))`).includes("Möjlig förklaring"));
+  const html = ev(`card(mk({${dead}, opts:["Järnbrist","Hypotyreos","Depression","Alltid sömnapné"]}))`);
+  assert.ok(html.includes("Möjlig förklaring") && html.includes("Ett alternativ valdes av nästan ingen."));
+  assert.equal(ev("typeof ASK_NEEDS_FORM"), "undefined");
 });

@@ -43,24 +43,19 @@ inte dokumenterad här.
   rättningen och temarapporten efter. Filen visar överst att den har en rad per student och
   inte ska skickas vidare. Adressen följer ingången (`#samordnare`, `#examinator`).
   Tentapaket i JSON-format från 3.25.0 går fortfarande att släppa i rutan för resultat.
-- **Formkontrollen ur MCQ-lathunden i temarapporten.** Lathundens mekaniska kontroll (längd,
-  ordeko, inledning, led, tvådelad form, negation, påståendeform, samlingsalternativ m.m.) körs
-  på varje flervalsfråga. Ett fynd visas under en fråga i "Att fråga sig" bara när det kan
-  förklara mönstret i svaren, med lathundens råd, motivering och källa i en utfällning. Hela
-  kontrollen för en fråga finns hopfälld längst ned på kortet, tillsammans med knappen
-  **Kopiera frågan** (i lathundens fältordning). Frågan om ett alternativ som nästan ingen
-  valde visas nu bara när formkontrollen hittar en möjlig förklaring; på en riktig tenta med
-  39 flervalsfrågor gick antalet kort med ruta från 36 till 28.
-- **Mönster i frågorna.** Regler vars budskap är detsamma för varje fråga de träffar står nu en
-  gång överst i temarapporten, med antal och knappen "Visa frågorna": mycket lätta frågor (med
-  nivåfrågan), frågor där ett alternativ valdes av nästan ingen, och återkommande formfynd med
-  lathundens råd. Sammanfattningen följer temafiltret och gäller urvalet på en urvalssida.
-  Korten har en ruta bara när något gäller just den frågan (facit, försvarbar distraktor,
-  tydlighet, missuppfattning). På en riktig tenta med 39 flervalsfrågor gick antalet kort med
-  ruta från 28 till 5.
+- **Formkontrollen ur MCQ-lathunden, där den är en trolig förklaring.** När en flervalsfråga
+  har en svaghet i statistiken prövas den mot lathundens mekaniska kontroll. Ett fynd visas
+  bara när det kan förklara svagheten, med lathundens råd, motivering och källa i en
+  utfällning. Frågor utan svaghet prövas inte, och regler som i lathunden bara är tips
+  används inte (de slår också på välbyggda frågor, till exempel parallella alternativ).
+- **Mönster i frågorna.** Två saker som gäller flera frågor på samma sätt står en gång överst,
+  med antal och knappen "Visa frågorna": mycket lätta frågor (med nivåfrågan) och frågor där
+  ett alternativ valdes av nästan ingen. Raden säger hur många av dem som har en möjlig
+  förklaring i formen. Sammanfattningen följer temafiltret och gäller urvalet på en
+  urvalssida. Korten har en ruta bara när något gäller just den frågan. På en riktig tenta
+  med 39 flervalsfrågor: 11 kort med ruta (5 med en fråga, 6 med en formförklaring).
 - **Förebilder.** Listan över starkt diskriminerande frågor i temarapporten ersätts av frågor
-  som fungerar som förebild, med samma kriterier som MCQ-lathundens goda exempel: 50–85 %
-  rätt, god diskriminering, inga formfynd och inget mönster som ger en fråga på kortet.
+  som var lagom svåra (50–85 % rätt), skilde väl och inte har någon fråga på kortet.
 - **Licens:** koden MIT som förut, texterna CC BY 4.0 (står i README).
 - **`tools/sync-lathund.mjs`** hämtar regelkoden och rådtexterna oförändrade ur MCQ-lathunden.
   Lathunden är källan; avsnitten i `index.html` ändras aldrig för hand.

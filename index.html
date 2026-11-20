@@ -206,25 +206,19 @@
   .patmain{min-width:0}
   .pathead{font-size:14px;font-weight:600;line-height:1.45}
   .patask{font-size:13.5px;line-height:1.5;margin-top:2px}
+  .patsub{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .askhead2{margin-top:12px}
   .patbtn{flex:none;white-space:nowrap}
-  .patminor{margin-top:6px;border-top:1px solid var(--line);padding-top:8px}
-  .patminor>summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-weight:600}
   @media print{ .patbtn{display:none!important} }
   .askform{margin-top:6px;padding:7px 10px;border-left:3px solid #c9b06a;background:#fff;font-size:13px;line-height:1.5}
-  .formitem{margin:8px 0;font-size:13px;line-height:1.5}
   .formrub{font-weight:600}
   .formfynd{color:var(--muted)}
   .formrad{margin-top:4px}
-  .formrad summary,.formall summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-weight:600}
+  .formrad summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-weight:600}
   .formtext{margin-top:5px}
   .formvarfor{margin-top:5px;color:var(--muted)}
   .formref{margin-top:5px;font-size:11.5px;color:var(--muted)}
-  .formall{margin-top:10px}
-  .formallbody{margin-top:8px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:#fbfaf6}
-  .formfoot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
-  .copyhint{font-size:12px;color:var(--muted)}
   .forebild{margin-top:12px;padding:8px 12px;border-left:3px solid var(--accent);background:var(--card);font-size:13.5px}
-  @media print{ .formall{display:none!important} }
   .askpsy{font-size:12.5px;color:var(--muted);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line)}
   .thcustom{margin:10px 0 0;padding:8px 12px;border:1px solid #c9b06a;border-radius:8px;background:#faf6ea;font-size:13px}
   .linkbtn{font:inherit;font-size:13px;background:none;border:none;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer}
@@ -2025,17 +2019,19 @@ const FORM_REGLER = {
 };
 /* </LATHUND-REGLER> */
 lathundKontrollInit();
-/* Vilka formfynd som kan förklara vilket statistiskt mönster (nycklarna är ASK_ORDER). Ett fynd visas på kortet
-   bara under en fråga det kan förklara – formregler slår ofta, och utan mönster i utfallet är fyndet bara brus.
-   Hela kontrollen finns alltid i den hopfällda rutan "Formkontroll" på kortet. */
-const FORM_CUE = ["langst","kortast","eko","inledning","tvadelad","led","absolut","inledning2","kvot","ojamn"];
+/* Vilka formfynd som är en TROLIG förklaring till vilket statistiskt mönster (nycklarna är ASK_ORDER).
+   Formkontrollen körs bara på frågor som har en svaghet i statistiken, och ett fynd visas bara där det kan
+   förklara svagheten. Regler som i lathunden bara är tips används inte: de slår på välbyggda frågor också
+   (t.ex. "ojämna inledningar" på parallella alternativ som 1000 mg … / 1500 mg …). Enda undantaget är
+   bästa-svar-markören, som är en trolig förklaring just när en distraktor går att försvara. */
+const FORM_CUE = ["langst","kortast","eko","inledning","tvadelad","absolut"];
 const FORM_EXPLAINS = {
   latt: FORM_CUE, ledtrad: FORM_CUE,
-  distraktor: ["absolut","samling","kvot","ojamn","inledning2","antal"],
-  tydlig: ["pastaende","negstam","pekar","negation","samling","dubblett"],
-  facit: ["dubblett","pastaende","negstam","negation","markor"],
+  distraktor: ["absolut","samling"],
+  tydlig: ["pastaende","negstam","pekar","samling","dubblett"],
+  facit: ["dubblett","pastaende","negstam"],
   forsvar: ["markor","pastaende","samling","dubblett"],
-  undervisning: ["negation","negstam"]
+  undervisning: ["negstam"]
 };
 /* Frågetexten ur PDF:en är ett stycke; lathundens kontroll vill ha vinjett och stam var för sig.
    Sista meningen räknas som stam. Blir delningen fel tystnar några regler, de ger inte falska fynd. */
@@ -2055,6 +2051,7 @@ function formFindings(v){
 /* Fördelar formfynden på kortets frågor: {nyckel: [fynd]}. Högst två per fråga och tre per kort, varje fynd en gång. */
 function formFor(v, qs){
   const out={}, used=new Set(); let total=0;
+  if(!qs || !qs.length) return out;             // ingen svaghet i statistiken: kontrollen körs inte
   const all=formFindings(v);
   for(const q of (qs||[])){
     const ok=FORM_EXPLAINS[q.key]||[];
@@ -2073,31 +2070,15 @@ function renderForm(f, cls){
       + (f.varfor?`<div class="formvarfor">${esc(f.varfor)}</div>`:"")
       + (f.ref?`<div class="formref">${esc(f.ref)}</div>`:"") + `</details>` : "") + `</div>`;
 }
-/* Förebild = samma kriterier som urvalet av goda exempel i MCQ-lathunden: lagom svår (50–85 % rätt), skiljer väl,
-   inga formfynd utöver tips, och inget mönster som ger en fråga på kortet. */
+/* Förebild = lagom svår (50–85 % rätt), skiljer väl, och inget i statistiken som ger en fråga på kortet.
+   Formkontrollen ingår inte: den körs bara på frågor med en svaghet. */
 function isForebild(v){
-  if(!v || isExcluded(v.seq) || !v.stem || !(v.correctIdx>=0)) return false;
+  if(!v || isExcluded(v.seq)) return false;
   const minority=Math.min(v.ncorr, v.n-v.ncorr);
   if(!(v.rpb!=null && v.n>=30 && minority>=10 && v.rpb>=state.th.goodDisc)) return false;
   if(!(v.pcorr>=50 && v.pcorr<=85)) return false;
-  if(cardQuestions(v).length) return false;
-  return !formFindings(v).some(f=>f.prio!=="tips");
+  return !cardQuestions(v).length;
 }
-/* Frågan som text i samma fältordning som lathundens mekaniska kontroll (Vinjett · Stam · Rätt svar · Distraktorer). */
-function questionAsText(v){
-  const sp=splitStem(v.stem);
-  const ratt = v.correctIdx>=0 ? String(v.opts[v.correctIdx]) : "";
-  const ds=v.opts.filter((_,i)=>i!==v.correctIdx).map(String);
-  return `Vinjett:\n${sp.vinjett}\n\nStam:\n${sp.stam}\n\nRätt svar:\n${ratt}\n\nDistraktorer:\n${ds.join("\n")}`;
-}
-function copyText(text){
-  if(typeof navigator!=="undefined" && navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text);
-  return new Promise((ok,fail)=>{ try{
-    const ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
-    document.body.appendChild(ta); ta.select(); const done=document.execCommand("copy"); ta.remove(); done?ok():fail(new Error("kopiering nekades"));
-  }catch(e){ fail(e); } });
-}
-
 /* ---------- Att fråga sig (temarapporten) ----------
    Samma villkor som advice(), men formulerade som frågor till den som skrev frågan – aldrig som
    åtgärder. Högst två per kort, i ASK_ORDER. Lydelserna är samlade här så att de är lätta att ändra.
@@ -2113,10 +2094,6 @@ const ASK_TEXT = {
   distraktor: "Var alternativet ett rimligt svar för en student som inte kan området?",
   latt: "Nästan alla svarade rätt. Är det väntat för det här målet, eller prövar frågan något enklare än ni avsåg?"
 };
-/* Frågor som bara visas när formkontrollen har ett fynd som kan förklara mönstret (FORM_EXPLAINS). På en riktig
-   tenta fick nästan hälften av korten annars frågan om ett alternativ som nästan ingen valde. Saknar frågan
-   text att kontrollera (JSON-läge) visas frågan som förut. Töm listan för att stänga av regeln. */
-const ASK_NEEDS_FORM = ["distraktor"];
 const ASK_PSY = { "rpb-neg":"facit", "dist-pos":"forsvar", "hard":"tydlig", "misconception":"undervisning",
                   "target-vs-norm":"ledtrad", "distractor-eff":"distraktor" };
 function askQuestions(v){
@@ -2130,10 +2107,6 @@ function askQuestions(v){
     hit[k]=q;
   }
   if(!hit.ledtrad && v.pcorr>=state.th.easy) hit.latt={key:"latt", psy:"target-vs-norm", text:ASK_TEXT.latt};
-  if(ASK_NEEDS_FORM.length && v.stem && v.correctIdx>=0){
-    const found=formFindings(v).map(f=>f.regel);
-    for(const k of ASK_NEEDS_FORM) if(hit[k] && !(FORM_EXPLAINS[k]||[]).some(r=>found.includes(r))) delete hit[k];
-  }
   return ASK_ORDER.filter(k=>hit[k]).slice(0,2).map(k=>hit[k]);
 }
 
@@ -2143,6 +2116,7 @@ function askQuestions(v){
    bara det som måste läsas i frågans eget innehåll (facit, försvarbar distraktor, tydlighet, missuppfattning).
    Sammanfattningen räknas på de frågor som visas, så den följer temafiltret och gäller urvalet på en urvalssida. */
 const ASK_SUMMARY = ["latt","ledtrad","distraktor"];
+const SUM_LEAD = { latt:"Nästan alla svarade rätt.", ledtrad:"Nästan alla svarade rätt.", distraktor:"Ett alternativ valdes av nästan ingen." };
 const SUM_TEXT = {
   latt: "Är det väntat för de här målen, eller prövar frågorna något enklare än ni avsåg?",
   distraktor: "Var alternativen rimliga svar för en student som inte kan området?"
@@ -2153,22 +2127,15 @@ function patternSummary(view){
   if(!N) return rows;
   const ids=a=>a.map(v=>String(v.seq));
   const withStat=live.filter(v=>v.n>=MIN_N_DIST);
+  // antal av frågorna i ett mönster där formkontrollen ger en trolig förklaring (den står på de frågornas kort)
+  const sub=(a,k)=>{ const n=a.filter(v=>Object.keys(formFor(v,[{key:k}])).length).length;
+    return {explained:n, sub: n ? `I ${n} av dem finns något i frågans form som kan förklara det. Det står på de frågornas kort.` : ""}; };
   const easy=withStat.filter(v=>v.pcorr>=state.th.easy);
-  if(easy.length) rows.push({key:"latt", seqs:ids(easy), minor:false,
-    head:`${easy.length} av ${N} frågor klarades av minst ${thFmt("easy")} %.`, ask:SUM_TEXT.latt});
+  if(easy.length) rows.push(Object.assign({key:"latt", seqs:ids(easy),
+    head:`${easy.length} av ${N} frågor klarades av minst ${thFmt("easy")} %.`, ask:SUM_TEXT.latt}, sub(easy,"latt")));
   const dead=withStat.filter(v=>{ const a=advice(v); return a.l1.concat(a.l2).some(x=>x.psy==="distractor-eff"); });
-  if(dead.length) rows.push({key:"distraktor", seqs:ids(dead), minor:false,
-    head:`I ${dead.length} av ${N} frågor valdes minst ett alternativ av färre än 5 %.`, ask:SUM_TEXT.distraktor});
-  const by={};
-  for(const v of live){ const seen=new Set();
-    for(const f of formFindings(v)){ if(seen.has(f.regel)) continue; seen.add(f.regel);
-      (by[f.regel]||(by[f.regel]={f, seqs:[]})).seqs.push(String(v.seq)); } }
-  const order=Object.keys(FORM_REGLER).filter(r=>by[r]);
-  order.sort((a,b)=>by[b].seqs.length-by[a].seqs.length);     // vanligast först (stabil: lika antal behåller lathundens ordning)
-  for(const regel of order){ const b=by[regel];
-    rows.push({key:"form:"+regel, seqs:b.seqs, minor:FORM_REGLER[regel].prio==="tips",
-      head:`I ${b.seqs.length} av ${N} frågor: ${b.f.rubrik}`,
-      form:{rubrik:b.f.rubrik, text:b.f.text, varfor:b.f.varfor, ref:b.f.ref}}); }
+  if(dead.length) rows.push(Object.assign({key:"distraktor", seqs:ids(dead),
+    head:`I ${dead.length} av ${N} frågor valdes minst ett alternativ av färre än 5 %.`, ask:SUM_TEXT.distraktor}, sub(dead,"distraktor")));
   return rows;
 }
 function renderPatterns(){
@@ -2178,17 +2145,11 @@ function renderPatterns(){
   if(!rows.length){ el.innerHTML=""; return; }
   const one=r=>`<div class="patrow${r.key===state.patternKey?" on":""}"><div class="patmain"><div class="pathead">${esc(r.head)}</div>`
     + (r.ask?`<div class="patask">${esc(r.ask)}</div>`:"")
-    + (r.form && (r.form.text||r.form.varfor) ? `<details class="formrad"><summary>Ur MCQ-lathunden</summary>`
-        + (r.form.text?`<div class="formtext">${esc(r.form.text)}</div>`:"")
-        + (r.form.varfor?`<div class="formvarfor">${esc(r.form.varfor)}</div>`:"")
-        + (r.form.ref?`<div class="formref">${esc(r.form.ref)}</div>`:"") + `</details>` : "")
+    + (r.sub?`<div class="patsub">${esc(r.sub)}</div>`:"")
     + `</div><button type="button" class="btn-ghost patbtn" data-key="${esc(r.key)}">${r.key===state.patternKey?"Visa alla":"Visa frågorna"}</button></div>`;
-  const main=rows.filter(r=>!r.minor), minor=rows.filter(r=>r.minor);
   el.innerHTML = `<div class="patbox"><div class="pattitle">Mönster i de här frågorna</div>`
     + `<div class="patnote">Sådant som gäller flera frågor står här en gång. Korten nedan har en ruta bara när något gäller just den frågan.</div>`
-    + main.map(one).join("")
-    + (minor.length ? `<details class="patminor"${minor.some(r=>r.key===state.patternKey)?" open":""}><summary>Mindre formfynd (${minor.length})</summary>${minor.map(one).join("")}</details>` : "")
-    + `</div>`;
+    + rows.map(one).join("") + `</div>`;
 }
 function togglePattern(k){
   if(state.patternKey===k){ state.patternKey=null; state.patternSeqs=null; }
@@ -2544,7 +2505,7 @@ function buildGoodList(){
   if(!items.length){ el.innerHTML=""; return; }
   el.innerHTML = `<div class="goodbox"><div class="goodhead">${items.length} fråga(or) ${tema ? "som fungerar som förebild" : "som skiljer starka från svaga väl"}</div>`
     + (tema
-        ? `<div class="goodnote">Lagom svåra (50–85 % rätt), skilde tydligt mellan studenter med höga och låga totalpoäng, och utan fynd i formkontrollen ur MCQ-lathunden.</div>`
+        ? `<div class="goodnote">Lagom svåra (50–85 % rätt) och skilde tydligt mellan studenter med höga och låga totalpoäng.</div>`
         : `<div class="goodnote">Diskriminerar väl i den här kohorten – det är evidens, inte bevis. Bekräfta att det beror på att frågan testar rätt sak, inte på en form-ledtråd, innan du återanvänder den.</div>`)
     + items.map(v=>`<button class="goodrow" data-seq="${esc(String(v.seq))}"><span class="acode">${esc(v.code)}</span>
         <span class="greason">${tema ? `r<sub>pb</sub> +${v.rpb.toFixed(2)}` : exemplaryReason(v)}</span>
@@ -2756,22 +2717,21 @@ function card(v){
       </details></div>`;
   }
   if(askMode){
-    const qs=cardQuestions(v), forms=formFor(v, qs);
-    advHtml = (qs.length || adv.note) ? `<div class="askbox">${noteHtml}${qs.length ? `<div class="askhead">Att fråga sig</div>`
-      + qs.map(q=>{ const fs=forms[q.key]||[];
-          return `<div class="askq">${esc(q.text)}${(q.fact && !fs.length)?`<div class="askfact">${esc(q.fact)}</div>`:""}`
-            + fs.map(f=>renderForm(f,"askform")).join("")
-            + ((state.mode==="ask-explain" && PSY[q.psy]) ? `<div class="askpsy">${esc(PSY[q.psy])}</div>` : "") + `</div>`; }).join("") : ""}</div>` : "";
-    if(isForebild(v)) advHtml += `<div class="forebild">✓ Fungerar som förebild: lagom svår, skiljer väl mellan studenter med höga och låga totalpoäng, och utan fynd i formkontrollen.</div>`;
-    if(v.stem && v.correctIdx>=0 && v.opts.length>=2){
-      const all=formFindings(v);
-      advHtml += `<details class="formall"><summary>Formkontroll och kopiera frågan</summary><div class="formallbody">`
-        + (all.length ? all.map(f=>renderForm(f,"formitem")).join("")
-                      : `<div class="formitem">Inga mekaniska fynd. Kontrollen ser bara formen: längd, ordval, ledtrådar och samlingsalternativ.</div>`)
-        + `<div class="formfoot"><button type="button" class="btn-ghost copyq" data-seq="${esc(String(v.seq))}">Kopiera frågan</button>`
-        + `<span class="copyhint">Frågan kopieras med rubrikerna Vinjett, Stam, Rätt svar och Distraktorer, som fälten i MCQ-lathundens mekaniska kontroll.</span></div>`
-        + `<div class="formref">Formreglerna och råden kommer ur MCQ-lathunden (${esc(FORM_META.version||"")}).</div></div></details>`;
-    }
+    const allQ=askQuestions(v), qs=allQ.filter(q=>!ASK_SUMMARY.includes(q.key)), forms=formFor(v, allQ);
+    // Mönster som sammanfattas överst (mycket lätt, alternativ som nästan ingen valde) får en rad på kortet
+    // bara när frågans form ger en trolig förklaring.
+    const expl=[]; const seenLead=new Set();
+    for(const q of allQ){ if(!ASK_SUMMARY.includes(q.key) || !(forms[q.key]||[]).length) continue;
+      const lead=SUM_LEAD[q.key]; expl.push((seenLead.has(lead)?"":`<div class="askq">${esc(lead)}</div>`) + forms[q.key].map(f=>renderForm(f,"askform")).join("")); seenLead.add(lead); }
+    advHtml = (qs.length || expl.length || adv.note) ? `<div class="askbox">${noteHtml}`
+      + (qs.length ? `<div class="askhead">Att fråga sig</div>`
+        + qs.map(q=>{ const fs=forms[q.key]||[];
+            return `<div class="askq">${esc(q.text)}${(q.fact && !fs.length)?`<div class="askfact">${esc(q.fact)}</div>`:""}`
+              + fs.map(f=>renderForm(f,"askform")).join("")
+              + ((state.mode==="ask-explain" && PSY[q.psy]) ? `<div class="askpsy">${esc(PSY[q.psy])}</div>` : "") + `</div>`; }).join("") : "")
+      + (expl.length ? `<div class="askhead${qs.length?" askhead2":""}">Möjlig förklaring i frågans form</div>` + expl.join("") : "")
+      + `</div>` : "";
+    if(isForebild(v)) advHtml += `<div class="forebild">✓ Fungerar som förebild: lagom svår och skiljer väl mellan studenter med höga och låga totalpoäng.</div>`;
   }
   if(excluded) advHtml="";   // exkluderad fråga: ingen åtgärdsruta – beslutet är taget, talen visas som dokumentation
   return `<div class="q ${flag?'flag':''}${excluded?' excluded':''}" id="card-${esc(String(v.seq))}">
@@ -3060,7 +3020,7 @@ function xExportRender(){
   $("#summary").innerHTML = stat(EMBED.candCount,"kandidater","","s-muted")+stat(view.length,"MCQ-frågor","","s-muted")
     + (nExcl?stat(nExcl,"exkluderade","Dragna ur poängsättningen – visas kvar men bidrar inte till total, diskriminering eller godkäntgränsen."):"")
     + stat(meanPc.toFixed(1)+" %","genomsnittlig andel rätt")
-    + (state.smallN||!showExe?"":stat(nExe,"förebilder","Lagom svåra, skiljer väl och utan fynd i formkontrollen."))
+    + (state.smallN||!showExe?"":stat(nExe,"förebilder","Lagom svåra och skiljer väl."))
     + (state.tags?stat(state.tags.tagCols.map(c=>c.name).join(" · "),"taggkolumner","","s-muted"):"");
   $("#nnote").innerHTML = state.smallN ? '<div class="advnote">Litet underlag: '+EMBED.candCount+' kandidater. Tolka enskilda procenttal försiktigt.</div>' : "";
   const modes=(spec.modes&&spec.modes.length)?spec.modes:[{id:"edu",label:"Alla frågor"}];
@@ -3168,12 +3128,6 @@ function xExportInit(){
     renderSelBar();
   });
   document.addEventListener("click", e=>{ const pb=e.target && e.target.closest && e.target.closest(".patbtn"); if(pb) togglePattern(pb.dataset.key); });
-  document.addEventListener("click", e=>{
-    const b=e.target && e.target.closest && e.target.closest(".copyq"); if(!b) return;
-    const v=(EMBED.views.find(x=>Array.isArray(x.view))||{view:[]}).view.find(c=>String(c.seq)===String(b.dataset.seq)); if(!v) return;
-    copyText(questionAsText(v)).then(()=>{ b.textContent="Kopierad"; setTimeout(()=>{ b.textContent="Kopiera frågan"; },1800); },
-                                     ()=>{ b.textContent="Kunde inte kopiera"; });
-  });
   { const a=$("#sel-all"), c=$("#sel-clear"), sv=$("#sel-save");
     if(a) a.addEventListener("click", selAllVisible); if(c) c.addEventListener("click", selClear); if(sv) sv.addEventListener("click", saveSubset); }
   renderSelBar();
@@ -3214,8 +3168,8 @@ studentgruppen. Den säger inget om huruvida en fråga ligger på rätt nivå i 
 kursplanen.</p>
 </div></details>
 <details class="helpsec"><summary>Mönster i frågorna</summary><div class="body">
-<p>Överst står det som gäller flera frågor på samma sätt: hur många som var mycket lätta, i hur
-många ett alternativ valdes av nästan ingen, och formfynd som återkommer. Varje rad står en gång,
+<p>Överst står det som gäller flera frågor på samma sätt: hur många som var mycket lätta och i hur
+många ett alternativ valdes av nästan ingen. Varje rad står en gång,
 med antal. <b>Visa frågorna</b> visar just de frågorna, och <b>Visa alla</b> går tillbaka.</p>
 <p>Sammanfattningen räknas på de frågor som visas. Filtrerar du på ett tema gäller den temat, och
 på en urvalssida gäller den urvalet.</p>
@@ -3228,15 +3182,14 @@ sådana mönster har ingen ruta.</p>
 <p>Läget <b>Med förklaringar</b> visar dessutom vad måttet bakom varje fråga betyder.</p>
 </div></details>
 <details class="helpsec"><summary>Formkontrollen och förebilderna</summary><div class="body">
-<p>Varje flervalsfråga går igenom den mekaniska kontrollen ur <b>MCQ-lathunden</b>. Den ser bara
-formen: längd, ordval, ledtrådar, negationer och samlingsalternativ. Formfynd som återkommer
-räknas ihop under "Mönster i frågorna". På kortet visas ett fynd bara under en fråga i "Att
-fråga sig" som det kan förklara, till exempel påståendeform i en fråga där det var otydligt vad
-som efterfrågades. Under "Ur MCQ-lathunden" står lathundens råd inför nästa gång och källan.</p>
-<p>Hela kontrollen för en fråga finns under <b>Formkontroll och kopiera frågan</b> längst ned på
-kortet. Där går frågan också att kopiera, för att klistra in i lathunden eller i ett mejl.</p>
-<p><b>Förebilder</b> är frågor som var lagom svåra (50–85 % rätt), skilde tydligt mellan studenter
-med höga och låga totalpoäng och inte gav några fynd i formkontrollen.</p>
+<p>När en fråga har en svaghet i statistiken prövas den mot den mekaniska kontrollen ur
+<b>MCQ-lathunden</b>, som ser på frågans form: längd, ordval, ledtrådar, negationer och
+samlingsalternativ. Ett fynd visas bara när det är en trolig förklaring till svagheten, till
+exempel att rätt svar är mycket längre än distraktorerna i en fråga som nästan alla klarade.
+Under "Ur MCQ-lathunden" står lathundens råd inför nästa gång och källan. Frågor utan svaghet
+i statistiken prövas inte.</p>
+<p><b>Förebilder</b> är frågor som var lagom svåra (50–85 % rätt) och skilde tydligt mellan
+studenter med höga och låga totalpoäng.</p>
 </div></details>
 <details class="helpsec"><summary>De två vyerna</summary><div class="body">
 <p><b>Slutrapport MCQ</b> – ett kort per flervalsfråga, med diskriminering mot hela tentans poäng.</p>
@@ -3382,7 +3335,7 @@ function temaFns(){
              setThreshold,thresholdsCustom,resetThresholds,thFmt,thresholdsText,settingsHtml,renderThCustom,wireSettings,thInfo,neutralInfo,
              temaFns,temaConsts,buildTemaReport,downloadText,stamp,
              cardQuestions,patternSummary,renderPatterns,togglePattern,
-             lathundKontrollInit,splitStem,formFindings,formFor,renderForm,isForebild,questionAsText,copyText,
+             lathundKontrollInit,splitStem,formFindings,formFor,renderForm,isForebild,
              subsetEmbed,totalVisibleRows,selVisible,renderSelBar,selRedraw,selAllVisible,selClear,saveSubset,
              xExportTabs,xExportTotal,xExportRender,xExportRows,xExportCSV,xLoadXLSX,xExportXLSX,xExportPrint,openHelp,closeHelp,wireHelp,xExportInit];
 }
@@ -3390,7 +3343,7 @@ function temaConsts(){
   return `const MIN_N_DIST=${MIN_N_DIST};const TH_DEFAULT=${JSON.stringify(TH_DEFAULT)};const TH_RANGE=${JSON.stringify(TH_RANGE)};const TH_LABEL=${JSON.stringify(TH_LABEL)};const PSY=${JSON.stringify(PSY)};`
     + `const TW=${JSON.stringify(TW)};const CUE_ABS=${JSON.stringify(CUE_ABS)};const CUE_HEDGE=${JSON.stringify(CUE_HEDGE)};`
     + `const FORM_META=${JSON.stringify(FORM_META)};const FORM_REGLER=${JSON.stringify(FORM_REGLER)};const FORM_CUE=${JSON.stringify(FORM_CUE)};const FORM_EXPLAINS=${JSON.stringify(FORM_EXPLAINS)};`
-    + `const ASK_SUMMARY=${JSON.stringify(ASK_SUMMARY)};const SUM_TEXT=${JSON.stringify(SUM_TEXT)};const ASK_NEEDS_FORM=${JSON.stringify(ASK_NEEDS_FORM)};const ASK_ORDER=${JSON.stringify(ASK_ORDER)};const ASK_TEXT=${JSON.stringify(ASK_TEXT)};const ASK_PSY=${JSON.stringify(ASK_PSY)};`
+    + `const ASK_SUMMARY=${JSON.stringify(ASK_SUMMARY)};const SUM_TEXT=${JSON.stringify(SUM_TEXT)};const SUM_LEAD=${JSON.stringify(SUM_LEAD)};const ASK_ORDER=${JSON.stringify(ASK_ORDER)};const ASK_TEXT=${JSON.stringify(ASK_TEXT)};const ASK_PSY=${JSON.stringify(ASK_PSY)};`
     + `const HELP_HTML=${JSON.stringify(HELP_TEMA_HTML)};const HELP_TEMA_HTML=HELP_HTML;`;
 }
 /* Bygger hela den fristående temarapporten som en HTML-sträng. Använder bara embed, funktionslistan

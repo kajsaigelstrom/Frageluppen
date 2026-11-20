@@ -47,27 +47,24 @@ test("alternativ som nästan ingen valde sammanfattas en gång", () => {
   assert.deepEqual(r.seqs, ["1"]);
   assert.equal(r.ask, "Var alternativen rimliga svar för en student som inte kan området?");
 });
-test("återkommande formfynd sammanfattas per regel, med lathundens råd", () => {
+test("sammanfattningen har bara de statistiska mönstren, med antal som har en möjlig förklaring i formen", () => {
   const { evj } = fresh();
-  const r = evj("row(V3, 'form:langst')");
-  assert.equal(r.head, "I 2 av 3 frågor: Rätt svar sticker ut.");
-  assert.deepEqual(r.seqs, ["1", "2"]);
-  assert.ok(r.form.text.length > 20 && r.form.ref.includes("NBME"));
-  assert.equal(r.minor, false);
-  const minor = evj("patternSummary(V3).filter(r => r.minor).map(r => r.key)");
-  assert.ok(minor.every(k => k.startsWith("form:")));
-  assert.ok(evj("patternSummary(V3).filter(r => r.minor)").every(r => evj(`FORM_REGLER[${JSON.stringify(r.key.slice(5))}].prio`) === "tips"));
+  assert.deepEqual(evj("patternSummary(V3).map(r => r.key)"), ["latt", "distraktor"]);   // inga rader per formregel
+  const r = evj("row(V3, 'latt')");
+  assert.equal(r.explained, 2);
+  assert.equal(r.sub, "I 2 av dem finns något i frågans form som kan förklara det. Det står på de frågornas kort.");
+  const clean = evj("row([mk({seq:'1', counts:[95,2,2,1], rpb:0.05}), mk({seq:'3', counts:[65,15,10,10], rpb:0.35})], 'latt')");
+  assert.equal(clean.explained, 0); assert.equal(clean.sub, "");
 });
 test("exkluderade frågor och för små underlag räknas inte", () => {
   const { ev, evj } = fresh();
   ev("state.excluded.set('1', 'Tekniskt fel')");
   assert.equal(evj("row(V3, 'latt')").head, "1 av 2 frågor klarades av minst 90 %.");
-  assert.equal(evj("row(V3, 'form:langst')").head, "I 1 av 2 frågor: Rätt svar sticker ut.");
   assert.equal(evj("row([mk({seq:'9', n:5, counts:[5,0,0,0], rpb:null})], 'latt')"), null);
 });
 test("inga mönster ger en tom sammanfattning", () => {
   const { evj } = fresh();
-  assert.deepEqual(evj("patternSummary([mk({seq:'3', counts:[65,15,10,10], rpb:0.35})]).filter(r => !r.minor)"), []);
+  assert.deepEqual(evj("patternSummary([mk({seq:'3', counts:[65,15,10,10], rpb:0.35})])"), []);
   assert.deepEqual(evj("patternSummary([])"), []);
 });
 test("rapporten visar sammanfattningen och kan filtrera korten på ett mönster", () => {
@@ -77,6 +74,7 @@ test("rapporten visar sammanfattningen och kan filtrera korten på ett mönster"
   assert.ok(p.includes("Mönster i de här frågorna"));
   assert.match(p, /\d+ av 47 frågor klarades av minst 90 %\./);
   assert.ok(p.includes("Visa frågorna"));
+  assert.ok(!p.includes("Mindre formfynd") && !p.includes("Ur MCQ-lathunden"));
   const nEasy = page.ev("EMBED.views[0].view.filter(v => v.pcorr >= 90).length");
   page.ev("togglePattern('latt')");
   assert.equal((page.el("#cards").innerHTML.match(/class="q /g) || []).length, nEasy);
@@ -106,13 +104,4 @@ test("Totalrapporten har ingen mönstersammanfattning, urvalssidan har sin egen"
   const other = page.ev("String(EMBED.views[0].view.find(v => v.pcorr < 90).seq)");
   const child = runHtml(page.ev(`buildTemaReport(subsetEmbed(EMBED, ${JSON.stringify(easy.concat(other))}, state.th))`));
   assert.ok(child.el("#patterns").innerHTML.includes("2 av 3 frågor klarades av minst 90 %."));
-});
-test("formfynden står med det vanligaste först", () => {
-  const { evj } = fresh();
-  const view = `[ mk({seq:"1", stem:"Vilket av följande är inte korrekt?", opts:LONGOPTS}),
-                  mk({seq:"2", stem:"Vilket av följande är inte korrekt?"}),
-                  mk({seq:"3", stem:"Vilket av följande är inte korrekt?"}) ]`;
-  const main = evj(`patternSummary(${view}).filter(r => r.key.startsWith("form:") && !r.minor).map(r => r.seqs.length)`);
-  assert.ok(main.length >= 2);
-  assert.deepEqual(main, [...main].sort((a, b) => b - a));
 });

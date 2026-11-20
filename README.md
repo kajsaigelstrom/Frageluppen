@@ -51,9 +51,10 @@ tentans frågor fungerade och innehåller bara sammanräknade resultat.
 - Filtrera på tema och klicka **Markera alla visade**, eller bocka för enskilda frågor.
 - **Spara sida med valda frågor** ger en ny fil med bara de frågorna, att ge vidare till den
   som skrev dem. Den sidan fungerar likadant och kan delas upp igen.
-- Där svaren följer ett mönster visar kortet också vad den mekaniska kontrollen ur
-  **MCQ-lathunden** hittade i frågans form, med lathundens råd och källa. Frågor som var
-  lagom svåra, skilde väl och saknade formfynd märks som förebilder.
+- Överst står det som gäller flera frågor på samma sätt, till exempel hur många som var
+  mycket lätta. Korten har en ruta bara när något gäller just den frågan.
+- Har en fråga en svaghet i statistiken prövas den mot den mekaniska kontrollen ur
+  **MCQ-lathunden**, och ett fynd visas när det är en trolig förklaring.
 - Statistiken visar hur frågorna fungerade i studentgruppen. Den säger inget om huruvida en
   fråga ligger på rätt nivå i förhållande till kursplanen.
 
