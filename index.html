@@ -955,6 +955,41 @@ function minimizeInspera(obj){
   return out;
 }
 
+/* ---------- tentapaket ----------
+   Kurssamordnaren bygger EN fil som examinatorn öppnar: minimerad resultatdata (minimizeInspera),
+   frågetexterna som de lästes ur PDF:en och taggfilens rader. Paketet är minimerat, inte anonymt
+   (varje rad är en students poängmönster) och hanteras som tentamaterial. */
+const PKG_FORMAT = "frageluppen-tentapaket";
+const PKG_VERSION = 1;
+function buildPackage({jsonObjs, pdfMcqs, tagRows}){
+  const titles = jsonObjs.map(o=>o && o.ext_inspera_assessmentRunTitle).filter(Boolean);
+  const pdfName = (pdfMcqs && pdfMcqs.examName) || null;
+  return { format:PKG_FORMAT, formatVersion:PKG_VERSION, toolVersion:VERSION,
+    created:new Date().toISOString().slice(0,10),
+    examName: titles[0] || null,
+    examWarning: examMismatch(pdfName, titles) || null,
+    data: jsonObjs.map(minimizeInspera),
+    pdf: pdfMcqs ? {examName:pdfName, items:[...pdfMcqs]} : null,
+    tagRows: tagRows || null };
+}
+function isPackage(obj){ return !!obj && typeof obj==="object" && !Array.isArray(obj) && obj.format===PKG_FORMAT; }
+function openPackage(pkg){
+  if(!isPackage(pkg)) throw new Error("Filen är inget tentapaket.");
+  if(typeof pkg.formatVersion==="number" && pkg.formatVersion>PKG_VERSION)
+    throw new Error("Paketet är gjort i en nyare version av Frågeluppen. Uppdatera verktyget och försök igen.");
+  const bad = () => new Error("Tentapaketet går inte att läsa. Be kurssamordnaren göra ett nytt.");
+  if(!Array.isArray(pkg.data) || !pkg.data.length) throw bad();
+  if(pkg.data.some(d=>!d || !Array.isArray(d.ext_inspera_candidates))) throw bad();
+  let pdfMcqs=null;
+  if(pkg.pdf){
+    if(!Array.isArray(pkg.pdf.items)) throw bad();
+    pdfMcqs=[...pkg.pdf.items];
+    if(pkg.pdf.examName) pdfMcqs.examName=pkg.pdf.examName;
+  }
+  if(pkg.tagRows && !Array.isArray(pkg.tagRows)) throw bad();
+  return { jsonObjs:pkg.data, pdfMcqs, tagRows:pkg.tagRows||null, examWarning:pkg.examWarning||null };
+}
+
 function parseJSON(jsonObjs){
   const cands=[];
   for(const d of jsonObjs){
@@ -1075,12 +1110,12 @@ function parseTagsRows(rows){
   }
   return {tagCols, byCode, byNum};
 }
-function parseTags(buf){
+function readTagRows(buf){
   const wb = XLSX.read(buf,{type:"array"});
   const ws = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(ws,{header:1,raw:false});
-  return parseTagsRows(rows);
+  return XLSX.utils.sheet_to_json(ws,{header:1,raw:false});
 }
+function parseTags(buf){ return parseTagsRows(readTagRows(buf)); }
 /* per-column values for a question, aligned with state.tags.tagCols (empty strings if none).
    Matcha PÅ POSITIONELLT NUMMER (Nr) först: det är den enda nyckel som delas av PDF:ens
    marginalnummer, JSON:s questionNumber och Excel-kolumnen Nr. Kodkolumnen (Namn/Fråga) kan
