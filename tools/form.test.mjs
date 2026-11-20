@@ -41,14 +41,13 @@ test("utan frågetext eller facit körs ingen kontroll", () => {
   assert.deepEqual(evj("rules(mk({stem:''}))"), []);
   assert.deepEqual(evj("rules(mk({correctIdx:-1, counts:[70,10,10,10]}))".replace("correctIdx:-1", "correctIdx:0, opts:['Järnbrist']")), []);
 });
-test("formfyndet visas som förklaring när statistiken har ett mönster", () => {
+test("formfyndet visas som förklaring under en fråga på kortet", () => {
   const { ev } = fresh();
-  const html = ev(`card(mk({n:80, counts:[76,2,1,1], rpb:0.05, opts:[${JSON.stringify(LONG)},"Hypotyreos","Depression","Sömnapné"]}))`);
+  // nära gissningsnivå utan diskriminering + negation i stammen: frågan om tydlighet får fyndet som förklaring
+  const html = ev(`card(mk({rpb:0.05, counts:[28,25,24,23], stem:"Vilket av följande är inte ett symtom vid anemi?"}))`);
   assert.ok(html.includes("Att fråga sig"));
   assert.ok(html.includes('class="askform"'));
-  assert.ok(html.includes("Rätt svar sticker ut."));
-  assert.match(html, /tecken, den längsta distraktorn/);
-  assert.ok(html.includes("Ur MCQ-lathunden"));
+  assert.ok(html.split('class="askform"')[1].split("</details>")[0].includes("Ur MCQ-lathunden"));
 });
 test("formfynd utan statistiskt mönster visas inte på kortet, bara i den hopfällda formkontrollen", () => {
   const { ev } = fresh();

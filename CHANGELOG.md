@@ -51,6 +51,13 @@ inte dokumenterad här.
   **Kopiera frågan** (i lathundens fältordning). Frågan om ett alternativ som nästan ingen
   valde visas nu bara när formkontrollen hittar en möjlig förklaring; på en riktig tenta med
   39 flervalsfrågor gick antalet kort med ruta från 36 till 28.
+- **Mönster i frågorna.** Regler vars budskap är detsamma för varje fråga de träffar står nu en
+  gång överst i temarapporten, med antal och knappen "Visa frågorna": mycket lätta frågor (med
+  nivåfrågan), frågor där ett alternativ valdes av nästan ingen, och återkommande formfynd med
+  lathundens råd. Sammanfattningen följer temafiltret och gäller urvalet på en urvalssida.
+  Korten har en ruta bara när något gäller just den frågan (facit, försvarbar distraktor,
+  tydlighet, missuppfattning). På en riktig tenta med 39 flervalsfrågor gick antalet kort med
+  ruta från 28 till 5.
 - **Förebilder.** Listan över starkt diskriminerande frågor i temarapporten ersätts av frågor
   som fungerar som förebild, med samma kriterier som MCQ-lathundens goda exempel: 50–85 %
   rätt, god diskriminering, inga formfynd och inget mönster som ger en fråga på kortet.

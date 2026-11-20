@@ -198,6 +198,18 @@
   .askhead{font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
   .askq{font-size:14px;line-height:1.5;margin:6px 0}
   .askfact{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .patbox{margin:14px 0;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+  .pattitle{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:17px}
+  .patnote{font-size:12.5px;color:var(--muted);margin:2px 0 8px}
+  .patrow{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:9px 0;border-top:1px solid var(--line)}
+  .patrow.on{background:#faf6ea;margin:0 -8px;padding-left:8px;padding-right:8px;border-radius:6px}
+  .patmain{min-width:0}
+  .pathead{font-size:14px;font-weight:600;line-height:1.45}
+  .patask{font-size:13.5px;line-height:1.5;margin-top:2px}
+  .patbtn{flex:none;white-space:nowrap}
+  .patminor{margin-top:6px;border-top:1px solid var(--line);padding-top:8px}
+  .patminor>summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-weight:600}
+  @media print{ .patbtn{display:none!important} }
   .askform{margin-top:6px;padding:7px 10px;border-left:3px solid #c9b06a;background:#fff;font-size:13px;line-height:1.5}
   .formitem{margin:8px 0;font-size:13px;line-height:1.5}
   .formrub{font-weight:600}
@@ -2068,7 +2080,7 @@ function isForebild(v){
   const minority=Math.min(v.ncorr, v.n-v.ncorr);
   if(!(v.rpb!=null && v.n>=30 && minority>=10 && v.rpb>=state.th.goodDisc)) return false;
   if(!(v.pcorr>=50 && v.pcorr<=85)) return false;
-  if(askQuestions(v).length) return false;
+  if(cardQuestions(v).length) return false;
   return !formFindings(v).some(f=>f.prio!=="tips");
 }
 /* Frågan som text i samma fältordning som lathundens mekaniska kontroll (Vinjett · Stam · Rätt svar · Distraktorer). */
@@ -2123,6 +2135,66 @@ function askQuestions(v){
     for(const k of ASK_NEEDS_FORM) if(hit[k] && !(FORM_EXPLAINS[k]||[]).some(r=>found.includes(r))) delete hit[k];
   }
   return ASK_ORDER.filter(k=>hit[k]).slice(0,2).map(k=>hit[k]);
+}
+
+/* ---------- Mönster i frågorna (temarapporten) ----------
+   Regler vars budskap är detsamma för varje fråga de träffar står EN gång överst, med antal och en knapp som
+   visar frågorna: mycket lätt, alternativ som nästan ingen valde, och återkommande formfynd. Korten behåller
+   bara det som måste läsas i frågans eget innehåll (facit, försvarbar distraktor, tydlighet, missuppfattning).
+   Sammanfattningen räknas på de frågor som visas, så den följer temafiltret och gäller urvalet på en urvalssida. */
+const ASK_SUMMARY = ["latt","ledtrad","distraktor"];
+const SUM_TEXT = {
+  latt: "Är det väntat för de här målen, eller prövar frågorna något enklare än ni avsåg?",
+  distraktor: "Var alternativen rimliga svar för en student som inte kan området?"
+};
+function cardQuestions(v){ return askQuestions(v).filter(q=>!ASK_SUMMARY.includes(q.key)); }
+function patternSummary(view){
+  const live=(view||[]).filter(v=>!isExcluded(v.seq)), N=live.length, rows=[];
+  if(!N) return rows;
+  const ids=a=>a.map(v=>String(v.seq));
+  const withStat=live.filter(v=>v.n>=MIN_N_DIST);
+  const easy=withStat.filter(v=>v.pcorr>=state.th.easy);
+  if(easy.length) rows.push({key:"latt", seqs:ids(easy), minor:false,
+    head:`${easy.length} av ${N} frågor klarades av minst ${thFmt("easy")} %.`, ask:SUM_TEXT.latt});
+  const dead=withStat.filter(v=>{ const a=advice(v); return a.l1.concat(a.l2).some(x=>x.psy==="distractor-eff"); });
+  if(dead.length) rows.push({key:"distraktor", seqs:ids(dead), minor:false,
+    head:`I ${dead.length} av ${N} frågor valdes minst ett alternativ av färre än 5 %.`, ask:SUM_TEXT.distraktor});
+  const by={};
+  for(const v of live){ const seen=new Set();
+    for(const f of formFindings(v)){ if(seen.has(f.regel)) continue; seen.add(f.regel);
+      (by[f.regel]||(by[f.regel]={f, seqs:[]})).seqs.push(String(v.seq)); } }
+  const order=Object.keys(FORM_REGLER).filter(r=>by[r]);
+  order.sort((a,b)=>by[b].seqs.length-by[a].seqs.length);     // vanligast först (stabil: lika antal behåller lathundens ordning)
+  for(const regel of order){ const b=by[regel];
+    rows.push({key:"form:"+regel, seqs:b.seqs, minor:FORM_REGLER[regel].prio==="tips",
+      head:`I ${b.seqs.length} av ${N} frågor: ${b.f.rubrik}`,
+      form:{rubrik:b.f.rubrik, text:b.f.text, varfor:b.f.varfor, ref:b.f.ref}}); }
+  return rows;
+}
+function renderPatterns(){
+  const el=$("#patterns"); if(!el) return;
+  const rows=patternSummary(currentView({ignorePattern:true}));
+  if(state.patternKey && !rows.some(r=>r.key===state.patternKey)){ state.patternKey=null; state.patternSeqs=null; }
+  if(!rows.length){ el.innerHTML=""; return; }
+  const one=r=>`<div class="patrow${r.key===state.patternKey?" on":""}"><div class="patmain"><div class="pathead">${esc(r.head)}</div>`
+    + (r.ask?`<div class="patask">${esc(r.ask)}</div>`:"")
+    + (r.form && (r.form.text||r.form.varfor) ? `<details class="formrad"><summary>Ur MCQ-lathunden</summary>`
+        + (r.form.text?`<div class="formtext">${esc(r.form.text)}</div>`:"")
+        + (r.form.varfor?`<div class="formvarfor">${esc(r.form.varfor)}</div>`:"")
+        + (r.form.ref?`<div class="formref">${esc(r.form.ref)}</div>`:"") + `</details>` : "")
+    + `</div><button type="button" class="btn-ghost patbtn" data-key="${esc(r.key)}">${r.key===state.patternKey?"Visa alla":"Visa frågorna"}</button></div>`;
+  const main=rows.filter(r=>!r.minor), minor=rows.filter(r=>r.minor);
+  el.innerHTML = `<div class="patbox"><div class="pattitle">Mönster i de här frågorna</div>`
+    + `<div class="patnote">Sådant som gäller flera frågor står här en gång. Korten nedan har en ruta bara när något gäller just den frågan.</div>`
+    + main.map(one).join("")
+    + (minor.length ? `<details class="patminor"${minor.some(r=>r.key===state.patternKey)?" open":""}><summary>Mindre formfynd (${minor.length})</summary>${minor.map(one).join("")}</details>` : "")
+    + `</div>`;
+}
+function togglePattern(k){
+  if(state.patternKey===k){ state.patternKey=null; state.patternSeqs=null; }
+  else { const r=patternSummary(currentView({ignorePattern:true})).find(x=>x.key===k); if(!r) return;
+         state.patternKey=k; state.patternSeqs=new Set(r.seqs); }
+  drawCards(); if(typeof renderSelBar==="function" && state.sel) renderSelBar();
 }
 
 /* ---------- render ---------- */
@@ -2495,7 +2567,7 @@ function tagPass(tagVals){
   if(!cols.length || !state.tags) return true;
   return cols.every(col=>{ const ci=state.tags.tagCols.findIndex(c=>c.name===col); return ci>=0 && state.activeTags[col].has(tagVals[ci]); });
 }
-function filtersActive(){ const s=$("#search"); return (!!s && s.value.trim()!=="") || Object.keys(state.activeTags).length>0; }
+function filtersActive(){ const s=$("#search"); return (!!s && s.value.trim()!=="") || Object.keys(state.activeTags).length>0 || !!state.patternKey; }
 function updateClearBtn(){ const b=$("#clearfilter"); if(b) b.classList.toggle("hidden", !filtersActive()); }
 function applyFilters(){
   buildTagbar(); updateClearBtn();
@@ -2503,7 +2575,7 @@ function applyFilters(){
   if(isTotal){ if(typeof renderTotal==="function") renderTotal(); }
   else if(state.vm) drawCards();
 }
-function clearFilters(){ const s=$("#search"); if(s) s.value=""; state.activeTags={}; applyFilters(); }
+function clearFilters(){ const s=$("#search"); if(s) s.value=""; state.activeTags={}; state.patternKey=null; state.patternSeqs=null; applyFilters(); }
 
 function buildTagbar(){
   const bar=$("#tagbar"); if(!bar) return;
@@ -2537,6 +2609,7 @@ function currentView(opts){
   if(q) v=v.filter(x=> key(x.stem).includes(q) || x.opts.some(o=>key(o).includes(q)) || x.code.toLowerCase().includes(q));
   if(!opts.allModes && state.mode==="action" && !q) v=v.filter(x=>x.advice && x.advice.l1.length && !isExcluded(x.seq));
   v=v.filter(x=>tagPass(x.tagVals));
+  if(state.patternSeqs && !opts.ignorePattern) v=v.filter(x=>state.patternSeqs.has(String(x.seq)));   // "Visa frågorna" i mönstersammanfattningen
   if(sort==="pc-asc") v.sort((a,b)=>a.pcorr-b.pcorr || cmpArr(codeSortKey(a.code),codeSortKey(b.code)));
   else if(sort==="pc-desc") v.sort((a,b)=>b.pcorr-a.pcorr || cmpArr(codeSortKey(a.code),codeSortKey(b.code)));
   else if(sort==="trap-desc") v.sort((a,b)=>b.topDist-a.topDist || a.pcorr-b.pcorr);
@@ -2554,6 +2627,7 @@ function filterSummary(){
   return parts.join(" · ");
 }
 function drawCards(){
+  if(state.mode==="ask" || state.mode==="ask-explain") renderPatterns();   // räknas om före korten: kan nollställa ett mönsterfilter som inte längre finns
   const v=currentView();
   const activeSummary=Object.keys(state.activeTags).map(col=>`${col}: ${[...state.activeTags[col]].join(", ")}`).join(" · ");
   $("#count").textContent = `Visar ${v.length} av ${state.vm.view.length} frågor`
@@ -2682,7 +2756,7 @@ function card(v){
       </details></div>`;
   }
   if(askMode){
-    const qs=askQuestions(v), forms=formFor(v, qs);
+    const qs=cardQuestions(v), forms=formFor(v, qs);
     advHtml = (qs.length || adv.note) ? `<div class="askbox">${noteHtml}${qs.length ? `<div class="askhead">Att fråga sig</div>`
       + qs.map(q=>{ const fs=forms[q.key]||[];
           return `<div class="askq">${esc(q.text)}${(q.fact && !fs.length)?`<div class="askfact">${esc(q.fact)}</div>`:""}`
@@ -2966,7 +3040,8 @@ function xExportRender(){
   const cc=$("#cardctrls"); if(cc) cc.classList.toggle("hidden", total);
   const lg=document.querySelector("#results .legend"); if(lg) lg.classList.toggle("hidden", total);
   if(total){
-    ["#summary","#nnote","#passmetric","#actionlist","#goodlist","#count","#cards","#freetext"].forEach(s=>{const e=$(s);if(e)e.innerHTML="";});
+    ["#summary","#nnote","#passmetric","#patterns","#actionlist","#goodlist","#count","#cards","#freetext"].forEach(s=>{const e=$(s);if(e)e.innerHTML="";});
+    state.patternKey=null; state.patternSeqs=null;
     state.totalRows = spec.total.rows;
     state.vm = {view: state.totalRows};          // så att buildTagbar/activeTagItems använder raderna
     buildTagbar(); updateClearBtn(); xExportTotal();
@@ -3015,7 +3090,7 @@ function xExportRows(){
   } else {
     aoa.push(["Kod","Fråga (titel)","n","Andel rätt %","r_pb","Starkaste distraktor %","Att fråga sig",...tagNames]);
     currentView({allModes:true}).forEach(v=>{
-      const flags=askQuestions(v).map(q=>q.text).join(" | ");
+      const flags=cardQuestions(v).map(q=>q.text).join(" | ");
       aoa.push([v.code, v.title||"", v.n, +v.pcorr.toFixed(1), (v.rpb==null?"":+v.rpb.toFixed(2)),
                 +v.topDist.toFixed(0), flags, ...(v.tagVals||[])]);
     });
@@ -3092,6 +3167,7 @@ function xExportInit(){
     if(b.checked) state.sel.add(String(b.dataset.seq)); else state.sel.delete(String(b.dataset.seq));
     renderSelBar();
   });
+  document.addEventListener("click", e=>{ const pb=e.target && e.target.closest && e.target.closest(".patbtn"); if(pb) togglePattern(pb.dataset.key); });
   document.addEventListener("click", e=>{
     const b=e.target && e.target.closest && e.target.closest(".copyq"); if(!b) return;
     const v=(EMBED.views.find(x=>Array.isArray(x.view))||{view:[]}).view.find(c=>String(c.seq)===String(b.dataset.seq)); if(!v) return;
@@ -3137,18 +3213,26 @@ distraktor som fler valde än rätt svar.</p>
 studentgruppen. Den säger inget om huruvida en fråga ligger på rätt nivå i förhållande till
 kursplanen.</p>
 </div></details>
+<details class="helpsec"><summary>Mönster i frågorna</summary><div class="body">
+<p>Överst står det som gäller flera frågor på samma sätt: hur många som var mycket lätta, i hur
+många ett alternativ valdes av nästan ingen, och formfynd som återkommer. Varje rad står en gång,
+med antal. <b>Visa frågorna</b> visar just de frågorna, och <b>Visa alla</b> går tillbaka.</p>
+<p>Sammanfattningen räknas på de frågor som visas. Filtrerar du på ett tema gäller den temat, och
+på en urvalssida gäller den urvalet.</p>
+</div></details>
 <details class="helpsec"><summary>Att fråga sig</summary><div class="body">
-<p>När svaren på en fråga följer ett mönster som är värt att titta på står en eller två frågor på
-kortet. De är frågor till den som skrev uppgiften, inte bedömningar. Kort utan sådana mönster har
-ingen ruta.</p>
+<p>När något gäller just en viss fråga står en eller två frågor på kortet: om facit stämmer, om
+en distraktor går att försvara, om det var tydligt vad som efterfrågades, eller om svaren visar
+en missuppfattning. De är frågor till den som skrev uppgiften, inte bedömningar. Kort utan
+sådana mönster har ingen ruta.</p>
 <p>Läget <b>Med förklaringar</b> visar dessutom vad måttet bakom varje fråga betyder.</p>
 </div></details>
 <details class="helpsec"><summary>Formkontrollen och förebilderna</summary><div class="body">
 <p>Varje flervalsfråga går igenom den mekaniska kontrollen ur <b>MCQ-lathunden</b>. Den ser bara
-formen: längd, ordval, ledtrådar, negationer och samlingsalternativ. Ett fynd visas under en fråga
-i "Att fråga sig" bara när det kan förklara mönstret i svaren, till exempel att rätt svar är
-mycket längre än distraktorerna i en fråga som nästan alla klarade. Under "Ur MCQ-lathunden"
-står lathundens råd inför nästa gång och källan.</p>
+formen: längd, ordval, ledtrådar, negationer och samlingsalternativ. Formfynd som återkommer
+räknas ihop under "Mönster i frågorna". På kortet visas ett fynd bara under en fråga i "Att
+fråga sig" som det kan förklara, till exempel påståendeform i en fråga där det var otydligt vad
+som efterfrågades. Under "Ur MCQ-lathunden" står lathundens råd inför nästa gång och källan.</p>
 <p>Hela kontrollen för en fråga finns under <b>Formkontroll och kopiera frågan</b> längst ned på
 kortet. Där går frågan också att kopiera, för att klistra in i lathunden eller i ett mejl.</p>
 <p><b>Förebilder</b> är frågor som var lagom svåra (50–85 % rätt), skilde tydligt mellan studenter
@@ -3297,6 +3381,7 @@ function temaFns(){
              currentView,drawCards,jumpToCard,passMetric,renderPassMetric,freeTextDist,renderFreeText,buildActionList,buildGoodList,buildTagbar,
              setThreshold,thresholdsCustom,resetThresholds,thFmt,thresholdsText,settingsHtml,renderThCustom,wireSettings,thInfo,neutralInfo,
              temaFns,temaConsts,buildTemaReport,downloadText,stamp,
+             cardQuestions,patternSummary,renderPatterns,togglePattern,
              lathundKontrollInit,splitStem,formFindings,formFor,renderForm,isForebild,questionAsText,copyText,
              subsetEmbed,totalVisibleRows,selVisible,renderSelBar,selRedraw,selAllVisible,selClear,saveSubset,
              xExportTabs,xExportTotal,xExportRender,xExportRows,xExportCSV,xLoadXLSX,xExportXLSX,xExportPrint,openHelp,closeHelp,wireHelp,xExportInit];
@@ -3305,7 +3390,7 @@ function temaConsts(){
   return `const MIN_N_DIST=${MIN_N_DIST};const TH_DEFAULT=${JSON.stringify(TH_DEFAULT)};const TH_RANGE=${JSON.stringify(TH_RANGE)};const TH_LABEL=${JSON.stringify(TH_LABEL)};const PSY=${JSON.stringify(PSY)};`
     + `const TW=${JSON.stringify(TW)};const CUE_ABS=${JSON.stringify(CUE_ABS)};const CUE_HEDGE=${JSON.stringify(CUE_HEDGE)};`
     + `const FORM_META=${JSON.stringify(FORM_META)};const FORM_REGLER=${JSON.stringify(FORM_REGLER)};const FORM_CUE=${JSON.stringify(FORM_CUE)};const FORM_EXPLAINS=${JSON.stringify(FORM_EXPLAINS)};`
-    + `const ASK_NEEDS_FORM=${JSON.stringify(ASK_NEEDS_FORM)};const ASK_ORDER=${JSON.stringify(ASK_ORDER)};const ASK_TEXT=${JSON.stringify(ASK_TEXT)};const ASK_PSY=${JSON.stringify(ASK_PSY)};`
+    + `const ASK_SUMMARY=${JSON.stringify(ASK_SUMMARY)};const SUM_TEXT=${JSON.stringify(SUM_TEXT)};const ASK_NEEDS_FORM=${JSON.stringify(ASK_NEEDS_FORM)};const ASK_ORDER=${JSON.stringify(ASK_ORDER)};const ASK_TEXT=${JSON.stringify(ASK_TEXT)};const ASK_PSY=${JSON.stringify(ASK_PSY)};`
     + `const HELP_HTML=${JSON.stringify(HELP_TEMA_HTML)};const HELP_TEMA_HTML=HELP_HTML;`;
 }
 /* Bygger hela den fristående temarapporten som en HTML-sträng. Använder bara embed, funktionslistan
@@ -3380,6 +3465,7 @@ function buildTemaReport(EMBED){
         </div>
         <div class="tagbar" id="tagbar"></div>
       </div>
+      <div id="patterns"></div>
       <div id="actionlist"></div>
       <div id="goodlist"></div>
       <div id="count"></div>

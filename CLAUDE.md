@@ -85,6 +85,10 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
   utfällningen "Ur MCQ-lathunden" under ett formfynd. Formfynd visas på kortet bara under en
   fråga de kan förklara (`FORM_EXPLAINS`); utan mönster i utfallet ligger de i den hopfällda
   rutan "Formkontroll". Appens egna vyer använder fortfarande `cueScan` och är orörda.
+- **Sammanfattning före kort.** En regel vars budskap är detsamma för varje fråga den träffar
+  (mycket lätt, alternativ som nästan ingen valde, återkommande formfynd) hör hemma i
+  "Mönster i frågorna" (`patternSummary`, `ASK_SUMMARY`), inte på korten. Korten
+  (`cardQuestions`) bär bara det som måste läsas i frågans eget innehåll.
 - **Temarapporten måste kunna bygga sig själv** (urvalssidan skapas inne i den exporterade
   filen). En funktion eller konstant som rapporten använder måste därför stå i `temaFns()`
   respektive `temaConsts()`. Testet "en exporterad sida kan själv bygga en urvalssida" fångar missar.
