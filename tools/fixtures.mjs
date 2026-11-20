@@ -28,3 +28,19 @@ export function setupDirty(ev) {
     return d;
   }; globalThis.dirty = makeDirty();`);
 }
+
+/** Ställer appen som efter "Visa exempel" i vyn Slutrapport MCQ och lägger korten i globalen `VIEW`. */
+export function setupDemoView(ev) {
+  ev(`state.json = parseJSON([demoToInspera(DEMO_DATA.DEMO)]); state.pdfMcqs = DEMO_DATA.PDF;
+      state.tags = parseTagsRows(DEMO_DATA.TAGS); state.view = "final-mcq"; state.mode = "edu"; state.excluded = new Map();
+      globalThis.rebuildView = function(){
+        state.disc = computeDiscrimination(state.json, {criterion:"whole", excluded:state.excluded});
+        state.optDisc = computeOptDisc(state.json, {criterion:"whole", excluded:state.excluded});
+        state.vm = buildView(); globalThis.VIEW = state.vm.view; return VIEW; };
+      rebuildView();`);
+}
+/** Utfallet per fråga som gränserna påverkar – används för att visa att standardgränserna inte ändrar något. */
+export const SNAPSHOT_EXPR = `({
+  cards: VIEW.map(v => { const a = advice(v); return { seq:String(v.seq), l1:a.l1.map(x=>x.psy), l2:a.l2.map(x=>x.psy),
+    rpbLabel: rpbInfo(v).label, exemplary: isExemplary(v), html: card(v) }; }),
+  pass: passMetric(new Set()) })`;

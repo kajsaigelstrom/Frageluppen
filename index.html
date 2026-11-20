@@ -181,6 +181,13 @@
     background:var(--accent);color:#fff;cursor:pointer;transition:.12s;box-shadow:0 1px 2px rgba(0,0,0,.08)}
   .btn-primary:hover:not(:disabled){background:#1a5e47}
   .btn-primary:disabled{background:var(--line);color:var(--faint);cursor:not-allowed;box-shadow:none}
+  #settings{margin:10px 0 0;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--card);max-width:560px}
+  .setgrid{display:grid;gap:8px}
+  .setrow{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;font-size:13.5px}
+  .setinp{font:inherit;font-size:13.5px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;width:5.5em;text-align:right}
+  .setrange{font-size:12px;color:var(--muted);min-width:5em}
+  .sethint{font-size:12.5px;color:var(--muted);margin:10px 0}
+  .thcustom{margin:10px 0 0;padding:8px 12px;border:1px solid #c9b06a;border-radius:8px;background:#faf6ea;font-size:13px}
   .linkbtn{font:inherit;font-size:13px;background:none;border:none;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer}
   .linkbtn:hover{color:var(--ink)}
   .prepline{margin-top:12px}
@@ -377,7 +384,10 @@
       <h1>Frågeluppen — MCQ-analys för Inspera-tentor</h1>
       <span class="devpill">Under utveckling</span>
       <button class="helpbtn" id="helpOpen" type="button">? Hjälp</button>
+      <button class="linkbtn" id="settings-open" type="button">Inställningar</button>
     </div>
+    <div id="settings" class="hidden"></div>
+    <div id="th-custom" class="hidden"></div>
     <p class="subtitle">Visar svarsfördelning per alternativ, andel rätt och diskriminering – hur väl varje fråga skiljer starka från svaga studenter.</p>
     <p>Ladda upp tentans PDF och ett eller flera JSON-resultat från Inspera. Stöd för att bedöma frågekvalitet, förbereda betygskollegiet och ge frågekonstruktörer återkoppling om MCQ-konstruktionen. Allt körs lokalt i din webbläsare; inga data laddas upp.</p>
     <p class="devnote">Verktyget utvecklas fortfarande och kan innehålla fel – dubbelkolla viktiga slutsatser. Hittar du en bugg eller har förslag, hör av dig till <b>Kajsa Igelström</b>.</p>
@@ -518,7 +528,60 @@ if (pdfjsLib && pdfjsLib.GlobalWorkerOptions)
 const $ = s => document.querySelector(s);
 const logEl = $("#log");
 function log(m){ logEl.textContent = m; }
-const state = { pdfMcqs:null, jsonFiles:[], tags:null, activeTags:{}, mode:"edu", view:"pre-mcq", excluded:new Map() };
+/* Justerbara gränser. Ändrar bara märkningar och vilka kort som får en fråga/ett tips – aldrig mätvärdena.
+   Minsta underlag (MIN_N_DIST, n>=30) och gränserna 0,10/0,30 för diskrimineringsetiketterna ligger fast. */
+const TH_DEFAULT = { easy:90, hard:60, goodDisc:0.20, pass:65 };
+const TH_RANGE   = { easy:[70,100], hard:[30,70], goodDisc:[0.10,0.30], pass:[50,100] };
+const TH_LABEL   = { easy:"Lätt från (% rätt)", hard:"Svår under (% rätt)", goodDisc:"God diskriminering från (r)", pass:"Godkäntgräns (%)" };
+const state = { pdfMcqs:null, jsonFiles:[], tags:null, activeTags:{}, mode:"edu", view:"pre-mcq", excluded:new Map(), th:Object.assign({},TH_DEFAULT) };
+function setThreshold(key, value){
+  if(!Object.prototype.hasOwnProperty.call(TH_RANGE,key)) return false;
+  if(value===null || value===undefined || (typeof value==="string" && value.trim()==="")) return false;
+  const x = typeof value==="number" ? value : Number(String(value).trim().replace(",","."));
+  if(!Number.isFinite(x)) return false;
+  const [lo,hi]=TH_RANGE[key];
+  if(x<lo || x>hi) return false;
+  if(key==="hard" && x>=state.th.easy) return false;
+  if(key==="easy" && x<=state.th.hard) return false;
+  state.th[key]=x; return true;
+}
+function thresholdsCustom(){ return Object.keys(TH_DEFAULT).some(k=>state.th[k]!==TH_DEFAULT[k]); }
+function resetThresholds(){ state.th=Object.assign({},TH_DEFAULT); }
+function thFmt(key){ return key==="goodDisc" ? state.th.goodDisc.toFixed(2).replace(".",",") : String(state.th[key]); }
+function thresholdsText(withPass){
+  return `Lätt från ${thFmt("easy")} % · Svår under ${thFmt("hard")} % · God diskriminering från ${thFmt("goodDisc")}`
+       + ((withPass && state.th.pass!==TH_DEFAULT.pass) ? ` · Godkäntgräns ${thFmt("pass")} %` : "");
+}
+/* Inställningspanelen: dold tills någon klickar på "Inställningar". Samma kod i appen och i temarapporten
+   (withPass=false där – godkäntgränsen ändrar godkäntandelen och hör till examinatorn). */
+function settingsHtml(withPass){
+  const keys = withPass ? ["easy","hard","goodDisc","pass"] : ["easy","hard","goodDisc"];
+  return `<div class="setgrid">` + keys.map(k=>`<label class="setrow"><span>${TH_LABEL[k]}</span>`
+      + `<input type="text" inputmode="decimal" class="setinp" data-th="${k}" value="${thFmt(k)}" size="5">`
+      + `<span class="setrange">${String(TH_RANGE[k][0]).replace(".",",")}–${String(TH_RANGE[k][1]).replace(".",",")}</span></label>`).join("")
+    + `</div><div class="sethint">Gränserna ändrar bara märkningar och vilka kort som får en kommentar. Mätvärdena ändras aldrig.</div>`
+    + `<button type="button" class="btn-ghost" id="set-reset">Återställ standard</button>`;
+}
+function renderThCustom(withPass){
+  const el=$("#th-custom"); if(!el) return;
+  if(!thresholdsCustom()){ el.className="hidden"; el.innerHTML=""; return; }
+  el.className="thcustom";
+  el.innerHTML=`<b>Anpassade gränser:</b> ${thresholdsText(withPass)} <button type="button" class="linkbtn" id="th-reset">Återställ</button>`;
+}
+function wireSettings(withPass, onChange){
+  const open=$("#settings-open"), panel=$("#settings"); if(!open || !panel) return;
+  const draw=()=>{ panel.innerHTML=settingsHtml(withPass); renderThCustom(withPass); };
+  const reset=()=>{ resetThresholds(); draw(); onChange(); renderThCustom(withPass); };
+  open.addEventListener("click", ()=>{ panel.classList.toggle("hidden"); if(!panel.classList.contains("hidden")) draw(); });
+  panel.addEventListener("change", e=>{
+    const inp=e.target.closest(".setinp"); if(!inp) return;
+    const ok=setThreshold(inp.dataset.th, inp.value);
+    draw();                                            // ogiltigt värde → fältet återgår till det förra
+    if(ok){ onChange(); renderThCustom(withPass); }
+  });
+  panel.addEventListener("click", e=>{ if(e.target.closest("#set-reset")) reset(); });
+  document.addEventListener("click", e=>{ if(e.target.closest && e.target.closest("#th-reset")) reset(); });
+}
 function modeHint(m){ return m==="action"
   ? "Triage visar bara frågor som kan behöva åtgärd – övriga är dolda. Växla för att se alla."
   : m==="simple"
@@ -567,7 +630,7 @@ function polyInfo(scores, r, max){
       tip:`Poängen på frågan följer inte tentan i övrigt: starka studenter får inte högre poäng här. Granska bedömningsmatrisen/rättningen. (Detta är ingen flervalsfråga, så det handlar inte om facit.) n=${n}.`};
   let cls,label;
   if(r>=0.30){cls="rpb-good";label="mycket god";}
-  else if(r>=0.20){cls="rpb-good";label="god";}
+  else if(r>=state.th.goodDisc){cls="rpb-good";label="god";}
   else if(r>=0.10){cls="rpb-mid";label="acceptabel";}
   else {cls="rpb-lowconf";label="låg";}
   return {cls,value:`r ${fmt}`,label,
@@ -1351,7 +1414,7 @@ function rpbInfo(v){
       tip:`Rätt svar diskriminerar svagt (r_pb ${fmt}) medan en distraktor diskriminerar tydligt positivt (r_pb +${v.bestDistPbis.toFixed(2)}) – starka studenter väljer distraktorn. Vanligt tecken på felregistrerat facit eller att «rätt» svar är diskutabelt. (n=${n}.)`};
   let cls,label,badge="";
   if(r>=0.30){cls="rpb-good";label="mycket god";}
-  else if(r>=0.20){cls="rpb-good";label="god";}
+  else if(r>=state.th.goodDisc){cls="rpb-good";label="god";}
   else if(r>=0.10){cls="rpb-mid";label="acceptabel";}
   else {cls="rpb-bad";label=(r<0?"låg (svagt negativ)":"låg");badge=`<span class="badge hard">Låg diskriminering</span>`;}
   const negNote=(r<0)?` Värdet är svagt negativt men inom bruset (ej under −${sig.toFixed(2)}), så det är inte ett tydligt tecken på felregistrerat facit – snarare ingen diskriminering.`:"";
@@ -1477,7 +1540,7 @@ function advice(v){
     facitDone=true;
   }
   const veryHard = P>0 && P < chance*1.25;
-  const goodDisc = rpbOk && r>=0.20;
+  const goodDisc = rpbOk && r>=state.th.goodDisc;
   if(distOk && veryHard && !goodDisc && !facitDone){
     out.l1.push({cls:"adv-orange", action:"Se över frågan", psy:"hard",
       why:`Få svarade rätt – nära ren gissningsnivå – och frågan skiljer inte starka från svaga studenter. Den kan vara otydlig eller felaktig; överväg att utesluta den. (En svår fråga som ändå skiljer väl behålls.)`});
@@ -1515,7 +1578,7 @@ function advice(v){
   }
   // lätt fråga: en farhåga bara om svaret verkar gå att gissa på formen.
   // En lätt, ren fråga med levande distraktorer är en bekräftad must-know, inte ett problem.
-  if(distrOk && P>=0.90 && !(rpbOk && r>=0.20)){
+  if(distrOk && P>=state.th.easy/100 && !(rpbOk && r>=state.th.goodDisc)){
     const cues=cueScan(v).pickCorrect;
     if(cues.length){
       out.l2.push({cls:"adv-green", action:"Se över – kan vara gissningsbar", psy:"target-vs-norm",
@@ -1626,7 +1689,7 @@ function render(){
   $("#summary").innerHTML =
     stat(state.json.candCount,"kandidater","","s-muted") +
     stat(view.length,"MCQ-frågor","","s-muted") +
-    (nExcl?stat(nExcl,"exkluderade","Dragna ur poängsättningen – visas kvar men bidrar inte till total, diskriminering eller 65 %-gränsen."):"") +
+    (nExcl?stat(nExcl,"exkluderade","Dragna ur poängsättningen – visas kvar men bidrar inte till total, diskriminering eller godkäntgränsen."):"") +
     stat(meanPc.toFixed(1)+" %","genomsnittlig andel rätt") +
     (state.smallN||!showExe?"":stat(nExe,"stark diskriminering","Skiljer starka från svaga väl (hög item–total-korrelation) utan automatiska flaggor. Diskriminering är evidens, inte bevis – bekräfta att frågan testar rätt sak innan du återanvänder den.")) +
     (state.smallN?"":stat(nClean,"inga automatiska flaggor","Inga flaggor från de automatiska kontrollerna (statistik, distraktorer, vanliga ledtrådar). Inget kvalitetsintyg – innehåll, måluppfyllelse och subtilare ledtrådar syns inte här.")) +
@@ -1692,12 +1755,11 @@ function refreshLists(){
 /* ---------- G-gränsmetrik: andel studenter som nått 65 % av hela tentans poäng ----------
    65 %-gränsen avrundas NEDÅT till heltal poäng; varje students poäng avrundas UPPÅT.
    Godkänd = ceil(studentpoäng) ≥ floor(0,65 × inkluderad maxpoäng). Frågor kan exkluderas. */
-const PASS_FRAC = 0.65;
 function passMetric(exc){
   const J=state.json; if(!J || !J.qMeta || !J.cohortScores) return null;
   const incl=[]; let maxP=0;
   J.qMeta.forEach((m,i)=>{ if(!exc.has(m.num)){ incl.push(i); maxP+=m.max; } });
-  const thr=Math.floor(PASS_FRAC*maxP + 1e-9);          // gränsen nedåt
+  const thr=Math.floor(state.th.pass/100*maxP + 1e-9);          // gränsen nedåt
   let pass=0; const N=J.cohortScores.length;
   for(const row of J.cohortScores){
     let p=0; for(const i of incl) p+=row[i];
@@ -1732,13 +1794,13 @@ function renderPassMetric(){
         <span class="exnum">Fråga ${esc(String(q.num))}</span>${nm}<span class="extype">${q.isMCQ?'MCQ':'Fritext'}</span><span class="exmax">${q.max} p</span>${off?reasonSel(q.num):''}</label>`;
     }).join("");
     excPanel = `<div class="excpanel ${state.excOpen?'':'hidden'}">
-      <div class="exchint">Avmarkera frågor som ska <b>dras ur poängsättningen</b>. Allt räknas om: maxpoäng, varje students poäng, diskriminering och 65 %-gränsen. Frågan visas kvar men märkt.${m.nExcluded?' <a href="#" class="exreset">Återställ alla</a>':''}</div>
+      <div class="exchint">Avmarkera frågor som ska <b>dras ur poängsättningen</b>. Allt räknas om: maxpoäng, varje students poäng, diskriminering och godkäntgränsen. Frågan visas kvar men märkt.${m.nExcluded?' <a href="#" class="exreset">Återställ alla</a>':''}</div>
       <div class="excgrid">${rows}</div></div>`;
   }
   el.innerHTML = `<div class="panel metric"><div class="metrictop"><div>
-      <div class="metrichead">Nått 65 %-gränsen</div>
+      <div class="metrichead">Nått ${state.th.pass} %-gränsen</div>
       <div class="metricbig">${m.pass} av ${m.N} <span class="metricpct">(${m.pct.toFixed(1)} %)</span></div>
-      <div class="metricsub">Gräns ≥ ${m.thr} av ${m.maxP} p (hela tentan; 65 %-gränsen nedåt, studentpoäng uppåt)${exNote}</div>
+      <div class="metricsub">Gräns ≥ ${m.thr} av ${m.maxP} p (hela tentan; ${state.th.pass} %-gränsen nedåt, studentpoäng uppåt)${exNote}</div>
     </div>${toggleBtn}</div>${warn}${excPanel}</div>`;
   if(interactive){
     el.querySelector(".exctoggle").addEventListener("click",()=>{ state.excOpen=!state.excOpen; renderPassMetric(); });
@@ -1784,7 +1846,7 @@ function renderTotal(){
     `<span class="stat"><b>${J.qMeta.length}</b><span>frågor (${J.mcqSeqs.length} MCQ)</span></span>`+
     (nExcl?`<span class="stat"><b>${nExcl}</b><span>exkluderade</span></span>`:"")+
     `<span class="stat"><b>${(+maxRed.toFixed(1))}</b><span>maxpoäng${nExcl?` (av ${(+J.maxTotal.toFixed(1))})`:""}</span></span>`+
-    (pm?`<span class="stat"><b>${pm.pass} / ${n}</b><span>nått 65 %-gränsen (${Math.round(pm.pass/n*100)} %)</span></span>`:"")+
+    (pm?`<span class="stat"><b>${pm.pass} / ${n}</b><span>nått ${state.th.pass} %-gränsen (${Math.round(pm.pass/n*100)} %)</span></span>`:"")+
     `</div>`;
   const TYPE={single:["MCQ","single"], multi:["Flerval","multi"], text:["Fritext","text"]};
   // Sök används inte i totalrapporten (rutan är dold där) – filtrering sker enbart på tema/taggar.
@@ -1863,7 +1925,7 @@ function isExemplary(v){
 }
 /* kort motivering till på vilket sätt frågan är exemplarisk */
 function exemplaryReason(v){
-  return v.pcorr<60
+  return v.pcorr<state.th.hard
     ? `Svår, men de starka klarar den (r<sub>pb</sub> +${v.rpb.toFixed(2)})`
     : `Skiljer tydligt starka från svaga (r<sub>pb</sub> +${v.rpb.toFixed(2)})`;
 }
@@ -2071,8 +2133,8 @@ function card(v){
   const tags=v.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("");
   let badge="";
   if(v.n>=MIN_N_DIST){
-    if(v.pcorr<60) badge=`<span class="badge hard">Svår</span>`;
-    else if(v.pcorr>=90) badge=`<span class="badge easy">Lätt</span>`;
+    if(v.pcorr<state.th.hard) badge=`<span class="badge hard">Svår</span>`;
+    else if(v.pcorr>=state.th.easy) badge=`<span class="badge easy">Lätt</span>`;
   }
   const flag=v.unmatched>0;
   const ri=rpbInfo(v);
@@ -2094,7 +2156,7 @@ function card(v){
       </div></details>`:""}`:""}
     </div>`;
   const noteHtml = adv.note ? `<div class="advnote">${esc(adv.note)}</div>` : "";
-  const okMsg = v.pcorr>=90
+  const okMsg = v.pcorr>=state.th.easy
     ? `✓ Nästan alla svarade rätt – inga formproblem hittade. En fråga som nästan alla klarar skiljer av naturliga skäl lite mellan starka och svaga; vid måltestning är det oftast som det ska (bekräftad must-know).`
     : `✓ Inga anmärkningar – frågan ser ut att fungera.`;
   const bucket = (title, items, edu) => items.length
@@ -2272,7 +2334,7 @@ function viewerInit(){
   const nExe=showExe?scored.filter(isExemplary).length:0;
   const nClean=scored.filter(v=>!has1(v)&&!has2(v)&&(!showExe||!isExemplary(v))).length;
   $("#summary").innerHTML = stat(state.json.candCount,"kandidater","","s-muted")+stat(view.length,"MCQ-frågor","","s-muted")
-    + (nExcl?stat(nExcl,"exkluderade","Dragna ur poängsättningen – visas kvar men bidrar inte till total, diskriminering eller 65 %-gränsen."):"")
+    + (nExcl?stat(nExcl,"exkluderade","Dragna ur poängsättningen – visas kvar men bidrar inte till total, diskriminering eller godkäntgränsen."):"")
     + stat(meanPc.toFixed(1)+" %","genomsnittlig andel rätt")
     + (state.smallN||!showExe?"":stat(nExe,"stark diskriminering","Skiljer starka från svaga väl (hög item–total-korrelation) utan automatiska flaggor. Diskriminering är evidens, inte bevis – bekräfta att frågan testar rätt sak innan du återanvänder den.")) + (state.smallN?"":stat(nClean,"inga automatiska flaggor","Inga flaggor från de automatiska kontrollerna (statistik, distraktorer, vanliga ledtrådar). Inget kvalitetsintyg – innehåll, måluppfyllelse och subtilare ledtrådar syns inte här."))
     + stat(nTips,"tips") + stat(nAction,"att åtgärda","",nAction>0?"s-act-on":"s-act-off")
@@ -2328,7 +2390,7 @@ function xExportTotal(){
     +`<span class="stat"><b>${h.nq}</b><span>frågor (${h.nmcq} MCQ)</span></span>`
     +(h.nExcl?`<span class="stat"><b>${h.nExcl}</b><span>exkluderade</span></span>`:"")
     +`<span class="stat"><b>${h.maxRed}</b><span>maxpoäng${h.nExcl?` (av ${h.maxTotal})`:""}</span></span>`
-    +(h.pass!=null?`<span class="stat"><b>${h.pass} / ${h.n}</b><span>nått 65 %-gränsen (${h.passPct} %)</span></span>`:"")
+    +(h.pass!=null?`<span class="stat"><b>${h.pass} / ${h.n}</b><span>nått ${state.th.pass} %-gränsen (${h.passPct} %)</span></span>`:"")
     +'</div>';
   const q=key($("#search").value);
   let rows=state.totalRows.slice();
@@ -2393,7 +2455,7 @@ function xExportRender(){
   const nExe=showExe?scored.filter(isExemplary).length:0;
   const nClean=scored.filter(v=>!has1(v)&&!has2(v)&&(!showExe||!isExemplary(v))).length;
   $("#summary").innerHTML = stat(EMBED.candCount,"kandidater","","s-muted")+stat(view.length,"MCQ-frågor","","s-muted")
-    + (nExcl?stat(nExcl,"exkluderade","Dragna ur poängsättningen – visas kvar men bidrar inte till total, diskriminering eller 65 %-gränsen."):"")
+    + (nExcl?stat(nExcl,"exkluderade","Dragna ur poängsättningen – visas kvar men bidrar inte till total, diskriminering eller godkäntgränsen."):"")
     + stat(meanPc.toFixed(1)+" %","genomsnittlig andel rätt")
     + (state.smallN||!showExe?"":stat(nExe,"stark diskriminering"))
     + (state.smallN?"":stat(nClean,"inga automatiska flaggor"))
@@ -2564,20 +2626,20 @@ function exportInteractive(){
   const snap = (J.qMeta && J.cohortScores) ? Object.assign(passMetric(state.excluded), {ungradedPts: J.ungradedPts||0}) : null;
   const EMBED = { views, viewIdx, candCount: J.candCount, smallN: !!state.smallN, tags,
                   passSnapshot: snap, freeDist: (state.freeDist||freeTextDist()||[]),
-                  excluded: [...state.excluded.entries()], mode: state.mode };
+                  excluded: [...state.excluded.entries()], mode: state.mode, th: Object.assign({},state.th) };
 
   const FNS=[esc,norm,key,stat,codeSortKey,cmpArr,rpbSortVal,distColor,critLabel,modeHint,availableModeIds,refreshLists,
              activeTagItems,tagPass,filtersActive,updateClearBtn,applyFilters,clearFilters,rpbInfo,isExcluded,exclReason,
              cueWords,cueHas,cueScan,advice,isExemplary,exemplaryReason,unmapReason,card,
              currentView,drawCards,jumpToCard,passMetric,renderPassMetric,freeTextDist,renderFreeText,buildActionList,buildGoodList,buildTagbar,
              xExportTabs,xExportTotal,xExportRender,xExportRows,xExportCSV,xLoadXLSX,xExportXLSX,xExportPrint,openHelp,closeHelp,wireHelp,xExportInit];
-  const consts = `const MIN_N_DIST=${MIN_N_DIST};const PASS_FRAC=${PASS_FRAC};const PSY=${JSON.stringify(PSY)};`
+  const consts = `const MIN_N_DIST=${MIN_N_DIST};const TH_DEFAULT=${JSON.stringify(TH_DEFAULT)};const TH_RANGE=${JSON.stringify(TH_RANGE)};const TH_LABEL=${JSON.stringify(TH_LABEL)};const PSY=${JSON.stringify(PSY)};`
     + `const TW=${JSON.stringify(TW)};const CUE_ABS=${JSON.stringify(CUE_ABS)};const CUE_HEDGE=${JSON.stringify(CUE_HEDGE)};`
     + `const HELP_HTML=${JSON.stringify(HELP_HTML)};`;
   const wrapper = `const EMBED=${JSON.stringify(EMBED)};`
     + `const $=s=>document.querySelector(s);`
     + `const state={vm:{view:[]},json:{candCount:EMBED.candCount},smallN:EMBED.smallN,tags:EMBED.tags,activeTags:{},`
-    + `mode:EMBED.mode,viewIdx:EMBED.viewIdx,totalRows:[],passSnapshot:EMBED.passSnapshot,freeDist:EMBED.freeDist,excluded:new Map(EMBED.excluded||[])};`
+    + `mode:EMBED.mode,viewIdx:EMBED.viewIdx,totalRows:[],passSnapshot:EMBED.passSnapshot,freeDist:EMBED.freeDist,excluded:new Map(EMBED.excluded||[]),th:Object.assign({},TH_DEFAULT,EMBED.th||{})};`
     + `const activeView=()=>EMBED.views[state.viewIdx];`
     + `const renderTotal=()=>xExportTotal();`
     + `xExportInit();`;
@@ -2898,6 +2960,7 @@ $("#prep-save").addEventListener("click", savePackage);
 $("#reopen").addEventListener("click", expandUpload);
 refreshCompute();
 wireHelp();
+wireSettings(true, ()=>{ if(state.json) render(); });
 { const c=$("#credit"); if(c) c.innerHTML=creditText(); }
 ["search","sort"].forEach(id=>$("#"+id).addEventListener("input", ()=>{ if(state.json) applyFilters(); }));
 $("#clearfilter").addEventListener("click", clearFilters);
