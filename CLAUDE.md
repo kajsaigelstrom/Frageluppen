@@ -79,7 +79,8 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
 - **Formkontrollen kommer ur MCQ-lathunden** och underhålls där. Avsnitten `LATHUND-KONTROLL`
   och `LATHUND-REGLER` i `index.html` skrivs av `node tools/sync-lathund.mjs <lathundens mapp>`
   och ändras aldrig för hand. Med `LATHUND_DIR` satt jämför testerna mot lathunden. Lathundens
-  innehåll är CC BY-NC-SA 4.0, resten av repot MIT.
+  regelkod har MIT-licens som resten av repot; texterna (råd, motiveringar, hjälptexter) har
+  CC BY 4.0.
 - **Lathundens råd är det enda undantaget från "aldrig åtgärder" i temarapporten**, och bara i
   utfällningen "Ur MCQ-lathunden" under ett formfynd. Formfynd visas på kortet bara under en
   fråga de kan förklara (`FORM_EXPLAINS`); utan mönster i utfallet ligger de i den hopfällda

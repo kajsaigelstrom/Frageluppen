@@ -1720,7 +1720,8 @@ function advice(v){
 /* ---------- Formkontrollen ur MCQ-lathunden ----------
    Lathundens mekaniska kontroll (längd, ordeko, inledning, led, negation, samlingsalternativ m.m.) körs på
    frågornas text. MCQ-lathunden är källan: de två märkta avsnitten nedan skrivs av tools/sync-lathund.mjs och
-   ändras aldrig för hand. Lathundens innehåll är © Kajsa Igelström, CC BY-NC-SA 4.0 (se FORM_META). */
+   ändras aldrig för hand. Lathunden är © Kajsa Igelström: regelkoden har MIT-licens, texterna (rubriker, råd,
+   motiveringar) CC BY 4.0 (se FORM_META). */
 function lathundKontrollInit(){
 /* <LATHUND-KONTROLL> */
 /* MCQ-lathunden — den mekaniska kontrollen.
@@ -1863,7 +1864,7 @@ function lathundKontrollInit(){
 /* </LATHUND-KONTROLL> */
 }
 /* <LATHUND-REGLER> */
-const FORM_META = {"version":"Betaversion 0.9","datum":"5 november 2026","licens":"CC BY-NC-SA 4.0","upphov":"© 2026 Kajsa Igelström"};
+const FORM_META = {"version":"Betaversion 0.9","datum":"5 november 2026","licens":"CC BY 4.0","upphov":"© 2026 Kajsa Igelström"};
 const FORM_REGLER = {
  "langst": {
   "prio": "battre",

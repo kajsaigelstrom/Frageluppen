@@ -54,6 +54,7 @@ inte dokumenterad här.
 - **Förebilder.** Listan över starkt diskriminerande frågor i temarapporten ersätts av frågor
   som fungerar som förebild, med samma kriterier som MCQ-lathundens goda exempel: 50–85 %
   rätt, god diskriminering, inga formfynd och inget mönster som ger en fråga på kortet.
+- **Licens:** koden MIT som förut, texterna CC BY 4.0 (står i README).
 - **`tools/sync-lathund.mjs`** hämtar regelkoden och rådtexterna oförändrade ur MCQ-lathunden.
   Lathunden är källan; avsnitten i `index.html` ändras aldrig för hand.
 - **PDF-exporten heter nu "PDF (examinatorns)"** och är orörd i övrigt. Den innehåller

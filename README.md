@@ -115,7 +115,12 @@ Verktyget bearbetar riktiga studentresultat lokalt i webbläsaren; ingenting lad
 
 ## Licens
 
-MIT – se [LICENSE](LICENSE). Fri att använda, ändra och dela, så länge upphovsrättsnotisen följer med.
+**Koden** har MIT-licens – se [LICENSE](LICENSE). Fri att använda, ändra och dela, så länge
+upphovsrättsnotisen följer med.
+
+**Texterna** (hjälptexter, frågorna i "Att fråga sig" samt råd och motiveringar ur
+MCQ-lathunden) har [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.sv): fria att
+använda, dela och bearbeta med angivande av källa (Kajsa Igelström, Linköpings universitet).
 
 ## Kontakt
 
