@@ -23,7 +23,8 @@ Hela verktyget är **en enda fil**, `index.html`. Du behöver inte installera n�
 
 ## För kurssamordnare: förbered tentan åt examinatorn
 
-1. Öppna verktyget och klicka **Förbered tentan åt examinatorn** under filrutorna.
+1. Öppna verktyget och välj fliken **Kurssamordnare** högst upp. En länk som slutar på
+   `#samordnare` öppnar det läget direkt.
 2. Släpp resultatfilerna (JSON) från Inspera, tentans PDF och taggfilen om den finns.
 3. Kontrollera kvittot (tentans namn och antal kandidater) och klicka **Spara tentapaket**.
 4. Lämna filen till examinatorn, som släpper den i rutan för resultat.

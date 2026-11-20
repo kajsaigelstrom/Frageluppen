@@ -58,6 +58,8 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
 - **Tre rapportvyer**, knutna till rättningsflödet: Preliminär MCQ (kriterium = MCQ-delen,
   före rättning), Slutrapport MCQ (kriterium = hela tentan, efter rättning), Totalrapport
   (hela tentan inkl. fritext/flersvar). Diskriminering = punkt-biseriell / item–total.
+- **Två ingångar** högst upp i filpanelen: Examinator och Kurssamordnare. Adressen följer valet
+  (`#examinator`, `#samordnare`).
 - **Kurssamordnaren** kan förbereda tentan (läget "Förbered tentan"): ser bara ett kvitto,
   aldrig resultat, och sparar ett tentapaket som examinatorn öppnar i rutan för resultat.
   Examinatorns egen PDF eller taggfil gäller före paketets.

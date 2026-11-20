@@ -106,3 +106,38 @@ test("tentapaketet sparas utan att länken dras in direkt", async () => {
   assert.equal(JSON.parse(downloads[0].parts[0]).format, "frageluppen-tentapaket");
   assert.deepEqual(urlEvents, ["create"]);
 });
+
+// ---- två ingångar: examinator och kurssamordnare ----
+import fs from "node:fs"; import { INDEX } from "./harness.mjs";
+test("adressen väljer ingång", () => {
+  const { ev } = fresh();
+  assert.equal(ev("roleFromHash('#samordnare')"), "prep");
+  assert.equal(ev("roleFromHash('#kurssamordnare')"), "prep");
+  assert.equal(ev("roleFromHash('#examinator')"), "exam");
+  assert.equal(ev("roleFromHash('')"), null);
+  assert.equal(ev("roleFromHash('#card-12')"), null);
+  assert.equal(ev("roleFromHash('#SAMORDNARE')"), "prep");
+});
+test("sidan har två flikar för ingångarna och ingen gömd länk", () => {
+  const html = fs.readFileSync(INDEX, "utf8");
+  assert.match(html, /id="role-exam"[^>]*>Examinator</);
+  assert.match(html, /id="role-prep"[^>]*>Kurssamordnare</);
+  assert.ok(!html.includes('id="prep-open"') && !html.includes('id="prep-close"'));
+});
+test("flikarna följer läget", () => {
+  const { ev, el } = fresh();
+  ev("setPrep(true)");
+  assert.equal(el("#role-prep").classList.contains("on"), true);
+  assert.equal(el("#role-exam").classList.contains("on"), false);
+  ev("setPrep(false)");
+  assert.equal(el("#role-exam").classList.contains("on"), true);
+  assert.equal(el("#role-prep").classList.contains("on"), false);
+});
+test("rutan för resultat talar till rätt person i varje ingång", () => {
+  const { ev, el } = fresh();
+  ev("setPrep(true)");
+  assert.ok(!el("#json-hint").innerHTML.includes("tentapaketet"));
+  assert.ok(el("#json-hint").innerHTML.includes("Inspera"));
+  ev("setPrep(false)");
+  assert.ok(el("#json-hint").innerHTML.includes("tentapaketet"));
+});

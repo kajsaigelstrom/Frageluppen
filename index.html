@@ -203,7 +203,7 @@
   .linkbtn{font:inherit;font-size:13px;background:none;border:none;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer}
   .linkbtn:hover{color:var(--ink)}
   .expbtn:disabled{opacity:.45;cursor:not-allowed}
-  .prepline{margin-top:12px}
+  .rolebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
   .prephead h2{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:20px;margin:0 0 4px}
   .prephead p{margin:0 0 14px;font-size:13.5px;color:var(--muted);max-width:70ch}
   #prep-receipt{margin-top:14px;font-size:13.5px;line-height:1.6}
@@ -415,6 +415,14 @@
   </div>
 
   <div class="panel" id="uploadpanel">
+    <div class="rolebar">
+      <span class="modelabel">Jag är</span>
+      <div class="modeseg" id="roleseg">
+        <button id="role-exam" class="modebtn on" type="button" title="Ladda upp tentan eller ett tentapaket och analysera frågorna.">Examinator</button>
+        <button id="role-prep" class="modebtn" type="button" title="Förbered tentan åt examinatorn: spara ett minimerat tentapaket.">Kurssamordnare</button>
+      </div>
+      <span class="modehint" id="rolehint">Analysera tentan: ladda upp filerna eller ett tentapaket.</span>
+    </div>
     <div id="uploadfull">
     <div id="prephead" class="prephead hidden">
       <h2>Förbered tentan</h2>
@@ -436,7 +444,7 @@
       </div>
       <div class="drop" id="d-json">
         <label>2 · Resultat (JSON)</label>
-        <div class="hint">Släpp <b>tentapaketet</b> från din kurssamordnare här, eller JSON-filerna från Inspera (under fliken <b>Statistik</b>). En fil per ort – flera går bra.</div>
+        <div class="hint" id="json-hint">Släpp <b>tentapaketet</b> från din kurssamordnare här, eller JSON-filerna från Inspera (under fliken <b>Statistik</b>). En fil per ort – flera går bra.</div>
         <input type="file" id="json" accept="application/json,.json" multiple>
         <div class="got" id="got-json"></div>
       </div>
@@ -455,10 +463,6 @@
     </div>
     <div id="prep-receipt" class="hidden"></div>
     <div id="prep-note" class="hidden">Paketet är minimerat, inte anonymt. Varje rad är en students poängmönster och kan på en liten omtenta kännas igen av den som vet vilka som skrev. Behandla paketet som tentamaterial och dela det bara med examinatorn. Paketet innehåller också tentans frågor.</div>
-    <div class="prepline">
-      <button id="prep-open" class="linkbtn" type="button">Förbered tentan åt examinatorn</button>
-      <button id="prep-close" class="linkbtn hidden" type="button">Tillbaka till analysen</button>
-    </div>
     </div>
     <div id="uploadmini" class="uploadmini hidden">
       <span class="minicheck">✓</span>
@@ -723,8 +727,10 @@ kort som får en kommentar, aldrig mätvärdena. Godkäntgränsen ändrar godkä
 gräns från standard står det överst på sidan, och temarapporten bär med sig dina gränser.</p>
 </div></details>
 <details class="helpsec"><summary>Tentapaket från kurssamordnaren</summary><div class="body">
-<p>Kurssamordnaren kan förbereda tentan åt examinatorn: välj <b>Förbered tentan åt
-examinatorn</b> under filrutorna, släpp resultatfilerna från Inspera, tentans PDF och
+<p>Verktyget har två ingångar, <b>Examinator</b> och <b>Kurssamordnare</b>, som väljs högst upp i
+filpanelen. Adressen följer valet, så en länk som slutar på <code>#samordnare</code> öppnar
+kurssamordnarens läge direkt.</p>
+<p>Kurssamordnaren förbereder tentan åt examinatorn: släpp resultatfilerna från Inspera, tentans PDF och
 taggfilen om den finns, och spara ett <b>tentapaket</b>. Fritextsvar, rättarnamn, tider,
 extratid, betyg och alla id tas bort, och kandidatnumren ersätts av löpnummer.</p>
 <p>Examinatorn släpper paketet i rutan för resultat och klickar Beräkna. En egen PDF eller
@@ -3120,11 +3126,25 @@ function refreshCompute(){
 function setPrep(on){
   state.prep=!!on; state.prepDemo=false;
   const tog=(sel,hide)=>{ const e=$(sel); if(e) e.classList.toggle("hidden", hide); };
-  tog("#prephead",!on); tog("#prep-save",!on); tog("#prep-receipt",!on); tog("#prep-note",!on); tog("#prep-close",!on);
-  tog("#compute",on); tog("#prep-open",on);
+  tog("#prephead",!on); tog("#prep-save",!on); tog("#prep-receipt",!on); tog("#prep-note",!on);
+  tog("#compute",on);
+  { const a=$("#role-exam"), b=$("#role-prep"), h=$("#rolehint");
+    if(a) a.classList.toggle("on", !on); if(b) b.classList.toggle("on", !!on);
+    if(h) h.textContent = on ? "Förbered tentan åt examinatorn: spara ett minimerat tentapaket."
+                             : "Analysera tentan: ladda upp filerna eller ett tentapaket.";
+    const jh=$("#json-hint");
+    if(jh) jh.innerHTML = on ? "Ladda ned JSON-filerna från Inspera (under fliken <b>Statistik</b>) och släpp dem här. En fil per ort – flera går bra."
+                             : "Släpp <b>tentapaketet</b> från din kurssamordnare här, eller JSON-filerna från Inspera (under fliken <b>Statistik</b>). En fil per ort – flera går bra."; }
+  // adressen följer ingången, så att sidan kan sparas som bokmärke eller skickas som länk i rätt läge
+  try{ if(typeof history!=="undefined" && history.replaceState) history.replaceState(null, "", on ? "#samordnare" : "#examinator"); }catch(_){}
   if(on){ $("#results").classList.add("hidden"); expandUpload(); log(""); }
   else if(state.json){ $("#results").classList.remove("hidden"); }
   refreshCompute();
+}
+/* Två ingångar: adressen index.html#samordnare öppnar kurssamordnarens läge, #examinator examinatorns. */
+function roleFromHash(hash){
+  const h=String(hash||"").replace(/^#/,"").toLowerCase();
+  return (h==="samordnare" || h==="kurssamordnare") ? "prep" : h==="examinator" ? "exam" : null;
 }
 async function prepInputs(){
   if(state.prepDemo) return {jsonObjs:[demoToInspera(DEMO_DATA.DEMO)], pdfMcqs:DEMO_DATA.PDF, tagRows:DEMO_DATA.TAGS};
@@ -3192,8 +3212,13 @@ $("#tags").addEventListener("change", e=>{
 });
 $("#compute").addEventListener("click", async ()=>{ await tryRun(); if(state.json) collapseUpload(); });
 $("#demo").addEventListener("click", ()=>{ if(state.prep){ state.prepDemo=true; refreshPrep(); } else loadDemo(); });
-$("#prep-open").addEventListener("click", ()=>setPrep(true));
-$("#prep-close").addEventListener("click", ()=>setPrep(false));
+$("#role-prep").addEventListener("click", ()=>{ if(!state.prep) setPrep(true); });
+$("#role-exam").addEventListener("click", ()=>{ if(state.prep) setPrep(false); });
+if(typeof location!=="undefined"){
+  const applyHash=()=>{ const r=roleFromHash(location.hash); if(r==="prep" && !state.prep) setPrep(true); else if(r==="exam" && state.prep) setPrep(false); };
+  applyHash();
+  if(typeof window.addEventListener==="function") window.addEventListener("hashchange", applyHash);
+}
 $("#prep-save").addEventListener("click", savePackage);
 $("#reopen").addEventListener("click", expandUpload);
 refreshCompute();

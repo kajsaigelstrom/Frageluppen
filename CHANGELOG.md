@@ -35,6 +35,9 @@ inte dokumenterad här.
   om per ort. Ett pakets PDF ger inte längre en falsk varning om fel filpar när nästa tenta
   öppnas. "Tillbaka till analysen" visar resultaten igen. Uppmaningar riktade till
   examinatorn syns inte i temarapporten.
+- **Två ingångar.** Högst upp i filpanelen väljs **Examinator** eller **Kurssamordnare**, i
+  stället för en länk under filrutorna. Adressen följer valet, så `index.html#samordnare`
+  öppnar kurssamordnarens läge direkt och kan skickas som länk.
 - **PDF-exporten heter nu "PDF (examinatorns)"** och är orörd i övrigt. Den innehåller
   åtgärdsförslagen och är inte tänkt för utskick till lärare.
 
