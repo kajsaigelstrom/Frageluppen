@@ -1630,6 +1630,37 @@ function advice(v){
   return out;
 }
 
+/* ---------- Att fråga sig (temarapporten) ----------
+   Samma villkor som advice(), men formulerade som frågor till den som skrev frågan – aldrig som
+   åtgärder. Högst två per kort, i ASK_ORDER. Lydelserna är samlade här så att de är lätta att ändra.
+   Raden "latt" (nivån som möjlig förklaring till en mycket lätt fråga) stängs av genom att nyckeln
+   tas ur ASK_ORDER. */
+const ASK_ORDER = ["facit","forsvar","tydlig","undervisning","ledtrad","distraktor","latt"];
+const ASK_TEXT = {
+  facit: "Stämmer facit? Kan frågan läsas på ett sätt som gör ett annat svar rätt?",
+  forsvar: "Går alternativet «X» att försvara som rätt eller delvis rätt?",
+  tydlig: "Var det tydligt vad som efterfrågades?",
+  undervisning: "Är det här en missuppfattning som undervisningen kan möta?",
+  ledtrad: "Finns det något i formuleringen som pekar ut svaret, eller prövar frågan något enklare än ni avsåg?",
+  distraktor: "Var alternativet ett rimligt svar för en student som inte kan området?",
+  latt: "Nästan alla svarade rätt. Är det väntat för det här målet, eller prövar frågan något enklare än ni avsåg?"
+};
+const ASK_PSY = { "rpb-neg":"facit", "dist-pos":"forsvar", "hard":"tydlig", "misconception":"undervisning",
+                  "target-vs-norm":"ledtrad", "distractor-eff":"distraktor" };
+function askQuestions(v){
+  if(isExcluded(v.seq) || !(v.n>=MIN_N_DIST)) return [];
+  const adv=advice(v), hit={};
+  for(const a of adv.l1.concat(adv.l2)){
+    const k=ASK_PSY[a.psy]; if(!k || hit[k]) continue;
+    const q={key:k, psy:a.psy, text:ASK_TEXT[k]};
+    if(k==="forsvar"){ const X=String(v.opts[v.bestDistIdx]); q.text=q.text.replace("X", X.length>54 ? X.slice(0,52)+"…" : X); }
+    if(k==="ledtrad" && a.tw && a.tw.found && a.tw.found.length) q.fact=a.tw.found.join(" ");
+    hit[k]=q;
+  }
+  if(!hit.ledtrad && v.pcorr>=state.th.easy) hit.latt={key:"latt", psy:"target-vs-norm", text:ASK_TEXT.latt};
+  return ASK_ORDER.filter(k=>hit[k]).slice(0,2).map(k=>hit[k]);
+}
+
 /* ---------- render ---------- */
 function showGate(spec, kind){
   const results=$("#results"); results.classList.add("stubmode");
