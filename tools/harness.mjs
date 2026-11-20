@@ -20,8 +20,11 @@ export function appSource() {
 }
 
 function makeEl() {
+  const cls = new Set();
   const el = {
-    classList: { add() {}, remove() {}, toggle() {}, contains() { return false; } },
+    classList: { add(...c) { c.forEach(x => cls.add(x)); }, remove(...c) { c.forEach(x => cls.delete(x)); },
+      toggle(c, on) { const want = on === undefined ? !cls.has(c) : !!on; want ? cls.add(c) : cls.delete(c); return want; },
+      contains(c) { return cls.has(c); } },
     style: {}, dataset: {}, files: [], children: [],
     innerHTML: "", textContent: "", value: "", disabled: false, checked: false,
     addEventListener() {}, removeEventListener() {}, appendChild() {}, remove() {},
@@ -42,12 +45,13 @@ function run(code, filename) {
     addEventListener() {},
     body: makeEl(), documentElement: makeEl(),
   };
-  const downloads = [];
+  const downloads = [], urlEvents = [];
+  const laterUnref = (fn, ms) => { const t = setTimeout(fn, ms); if (t && t.unref) t.unref(); return t; };   // håll inte testkörningen vid liv
   const sandbox = {
-    document, console, setTimeout, clearTimeout,
+    document, console, setTimeout: laterUnref, clearTimeout,
     alert() {}, confirm() { return true; }, print() {},
     navigator: { userAgent: "node" },
-    URL: { createObjectURL(b) { downloads.push(b); return "blob:test"; }, revokeObjectURL() {} },
+    URL: { createObjectURL(b) { downloads.push(b); urlEvents.push("create"); return "blob:test"; }, revokeObjectURL() { urlEvents.push("revoke"); } },
     Blob: class { constructor(parts, opts) { this.parts = parts; this.opts = opts; } },
     __downloads: downloads,
   };
@@ -57,7 +61,7 @@ function run(code, filename) {
   const ev = c => vm.runInContext(c, ctx);
   const evj = c => { const s = vm.runInContext(`JSON.stringify(${c})`, ctx); return s === undefined ? undefined : JSON.parse(s); };
   const set = (name, value) => { sandbox[name] = value; };   // lägg in ett värde som global i sandboxen
-  return { ev, evj, set, el: bySel, downloads };
+  return { ev, evj, set, el: bySel, downloads, urlEvents };
 }
 
 /** Laddar appen. ev(kod) ger råvärdet, evj(kod) ger en JSON-klon (jämförbar med deepEqual),

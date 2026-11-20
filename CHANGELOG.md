@@ -26,6 +26,15 @@ inte dokumenterad här.
   Godkäntgränsen finns bara i appen. Avvikelse från standard visas överst på sidan, och
   temarapporten och urvalssidan bär med sig gränserna. Med standardvärdena är allt utfall
   oförändrat (kontrollerat mot sparat utgångsläge).
+- **Efter oberoende granskning, före släpp:** ett klick på en rad i listan över starkt
+  diskriminerande frågor kunde växla temarapporten till appens åtgärdsvy när kortet var
+  bortfiltrerat (nu stannar den i rapportens eget läge). Godkäntgränsen i en temarapport kan
+  inte längre återställas av läsaren, eftersom godkäntandelen är räknad med examinatorns
+  gräns. En fil som inte är JSON, eller ett strukturellt trasigt paket, ger ett svenskt
+  felmeddelande. Löpnumren i ett paket löper över alla resultatfiler i stället för att börja
+  om per ort. Ett pakets PDF ger inte längre en falsk varning om fel filpar när nästa tenta
+  öppnas. "Tillbaka till analysen" visar resultaten igen. Uppmaningar riktade till
+  examinatorn syns inte i temarapporten.
 - **PDF-exporten heter nu "PDF (examinatorns)"** och är orörd i övrigt. Den innehåller
   åtgärdsförslagen och är inte tänkt för utskick till lärare.
 

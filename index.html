@@ -558,8 +558,10 @@ function setThreshold(key, value){
   if(key==="easy" && x<=state.th.hard) return false;
   state.th[key]=x; return true;
 }
-function thresholdsCustom(){ return Object.keys(TH_DEFAULT).some(k=>state.th[k]!==TH_DEFAULT[k]); }
-function resetThresholds(){ state.th=Object.assign({},TH_DEFAULT); }
+/* withPass=false (temarapporten): godkäntgränsen är examinatorns och varken räknas som anpassad eller återställs där –
+   godkäntandelen i rapporten är räknad med den. */
+function thresholdsCustom(withPass){ return Object.keys(TH_DEFAULT).some(k=>(withPass!==false || k!=="pass") && state.th[k]!==TH_DEFAULT[k]); }
+function resetThresholds(withPass){ state.th=Object.assign({},TH_DEFAULT, withPass===false ? {pass:state.th.pass} : {}); }
 function thFmt(key){ return key==="goodDisc" ? state.th.goodDisc.toFixed(2).replace(".",",") : String(state.th[key]); }
 function thresholdsText(withPass){
   return `Lätt från ${thFmt("easy")} % · Svår under ${thFmt("hard")} % · God diskriminering från ${thFmt("goodDisc")}`
@@ -577,14 +579,14 @@ function settingsHtml(withPass){
 }
 function renderThCustom(withPass){
   const el=$("#th-custom"); if(!el) return;
-  if(!thresholdsCustom()){ el.className="hidden"; el.innerHTML=""; return; }
+  if(!thresholdsCustom(withPass)){ el.className="hidden"; el.innerHTML=""; return; }
   el.className="thcustom";
   el.innerHTML=`<b>Anpassade gränser:</b> ${thresholdsText(withPass)} <button type="button" class="linkbtn" id="th-reset">Återställ</button>`;
 }
 function wireSettings(withPass, onChange){
   const open=$("#settings-open"), panel=$("#settings"); if(!open || !panel) return;
   const draw=()=>{ panel.innerHTML=settingsHtml(withPass); renderThCustom(withPass); };
-  const reset=()=>{ resetThresholds(); draw(); onChange(); renderThCustom(withPass); };
+  const reset=()=>{ resetThresholds(withPass); draw(); onChange(); renderThCustom(withPass); };
   open.addEventListener("click", ()=>{ panel.classList.toggle("hidden"); if(!panel.classList.contains("hidden")) draw(); });
   panel.addEventListener("change", e=>{
     const inp=e.target.closest(".setinp"); if(!inp) return;
@@ -933,6 +935,7 @@ function examMismatch(pdfName, titles){
 async function checkExamMatch(){
   const el=$("#examwarn"); if(!el) return;
   el.className=""; el.textContent="";
+  if(state.pdfFromPackage) return;                         // paketets PDF hör till paketet, inte till nästa fil som släpps
   const pdfName = state.pdfMcqs && state.pdfMcqs.examName;
   if(!pdfName || !state.jsonFiles.length) return;
   const titles=[];
@@ -1049,7 +1052,13 @@ function computeOptDisc(model, {criterion, excluded}){
    fält som Inspera lägger till i framtiden. Bygg alltid nya objekt fält för fält; kopiera aldrig ett
    helt objekt och ta bort i efterhand. Kandidatnumret ersätts av ett löpnummer i filens ordning
    (ordningen behålls – parseJSON löser lika-lägen efter först sedd). */
-function minimizeInspera(obj){
+/* Läser en fil som JSON och ger ett begripligt fel i stället för webbläsarens engelska. */
+function parseJsonFile(text, name){
+  try{ return JSON.parse(text); }
+  catch(_){ throw new Error(`Filen "${name||"okänd"}" går inte att läsa. Kontrollera att det är resultatfilen (JSON) från Inspera eller ett tentapaket.`); }
+}
+function isPlainObj(o){ return !!o && typeof o==="object" && !Array.isArray(o); }
+function minimizeInspera(obj, offset){
   const out={};
   if(obj.ext_inspera_assessmentRunTitle!==undefined) out.ext_inspera_assessmentRunTitle=obj.ext_inspera_assessmentRunTitle;
   if(obj.ext_inspera_maxTotalScore!==undefined) out.ext_inspera_maxTotalScore=obj.ext_inspera_maxTotalScore;
@@ -1057,7 +1066,7 @@ function minimizeInspera(obj){
   out.ext_inspera_candidates = list.map((c,i)=>{
     const r = (c && c.result) || c || {};
     const qs = Array.isArray(r.ext_inspera_questions) ? r.ext_inspera_questions : null;
-    const res = { ext_inspera_candidateId: String(i+1) };
+    const res = { ext_inspera_candidateId: String((offset||0)+i+1) };
     if(qs) res.ext_inspera_questions = qs.map(q=>{
       const o={};
       for(const k of ["ext_inspera_maxQuestionScore","ext_inspera_questionNumber","ext_inspera_questionTitle","ext_inspera_autoScore"])
@@ -1087,25 +1096,27 @@ function buildPackage({jsonObjs, pdfMcqs, tagRows}){
     created:new Date().toISOString().slice(0,10),
     examName: titles[0] || null,
     examWarning: examMismatch(pdfName, titles) || null,
-    data: jsonObjs.map(minimizeInspera),
+    data: (()=>{ let off=0;                                   // löpnumren löper över alla filer (en fil per ort)
+      return jsonObjs.map(o=>{ const m=minimizeInspera(o, off); off+=m.ext_inspera_candidates.length; return m; }); })(),
     pdf: pdfMcqs ? {examName:pdfName, items:[...pdfMcqs]} : null,
     tagRows: tagRows || null };
 }
 function isPackage(obj){ return !!obj && typeof obj==="object" && !Array.isArray(obj) && obj.format===PKG_FORMAT; }
 function openPackage(pkg){
   if(!isPackage(pkg)) throw new Error("Filen är inget tentapaket.");
-  if(typeof pkg.formatVersion==="number" && pkg.formatVersion>PKG_VERSION)
+  if(Number(pkg.formatVersion)>PKG_VERSION)
     throw new Error("Paketet är gjort i en nyare version av Frågeluppen. Uppdatera verktyget och försök igen.");
   const bad = () => new Error("Tentapaketet går inte att läsa. Be kurssamordnaren göra ett nytt.");
   if(!Array.isArray(pkg.data) || !pkg.data.length) throw bad();
-  if(pkg.data.some(d=>!d || !Array.isArray(d.ext_inspera_candidates))) throw bad();
+  if(pkg.data.some(d=>!isPlainObj(d) || !Array.isArray(d.ext_inspera_candidates)
+       || d.ext_inspera_candidates.some(c=>!isPlainObj(c) || !isPlainObj(c.result)))) throw bad();
   let pdfMcqs=null;
   if(pkg.pdf){
-    if(!Array.isArray(pkg.pdf.items)) throw bad();
+    if(!Array.isArray(pkg.pdf.items) || pkg.pdf.items.some(x=>!isPlainObj(x))) throw bad();
     pdfMcqs=[...pkg.pdf.items];
     if(pkg.pdf.examName) pdfMcqs.examName=pkg.pdf.examName;
   }
-  if(pkg.tagRows && !Array.isArray(pkg.tagRows)) throw bad();
+  if(pkg.tagRows && (!Array.isArray(pkg.tagRows) || pkg.tagRows.some(r=>!Array.isArray(r)))) throw bad();
   return { jsonObjs:pkg.data, pdfMcqs, tagRows:pkg.tagRows||null, examWarning:pkg.examWarning||null };
 }
 
@@ -1114,6 +1125,7 @@ function openPackage(pkg){
    PDF-läsning ska kunna nå en gammal tenta). Paket + andra filer → fel, aldrig dubbelräkning. */
 function resolveInputs(objs, loaded){
   const own = loaded || {};
+  if(objs.some(o=>!isPlainObj(o))) throw new Error("Resultatfilen har inte det format som Inspera exporterar.");
   if(!objs.some(isPackage))
     return { jsonObjs:objs, pdfMcqs:own.pdfMcqs||null, tagRows:own.tagRows||null, fromPackage:false, examWarning:null };
   if(objs.length!==1)
@@ -1125,6 +1137,7 @@ function resolveInputs(objs, loaded){
 /* Kvittot kurssamordnaren ser innan paketet sparas – aldrig några resultat. */
 function prepReceipt({jsonObjs, pdfMcqs, tagRows}){
   if(jsonObjs.some(isPackage)) throw new Error("Det här är redan ett tentapaket. Släpp resultatfilerna från Inspera i stället.");
+  if(jsonObjs.some(o=>!isPlainObj(o))) throw new Error("Resultatfilen har inte det format som Inspera exporterar.");
   let n=0; for(const d of jsonObjs){ const l=(d && (d.ext_inspera_candidates || d.candidates)) || []; n+=l.length; }
   if(!n) throw new Error("Hittar inga kandidater i resultatfilen. Är det rätt fil från Inspera?");
   const titles = jsonObjs.map(o=>o && o.ext_inspera_assessmentRunTitle).filter(Boolean);
@@ -1994,11 +2007,12 @@ function exemplaryReason(v){
 function jumpToCard(seq){
   seq=String(seq);
   let el=document.getElementById("card-"+seq);
-  if(!el && state.mode!=="edu"){
+  const fb = availableModeIds()[0] || "edu";   // vyns första läge – aldrig ett läge som vyn saknar (temarapporten har inget "edu")
+  if(!el && state.mode!==fb){
     // Exemplariska frågor ritas inte i triageläget – växla till hela listan så att kortet finns.
-    state.mode="edu";
-    const seg=$("#modeseg"); if(seg) seg.querySelectorAll(".modebtn").forEach(x=>x.classList.toggle("on", x.dataset.mode==="edu"));
-    const mh=$("#modehint"); if(mh) mh.textContent=modeHint("edu");
+    state.mode=fb;
+    const seg=$("#modeseg"); if(seg) seg.querySelectorAll(".modebtn").forEach(x=>x.classList.toggle("on", x.dataset.mode===fb));
+    const mh=$("#modehint"); if(mh) mh.textContent=modeHint(fb);
     refreshLists(); drawCards();
     el=document.getElementById("card-"+seq);
   }
@@ -2032,7 +2046,9 @@ function buildGoodList(){
   const items=state.vm.view.filter(v=>isExemplary(v) && !isExcluded(v.seq)).sort((a,b)=>b.rpb-a.rpb);
   if(!items.length){ el.innerHTML=""; return; }
   el.innerHTML = `<div class="goodbox"><div class="goodhead">${items.length} fråga(or) som skiljer starka från svaga väl</div>`
-    + `<div class="goodnote">Diskriminerar väl i den här kohorten – det är evidens, inte bevis. Bekräfta att det beror på att frågan testar rätt sak, inte på en form-ledtråd, innan du återanvänder den.</div>`
+    + ((state.mode==="ask" || state.mode==="ask-explain")
+        ? `<div class="goodnote">De här frågorna skilde tydligt mellan studenter med höga och låga totalpoäng i den här studentgruppen.</div>`
+        : `<div class="goodnote">Diskriminerar väl i den här kohorten – det är evidens, inte bevis. Bekräfta att det beror på att frågan testar rätt sak, inte på en form-ledtråd, innan du återanvänder den.</div>`)
     + items.map(v=>`<button class="goodrow" data-seq="${esc(String(v.seq))}"><span class="acode">${esc(v.code)}</span>
         <span class="greason">${exemplaryReason(v)}</span>
         <span class="apc">${v.pcorr.toFixed(0)} % rätt</span></button>`).join("")
@@ -2220,7 +2236,8 @@ function card(v){
         <ul>${a.tw.points.map(p=>`<li>${esc(p)}</li>`).join("")}</ul>
       </div></details>`:""}`:""}
     </div>`;
-  const noteHtml = adv.note ? `<div class="advnote">${esc(adv.note)}</div>` : "";
+  const noteTxt = (askMode && adv.note) ? adv.note.replace(" – bedöm utifrån fördelningen ovan och frågans innehåll.", ".") : adv.note;
+  const noteHtml = noteTxt ? `<div class="advnote">${esc(noteTxt)}</div>` : "";
   const okMsg = v.pcorr>=state.th.easy
     ? `✓ Nästan alla svarade rätt – inga formproblem hittade. En fråga som nästan alla klarar skiljer av naturliga skäl lite mellan starka och svaga; vid måltestning är det oftast som det ska (bekräftad must-know).`
     : `✓ Inga anmärkningar – frågan ser ut att fungera.`;
@@ -2280,7 +2297,7 @@ function card(v){
         return `<div class="qanote">${blocks.join(" ")}</div>`;
       }
       return v.unmatched>0
-        ? `<div class="qanote">⚠ ${v.unmatched} svar kunde inte matchas mot ett PDF-alternativ – kontrollera att rätt PDF är inläst.</div>`
+        ? `<div class="qanote">⚠ ${v.unmatched} svar kunde inte matchas mot ett PDF-alternativ${askMode?"":" – kontrollera att rätt PDF är inläst"}.</div>`
         : "";
     })()}
     ${advHtml}
@@ -3058,12 +3075,12 @@ async function tryRun(){
   if(!state.jsonFiles.length) return;
   try{
     log("Bearbetar JSON …");
-    const objs=[]; for(const f of state.jsonFiles){ objs.push(JSON.parse(await f.text())); }
+    const objs=[]; for(const f of state.jsonFiles){ objs.push(parseJsonFile(await f.text(), f.name)); }
     // Demons pdf-data ska inte matchas mot en riktig JSON – släpp den och kör JSON-läge
     // (eller be om riktig PDF). Samma princip som taggstubben nedan.
     if(state.pdfIsDemo){ state.pdfMcqs=null; state.pdfIsDemo=false; $("#got-pdf").textContent=""; }
     // En PDF som kom ur ett tidigare öppnat paket är inte examinatorns egen – släpp den före ny körning.
-    if(state.pdfFromPackage){ state.pdfMcqs=null; state.pdfFromPackage=false; }
+    if(state.pdfFromPackage){ state.pdfMcqs=null; state.pdfFromPackage=false; const w=$("#examwarn"); if(w){ w.className=""; w.textContent=""; } }
     // typeof-vakten: demoläget lämnar en filstubb ({name}) i tagsFile som saknar arrayBuffer().
     // Riktig fil → läs; demostubb → släng den och demons taggar så att de inte appliceras på
     // riktiga data (kraschade tidigare: "state.tagsFile.arrayBuffer is not a function").
@@ -3106,12 +3123,13 @@ function setPrep(on){
   tog("#prephead",!on); tog("#prep-save",!on); tog("#prep-receipt",!on); tog("#prep-note",!on); tog("#prep-close",!on);
   tog("#compute",on); tog("#prep-open",on);
   if(on){ $("#results").classList.add("hidden"); expandUpload(); log(""); }
+  else if(state.json){ $("#results").classList.remove("hidden"); }
   refreshCompute();
 }
 async function prepInputs(){
   if(state.prepDemo) return {jsonObjs:[demoToInspera(DEMO_DATA.DEMO)], pdfMcqs:DEMO_DATA.PDF, tagRows:DEMO_DATA.TAGS};
   const jsonObjs=[];
-  for(const f of state.jsonFiles){ if(typeof f.text==="function") jsonObjs.push(JSON.parse(await f.text())); }
+  for(const f of state.jsonFiles){ if(typeof f.text==="function") jsonObjs.push(parseJsonFile(await f.text(), f.name)); }
   const pdfMcqs = (state.pdfMcqs && !state.pdfIsDemo && !state.pdfFromPackage) ? state.pdfMcqs : null;
   const tagRows = (state.tagsFile && typeof state.tagsFile.arrayBuffer==="function") ? readTagRows(await state.tagsFile.arrayBuffer()) : null;
   return {jsonObjs, pdfMcqs, tagRows};
@@ -3133,10 +3151,7 @@ async function refreshPrep(){
 async function savePackage(){
   try{
     const inp=await prepInputs(); prepReceipt(inp);
-    const blob=new Blob([JSON.stringify(buildPackage(inp))],{type:"application/json"});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement("a"); a.href=url; a.download=`tentapaket_${stamp()}.frageluppen.json`;
-    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    downloadText(`tentapaket_${stamp()}.frageluppen.json`, JSON.stringify(buildPackage(inp)), "application/json");
     log("Tentapaketet är sparat. Lämna filen till examinatorn.");
   }catch(e){ log("Fel: "+e.message); console.error(e); }
 }
