@@ -924,6 +924,37 @@ function computeOptDisc(model, {criterion, excluded}){
   return out;
 }
 
+/* ---------- minimering (tentapaket) ----------
+   Bygger en ny, minimerad kopia av en Inspera-resultatfil. VITLISTA: bara de fält som räknas upp här
+   följer med – allt annat (fritextsvar, rättare, tider, extratid, betyg, alla id) faller bort, även
+   fält som Inspera lägger till i framtiden. Bygg alltid nya objekt fält för fält; kopiera aldrig ett
+   helt objekt och ta bort i efterhand. Kandidatnumret ersätts av ett löpnummer i filens ordning
+   (ordningen behålls – parseJSON löser lika-lägen efter först sedd). */
+function minimizeInspera(obj){
+  const out={};
+  if(obj.ext_inspera_assessmentRunTitle!==undefined) out.ext_inspera_assessmentRunTitle=obj.ext_inspera_assessmentRunTitle;
+  if(obj.ext_inspera_maxTotalScore!==undefined) out.ext_inspera_maxTotalScore=obj.ext_inspera_maxTotalScore;
+  const list = obj.ext_inspera_candidates || obj.candidates || [];
+  out.ext_inspera_candidates = list.map((c,i)=>{
+    const r = (c && c.result) || c || {};
+    const qs = Array.isArray(r.ext_inspera_questions) ? r.ext_inspera_questions : null;
+    const res = { ext_inspera_candidateId: String(i+1) };
+    if(qs) res.ext_inspera_questions = qs.map(q=>{
+      const o={};
+      for(const k of ["ext_inspera_maxQuestionScore","ext_inspera_questionNumber","ext_inspera_questionTitle","ext_inspera_autoScore"])
+        if(k in q) o[k]=q[k];
+      if(Array.isArray(q.ext_inspera_manualScores))
+        o.ext_inspera_manualScores = q.ext_inspera_manualScores.map(m=>({ext_inspera_manualScore: m ? m.ext_inspera_manualScore : undefined}));
+      if(Array.isArray(q.ext_inspera_candidateResponses))
+        o.ext_inspera_candidateResponses = q.ext_inspera_candidateResponses.filter(x=>x && isChoice(x))
+          .map(x=>({ext_inspera_response:x.ext_inspera_response, ext_inspera_interactionValue:x.ext_inspera_interactionValue}));
+      return o;
+    });
+    return {result:res};
+  });
+  return out;
+}
+
 function parseJSON(jsonObjs){
   const cands=[];
   for(const d of jsonObjs){
