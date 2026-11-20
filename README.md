@@ -23,15 +23,25 @@ Hela verktyget är **en enda fil**, `index.html`. Du behöver inte installera n�
 
 ## För kurssamordnare: förbered tentan åt examinatorn
 
-1. Öppna verktyget och välj fliken **Kurssamordnare** högst upp. En länk som slutar på
-   `#samordnare` öppnar det läget direkt.
-2. Släpp resultatfilerna (JSON) från Inspera, tentans PDF och taggfilen om den finns.
-3. Kontrollera kvittot (tentans namn och antal kandidater) och klicka **Spara tentapaket**.
-4. Lämna filen till examinatorn, som släpper den i rutan för resultat.
+Verktyget öppnar i kurssamordnarens läge.
 
-Paketet innehåller bara det verktyget behöver. Fritextsvar, rättarnamn, tider, extratid,
-betyg och alla id tas bort, och kandidatnumren ersätts av löpnummer. Paketet är minimerat,
-inte anonymt, och ska behandlas som tentamaterial.
+1. Släpp resultatfilerna (JSON) från Inspera, tentans PDF och taggfilen om den finns.
+2. Kontrollera kvittot (tentans namn och antal kandidater) och klicka **Spara examinatorns fil**.
+3. Skicka filen till examinatorn. Gör samma sak en gång till när tentan är rättad.
+
+Filen innehåller verktyget och bara den data det behöver. Fritextsvar, rättarnamn, tider,
+extratid, betyg och alla id tas bort, och kandidatnumren ersätts av löpnummer. Filen är
+minimerad, inte anonym, och ska behandlas som tentamaterial.
+
+## För examinatorer
+
+Öppna filen från kurssamordnaren med ett dubbelklick. Den hamnar direkt i analysen, utan
+uppladdning. Före rättningen visar den Preliminär MCQ för triage och exkludering, efter
+rättningen även Slutrapport MCQ och Totalrapport. Temarapporten till temagrupperna skapas
+därifrån. Skicka aldrig själva filen vidare.
+
+Har du råfilerna själv väljer du fliken **Examinator** på verktygets vanliga sida (eller en
+länk som slutar på `#examinator`).
 
 ## För temagrupper: temarapporten
 

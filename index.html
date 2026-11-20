@@ -203,6 +203,8 @@
   .linkbtn{font:inherit;font-size:13px;background:none;border:none;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer}
   .linkbtn:hover{color:var(--ink)}
   .expbtn:disabled{opacity:.45;cursor:not-allowed}
+  .embnote{margin-bottom:14px;padding:10px 14px;border:1px solid #c9b06a;border-radius:8px;background:#faf6ea;font-size:13px;line-height:1.55}
+  .rolebar.hidden{display:none}
   .rolebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
   .prephead h2{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:20px;margin:0 0 4px}
   .prephead p{margin:0 0 14px;font-size:13.5px;color:var(--muted);max-width:70ch}
@@ -415,18 +417,19 @@
   </div>
 
   <div class="panel" id="uploadpanel">
-    <div class="rolebar">
+    <div id="embnote" class="embnote hidden"></div>
+    <div class="rolebar" id="rolebar">
       <span class="modelabel">Jag är</span>
       <div class="modeseg" id="roleseg">
-        <button id="role-exam" class="modebtn on" type="button" title="Ladda upp tentan eller ett tentapaket och analysera frågorna.">Examinator</button>
-        <button id="role-prep" class="modebtn" type="button" title="Förbered tentan åt examinatorn: spara ett minimerat tentapaket.">Kurssamordnare</button>
+        <button id="role-prep" class="modebtn" type="button" title="Förbered tentan åt examinatorn: spara en fil som examinatorn bara öppnar.">Kurssamordnare</button>
+        <button id="role-exam" class="modebtn on" type="button" title="Analysera tentan från egna filer, när du inte har fått en fil från kurssamordnaren.">Examinator</button>
       </div>
-      <span class="modehint" id="rolehint">Analysera tentan: ladda upp filerna eller ett tentapaket.</span>
+      <span class="modehint" id="rolehint"></span>
     </div>
     <div id="uploadfull">
     <div id="prephead" class="prephead hidden">
       <h2>Förbered tentan</h2>
-      <p>Fritextsvar, rättarnamn, tider, extratid, betyg och alla id tas bort. Inga resultat visas här.</p>
+      <p>Släpp filerna från Inspera och spara en fil till examinatorn. Fritextsvar, rättarnamn, tider, extratid, betyg och alla id tas bort. Inga resultat visas här.</p>
     </div>
     <div class="drops">
       <div class="drop" id="d-pdf">
@@ -444,7 +447,7 @@
       </div>
       <div class="drop" id="d-json">
         <label>2 · Resultat (JSON)</label>
-        <div class="hint" id="json-hint">Släpp <b>tentapaketet</b> från din kurssamordnare här, eller JSON-filerna från Inspera (under fliken <b>Statistik</b>). En fil per ort – flera går bra.</div>
+        <div class="hint" id="json-hint">Har du fått <b>examinatorns fil</b> från din kurssamordnare behöver du inte ladda upp något, öppna bara den. Annars släpper du JSON-filerna från Inspera här (under fliken <b>Statistik</b>). En fil per ort – flera går bra.</div>
         <input type="file" id="json" accept="application/json,.json" multiple>
         <div class="got" id="got-json"></div>
       </div>
@@ -457,12 +460,12 @@
     </div>
     <div class="computebar">
       <button id="compute" class="btn-primary" disabled>Beräkna</button>
-      <button id="prep-save" class="btn-primary hidden" type="button" disabled>Spara tentapaket</button>
+      <button id="prep-save" class="btn-primary hidden" type="button" disabled>Spara examinatorns fil</button>
       <button id="demo" class="btn-ghost" type="button" title="Ladda en syntetisk exempeltenta (neutraliserad, inga riktiga data) för att prova verktyget">Visa exempel</button>
       <span class="computehint" id="computehint">Ladda upp minst en JSON-fil (PDF är valfri).</span>
     </div>
     <div id="prep-receipt" class="hidden"></div>
-    <div id="prep-note" class="hidden">Paketet är minimerat, inte anonymt. Varje rad är en students poängmönster och kan på en liten omtenta kännas igen av den som vet vilka som skrev. Behandla paketet som tentamaterial och dela det bara med examinatorn. Paketet innehåller också tentans frågor.</div>
+    <div id="prep-note" class="hidden">Du sparar <b>en fil som examinatorn öppnar med ett dubbelklick</b>. Skicka den till examinatorn, före rättningen och en gång till efter rättningen. Filen är minimerad, inte anonym. Varje rad är en students poängmönster och kan på en liten omtenta kännas igen av den som vet vilka som skrev. Behandla filen som tentamaterial och dela den bara med examinatorn. Den innehåller också tentans frågor.</div>
     </div>
     <div id="uploadmini" class="uploadmini hidden">
       <span class="minicheck">✓</span>
@@ -535,6 +538,9 @@
 
 <script>
 "use strict";
+/* Sidans egen källa, fångad innan något i den har ändrats och innan någon fil har lästs in. Examinatorns fil
+   byggs ur den (buildExaminerFile) – den innehåller därför aldrig något annat än verktyget självt. */
+const PRISTINE_HTML = (typeof document!=="undefined" && document.documentElement && document.documentElement.outerHTML) || "";
 const pdfjsLib = window.pdfjsLib;
 // Skydda mot att hela sidan vitskärmar om pdf.js-CDN:en är blockerad (t.ex. på ett låst
 // institutionsnät). Utan pdf.js kan man inte läsa en PDF, men "Visa exempel", hjälpen och
@@ -550,7 +556,7 @@ function log(m){ logEl.textContent = m; }
 const TH_DEFAULT = { easy:90, hard:60, goodDisc:0.20, pass:65 };
 const TH_RANGE   = { easy:[70,100], hard:[30,70], goodDisc:[0.10,0.30], pass:[50,100] };
 const TH_LABEL   = { easy:"Lätt från (% rätt)", hard:"Svår under (% rätt)", goodDisc:"God diskriminering från (r)", pass:"Godkäntgräns (%)" };
-const state = { pdfMcqs:null, jsonFiles:[], tags:null, activeTags:{}, mode:"edu", view:"pre-mcq", excluded:new Map(), th:Object.assign({},TH_DEFAULT) };
+const state = { pdfMcqs:null, jsonFiles:[], tags:null, activeTags:{}, mode:"edu", view:"pre-mcq", excluded:new Map(), th:Object.assign({},TH_DEFAULT), prep:false, embedded:false };
 function setThreshold(key, value){
   if(!Object.prototype.hasOwnProperty.call(TH_RANGE,key)) return false;
   if(value===null || value===undefined || (typeof value==="string" && value.trim()==="")) return false;
@@ -726,17 +732,19 @@ diskriminering och för godkänt ändras. Gränserna för märkningar ändrar ba
 kort som får en kommentar, aldrig mätvärdena. Godkäntgränsen ändrar godkäntandelen. Avviker en
 gräns från standard står det överst på sidan, och temarapporten bär med sig dina gränser.</p>
 </div></details>
-<details class="helpsec"><summary>Tentapaket från kurssamordnaren</summary><div class="body">
-<p>Verktyget har två ingångar, <b>Examinator</b> och <b>Kurssamordnare</b>, som väljs högst upp i
-filpanelen. Adressen följer valet, så en länk som slutar på <code>#samordnare</code> öppnar
-kurssamordnarens läge direkt.</p>
-<p>Kurssamordnaren förbereder tentan åt examinatorn: släpp resultatfilerna från Inspera, tentans PDF och
-taggfilen om den finns, och spara ett <b>tentapaket</b>. Fritextsvar, rättarnamn, tider,
-extratid, betyg och alla id tas bort, och kandidatnumren ersätts av löpnummer.</p>
-<p>Examinatorn släpper paketet i rutan för resultat och klickar Beräkna. En egen PDF eller
-taggfil som laddas samtidigt gäller före paketets.</p>
-<p>Paketet är minimerat, inte anonymt: varje rad är en students poängmönster. Behandla det
-som tentamaterial.</p>
+<details class="helpsec"><summary>Kurssamordnare och examinator</summary><div class="body">
+<p>Verktyget har två ingångar, <b>Kurssamordnare</b> och <b>Examinator</b>, som väljs högst upp i
+filpanelen. Sidan öppnar hos kurssamordnaren, eftersom det är hen som hämtar filerna ur Inspera.
+En länk som slutar på <code>#examinator</code> öppnar examinatorns ingång direkt.</p>
+<p><b>Kurssamordnaren</b> släpper resultatfilerna från Inspera, tentans PDF och taggfilen om den
+finns, och sparar <b>en fil till examinatorn</b>. Det görs två gånger per tenta, direkt efter
+tentan och efter rättningen. Fritextsvar, rättarnamn, tider, extratid, betyg och alla id tas
+bort, och kandidatnumren ersätts av löpnummer. Inga resultat visas för kurssamordnaren.</p>
+<p><b>Examinatorn</b> öppnar filen med ett dubbelklick och hamnar direkt i analysen, utan att
+ladda upp något. Där görs triage och exkludering, och därifrån skapas temarapporten. En egen
+PDF eller taggfil kan läggas till under "Ändra filer" och gäller då före filens.</p>
+<p>Filen är minimerad, inte anonym: varje rad är en students poängmönster. Behandla den som
+tentamaterial och skicka den inte vidare.</p>
 </div></details>`;
 
 function openHelp(){ const m=document.getElementById("helpModal"); if(m) m.classList.remove("hidden"); }
@@ -1126,6 +1134,24 @@ function openPackage(pkg){
   return { jsonObjs:pkg.data, pdfMcqs, tagRows:pkg.tagRows||null, examWarning:pkg.examWarning||null };
 }
 
+/* Examinatorns fil: hela verktyget med ett tentapaket inbäddat. Kurssamordnaren sparar den, examinatorn öppnar den
+   med ett dubbelklick och hamnar direkt i analysen (ingen uppladdning). Datan läggs som ett JSON-block i <head>;
+   "<" skrivs som \u003c så att ingen frågetext kan avsluta blocket eller starta ett skript. */
+function buildExaminerFile(pkg){
+  const src = PRISTINE_HTML;
+  const i = src.indexOf("</head>");
+  if(!src || i<0) throw new Error("Verktygets egen källa kunde inte läsas. Ladda om sidan och försök igen.");
+  // Taggen sätts ihop i delar så att den här källtexten inte själv innehåller ett datablock.
+  const block = "<scr"+"ipt type=\"application/json\" id=\""+"fl-data"+"\">" + JSON.stringify(pkg).replace(/</g,"\\u003c") + "</scr"+"ipt>";
+  return "<!DOCTYPE html>\n" + src.slice(0,i) + block + src.slice(i);
+}
+/* Läser den inbäddade tentan, om filen är en examinatorsfil. Ger {text} eller null; tolkningen sker i tryRun
+   så att en trasig fil ger samma felmeddelande som en trasig uppladdning. */
+function readEmbedded(){
+  const el = (typeof document!=="undefined") ? document.getElementById("fl-data") : null;
+  const t = el && el.textContent;
+  return (t && String(t).trim()) ? {text:String(t)} : null;
+}
 /* Avgör vad en körning ska bygga på. Exakt ett objekt som är ett paket → öppna det; PDF eller taggar
    som examinatorn själv har laddat gäller före paketets (taggfiler kommer ofta sent, och en rättad
    PDF-läsning ska kunna nå en gammal tenta). Paket + andra filer → fel, aldrig dubbelräkning. */
@@ -3130,11 +3156,11 @@ function setPrep(on){
   tog("#compute",on);
   { const a=$("#role-exam"), b=$("#role-prep"), h=$("#rolehint");
     if(a) a.classList.toggle("on", !on); if(b) b.classList.toggle("on", !!on);
-    if(h) h.textContent = on ? "Förbered tentan åt examinatorn: spara ett minimerat tentapaket."
-                             : "Analysera tentan: ladda upp filerna eller ett tentapaket.";
+    if(h) h.textContent = on ? "Förbered tentan åt examinatorn: spara en fil som examinatorn bara öppnar."
+                             : "Analysera tentan från egna filer, när du inte har fått en fil från kurssamordnaren.";
     const jh=$("#json-hint");
     if(jh) jh.innerHTML = on ? "Ladda ned JSON-filerna från Inspera (under fliken <b>Statistik</b>) och släpp dem här. En fil per ort – flera går bra."
-                             : "Släpp <b>tentapaketet</b> från din kurssamordnare här, eller JSON-filerna från Inspera (under fliken <b>Statistik</b>). En fil per ort – flera går bra."; }
+                             : "Har du fått <b>examinatorns fil</b> från din kurssamordnare behöver du inte ladda upp något, öppna bara den. Annars släpper du JSON-filerna från Inspera här (under fliken <b>Statistik</b>). En fil per ort – flera går bra."; }
   // adressen följer ingången, så att sidan kan sparas som bokmärke eller skickas som länk i rätt läge
   try{ if(typeof history!=="undefined" && history.replaceState) history.replaceState(null, "", on ? "#samordnare" : "#examinator"); }catch(_){}
   if(on){ $("#results").classList.add("hidden"); expandUpload(); log(""); }
@@ -3168,19 +3194,19 @@ async function refreshPrep(){
       + (k.warning ? `<br><span class="warn">⚠ ${esc(k.warning)}</span>` : "");
   }catch(e){ b.disabled=true; box.innerHTML=`<span class="warn">⚠ ${esc(e.message)}</span>`; }
 }
-async function savePackage(){
+async function saveExaminerFile(){
   try{
     const inp=await prepInputs(); prepReceipt(inp);
-    downloadText(`tentapaket_${stamp()}.frageluppen.json`, JSON.stringify(buildPackage(inp)), "application/json");
-    log("Tentapaketet är sparat. Lämna filen till examinatorn.");
+    downloadText(`tenta-till-examinator_${stamp()}.html`, buildExaminerFile(buildPackage(inp)), "text/html;charset=utf-8");
+    log("Filen är sparad. Skicka den till examinatorn, som öppnar den med ett dubbelklick.");
   }catch(e){ log("Fel: "+e.message); console.error(e); }
 }
 function uploadSummary(){
-  const parts=[ (state.fromPackage && state.json) ? `tentapaket (${state.json.candCount} kandidater)`
+  const parts=[ (state.fromPackage && state.json) ? `${state.embedded?"kurssamordnarens fil":"tentapaket"} (${state.json.candCount} kandidater)`
                   : state.jsonFiles.length+" JSON-fil"+(state.jsonFiles.length===1?"":"er"),
                 state.pdfMcqs ? `PDF (${state.pdfMcqs.length} MCQ)` : "ingen PDF (JSON-läge)" ];
   if(state.tagsFile) parts.push("taggar: "+state.tagsFile.name);
-  else if(state.tagsFromPackage) parts.push("taggar ur paketet");
+  else if(state.tagsFromPackage) parts.push(state.embedded ? "taggar ur filen" : "taggar ur paketet");
   return parts.join("   ·   ");
 }
 function collapseUpload(){
@@ -3214,13 +3240,31 @@ $("#compute").addEventListener("click", async ()=>{ await tryRun(); if(state.jso
 $("#demo").addEventListener("click", ()=>{ if(state.prep){ state.prepDemo=true; refreshPrep(); } else loadDemo(); });
 $("#role-prep").addEventListener("click", ()=>{ if(!state.prep) setPrep(true); });
 $("#role-exam").addEventListener("click", ()=>{ if(state.prep) setPrep(false); });
-if(typeof location!=="undefined"){
-  const applyHash=()=>{ const r=roleFromHash(location.hash); if(r==="prep" && !state.prep) setPrep(true); else if(r==="exam" && state.prep) setPrep(false); };
-  applyHash();
-  if(typeof window.addEventListener==="function") window.addEventListener("hashchange", applyHash);
+{
+  const emb=readEmbedded();
+  if(emb){
+    // Examinatorns fil: tentan finns redan i filen. Öppna direkt i analysen; ingångarna behövs inte här.
+    state.embedded=true;
+    state.jsonFiles=[{name:"kurssamordnarens fil", text: async()=>emb.text}];
+    { const rb=$("#rolebar"); if(rb) rb.classList.add("hidden"); }
+    state.embeddedReady = tryRun().then(()=>{
+      if(!state.json) return;
+      collapseUpload();
+      const n=$("#embnote"); if(!n) return;
+      let pk={}; try{ pk=JSON.parse(emb.text)||{}; }catch(_){}
+      n.classList.remove("hidden");
+      n.innerHTML = `<b>${esc(pk.examName||"Tenta")}</b> · ${state.json.candCount} kandidater`
+        + (pk.created?` · förberedd ${esc(pk.created)}`:"")
+        + `<br>Den här filen har en rad per student. Den är minimerad men inte anonym. Behandla den som tentamaterial och skicka den inte vidare. Det som ska till temagrupperna är <b>Temarapporten</b>.`;
+    });
+  } else {
+    // Vanliga sidan: kurssamordnaren är landningsstället (hen är den enda som kan hämta filerna ur Inspera).
+    const hash = () => (typeof location!=="undefined" && location.hash) || "";
+    const applyHash=()=>{ const want = roleFromHash(hash())==="exam" ? false : true; if(want!==!!state.prep || !$("#rolehint").textContent) setPrep(want); };
+    applyHash();
+    if(typeof window.addEventListener==="function") window.addEventListener("hashchange", ()=>{ const r=roleFromHash(hash()); if(r) setPrep(r==="prep"); });
+  }
 }
-$("#prep-save").addEventListener("click", savePackage);
-$("#reopen").addEventListener("click", expandUpload);
 refreshCompute();
 wireHelp();
 wireSettings(true, ()=>{ if(state.json) render(); });

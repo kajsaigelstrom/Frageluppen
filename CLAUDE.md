@@ -58,8 +58,14 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
 - **Tre rapportvyer**, knutna till rättningsflödet: Preliminär MCQ (kriterium = MCQ-delen,
   före rättning), Slutrapport MCQ (kriterium = hela tentan, efter rättning), Totalrapport
   (hela tentan inkl. fritext/flersvar). Diskriminering = punkt-biseriell / item–total.
-- **Två ingångar** högst upp i filpanelen: Examinator och Kurssamordnare. Adressen följer valet
-  (`#examinator`, `#samordnare`).
+- **Två ingångar** högst upp i filpanelen: Kurssamordnare (landningsstället) och Examinator.
+  Adressen följer valet (`#samordnare`, `#examinator`).
+- **Examinatorns fil** (`buildExaminerFile`): kurssamordnaren sparar hela verktyget med
+  tentapaketet inbäddat som ett JSON-block i `<head>` (`id="fl-data"`). Filen öppnar direkt i
+  analysen. Den byggs ur `PRISTINE_HTML`, sidans källa fångad innan något lästs in – ändra
+  aldrig det till en avläsning av sidan i efterhand, då kan inläst data följa med. Källtexten
+  får inte själv innehålla datablockets tagg som en sammanhängande sträng. Filen har en rad
+  per student och är blockerad i `.gitignore`.
 - **Kurssamordnaren** kan förbereda tentan (läget "Förbered tentan"): ser bara ett kvitto,
   aldrig resultat, och sparar ett tentapaket som examinatorn öppnar i rutan för resultat.
   Examinatorns egen PDF eller taggfil gäller före paketets.

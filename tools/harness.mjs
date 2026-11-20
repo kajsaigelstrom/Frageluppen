@@ -34,7 +34,7 @@ function makeEl() {
   return el;
 }
 
-function run(code, filename) {
+function run(code, filename, docHtml) {
   const cache = new Map();
   const bySel = s => { if (!cache.has(s)) cache.set(s, makeEl()); return cache.get(s); };
   const document = {
@@ -45,12 +45,16 @@ function run(code, filename) {
     addEventListener() {},
     body: makeEl(), documentElement: makeEl(),
   };
+  // Sidans egen källa, som en webbläsare ger den (utan doctype) – appen bygger examinatorns fil ur den.
+  document.documentElement.outerHTML = (docHtml || "").replace(/^\s*<!DOCTYPE[^>]*>\s*/i, "");
+  // Inbäddade datablock (<script type="application/json" id="…">) görs läsbara via getElementById.
+  for (const m of (docHtml || "").matchAll(/<script type="application\/json" id="([^"]+)">([\s\S]*?)<\/script>/g)) bySel("#" + m[1]).textContent = m[2];
   const downloads = [], urlEvents = [];
   const laterUnref = (fn, ms) => { const t = setTimeout(fn, ms); if (t && t.unref) t.unref(); return t; };   // håll inte testkörningen vid liv
   const sandbox = {
     document, console, setTimeout: laterUnref, clearTimeout,
     alert() {}, confirm() { return true; }, print() {},
-    navigator: { userAgent: "node" },
+    navigator: { userAgent: "node" }, location: { hash: "" },
     URL: { createObjectURL(b) { downloads.push(b); urlEvents.push("create"); return "blob:test"; }, revokeObjectURL() { urlEvents.push("revoke"); } },
     Blob: class { constructor(parts, opts) { this.parts = parts; this.opts = opts; } },
     __downloads: downloads,
@@ -66,14 +70,14 @@ function run(code, filename) {
 
 /** Laddar appen. ev(kod) ger råvärdet, evj(kod) ger en JSON-klon (jämförbar med deepEqual),
  *  el(selektor) ger det stubbade elementet (t.ex. el("#cards").innerHTML). */
-export function loadApp() { return run(appSource(), "index.html<script>"); }
+export function loadApp() { return run(appSource(), "index.html<script>", fs.readFileSync(INDEX, "utf8")); }
 
 /** Kör skriptet i en exporterad rapport (HTML-sträng) på samma sätt. Det som sidan ritar hamnar i
  *  de stubbade elementens innerHTML och kan läsas med el(). */
 export function runHtml(html) {
-  const blocks = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+  const blocks = [...html.matchAll(/<script(?![^>]*\bsrc=)(?![^>]*application\/json)[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]);
   if (!blocks.length) throw new Error("Rapporten innehåller inget skript");
-  return run(blocks.reduce((a, b) => (b.length > a.length ? b : a)), "rapport<script>");
+  return run(blocks.reduce((a, b) => (b.length > a.length ? b : a)), "rapport<script>", html);
 }
 
 /** Sammanfattning av allt som statistiken bygger på, som JSON-sträng. Två indata som ger samma

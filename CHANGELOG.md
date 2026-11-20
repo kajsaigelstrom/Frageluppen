@@ -35,9 +35,14 @@ inte dokumenterad här.
   om per ort. Ett pakets PDF ger inte längre en falsk varning om fel filpar när nästa tenta
   öppnas. "Tillbaka till analysen" visar resultaten igen. Uppmaningar riktade till
   examinatorn syns inte i temarapporten.
-- **Två ingångar.** Högst upp i filpanelen väljs **Examinator** eller **Kurssamordnare**, i
-  stället för en länk under filrutorna. Adressen följer valet, så `index.html#samordnare`
-  öppnar kurssamordnarens läge direkt och kan skickas som länk.
+- **Kurssamordnaren är landningsstället, och lämnar en fil som examinatorn bara öppnar.**
+  Högst upp i filpanelen väljs **Kurssamordnare** eller **Examinator**, och sidan öppnar hos
+  kurssamordnaren. I stället för ett paket som examinatorn måste ladda upp sparar
+  kurssamordnaren **examinatorns fil**: hela verktyget med den minimerade tentan inbäddad.
+  Examinatorn dubbelklickar och hamnar direkt i analysen, med triage och exkludering före
+  rättningen och temarapporten efter. Filen visar överst att den har en rad per student och
+  inte ska skickas vidare. Adressen följer ingången (`#samordnare`, `#examinator`).
+  Tentapaket i JSON-format från 3.25.0 går fortfarande att släppa i rutan för resultat.
 - **PDF-exporten heter nu "PDF (examinatorns)"** och är orörd i övrigt. Den innehåller
   åtgärdsförslagen och är inte tänkt för utskick till lärare.
 

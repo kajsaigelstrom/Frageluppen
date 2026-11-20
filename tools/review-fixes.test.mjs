@@ -98,12 +98,13 @@ test("Tillbaka till analysen visar resultaten igen", () => {
   ev("setPrep(false)");
   assert.equal(el("#results").classList.contains("hidden"), false);
 });
-test("tentapaketet sparas utan att länken dras in direkt", async () => {
+test("examinatorns fil sparas utan att länken dras in direkt", async () => {
   const { ev, downloads, urlEvents } = fresh();
   ev("state.prep = true; state.prepDemo = true;");
-  await ev("savePackage()");
+  await ev("saveExaminerFile()");
   assert.equal(downloads.length, 1);
-  assert.equal(JSON.parse(downloads[0].parts[0]).format, "frageluppen-tentapaket");
+  assert.match(downloads[0].parts[0], /^<!DOCTYPE html>/);
+  assert.ok(downloads[0].parts[0].includes('id="fl-data"'));
   assert.deepEqual(urlEvents, ["create"]);
 });
 
@@ -136,8 +137,8 @@ test("flikarna följer läget", () => {
 test("rutan för resultat talar till rätt person i varje ingång", () => {
   const { ev, el } = fresh();
   ev("setPrep(true)");
-  assert.ok(!el("#json-hint").innerHTML.includes("tentapaketet"));
+  assert.ok(!el("#json-hint").innerHTML.includes("examinatorns fil"));
   assert.ok(el("#json-hint").innerHTML.includes("Inspera"));
   ev("setPrep(false)");
-  assert.ok(el("#json-hint").innerHTML.includes("tentapaketet"));
+  assert.ok(el("#json-hint").innerHTML.includes("examinatorns fil"));
 });

@@ -50,6 +50,18 @@ if (longest.length >= 40 && pkgText.includes(JSON.stringify(longest.slice(0, 40)
 const ids = ev("PKG.data.flatMap(d => d.ext_inspera_candidates.map(c => c.result.ext_inspera_candidateId))");
 if (ids.some((id, i) => !/^\d+$/.test(id)) ) leaks.push("kandidatnummer (inte löpnummer)");
 if (leaks.length) { ok = false; console.log("LÄCKER: " + leaks.join(", ")); } else console.log("INGET LÄCKER");
+// 2b. examinatorns fil bär exakt paketet och inget annat från råfilerna
+{
+  const file = ev("buildExaminerFile(PKG)");
+  const open = '<script type="application/json" id="fl-data">';
+  const block = file.split(open)[1]?.split("</scr" + "ipt>")[0] ?? "";
+  const same = block && JSON.stringify(JSON.parse(block)) === pkgText;
+  let extra = false;
+  for (const t of teachers) if (t.length >= 4 && file.includes(t)) extra = true;
+  if (longest.length >= 40 && file.includes(longest.slice(0, 40))) extra = true;
+  if (!same || extra) { ok = false; console.log("EXAMINATORNS FIL AVVIKER" + (extra ? ": innehåller ett rättarnamn eller fritextsvar" : ": datablocket är inte paketet")); }
+  else console.log("EXAMINATORNS FIL: BARA PAKETET");
+}
 // 3. temarapporten innehåller bara aggregat
 ev(`state.json = parseJSON(RAW); state.pdfMcqs = null; state.synthMcqs = synthMcqsFromJson(state.json);
     state.tags = null; state.excluded = new Map(); globalThis.TEMA = temaEmbed();`);
