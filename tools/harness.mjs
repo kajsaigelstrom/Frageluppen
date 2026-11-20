@@ -31,8 +31,7 @@ function makeEl() {
   return el;
 }
 
-/** Laddar appen. ev(kod) ger råvärdet, evj(kod) ger en JSON-klon (jämförbar med deepEqual). */
-export function loadApp() {
+function run(code, filename) {
   const cache = new Map();
   const bySel = s => { if (!cache.has(s)) cache.set(s, makeEl()); return cache.get(s); };
   const document = {
@@ -46,7 +45,7 @@ export function loadApp() {
   const downloads = [];
   const sandbox = {
     document, console, setTimeout, clearTimeout,
-    alert() {}, confirm() { return true; },
+    alert() {}, confirm() { return true; }, print() {},
     navigator: { userAgent: "node" },
     URL: { createObjectURL(b) { downloads.push(b); return "blob:test"; }, revokeObjectURL() {} },
     Blob: class { constructor(parts, opts) { this.parts = parts; this.opts = opts; } },
@@ -54,11 +53,23 @@ export function loadApp() {
   };
   sandbox.window = sandbox;
   const ctx = vm.createContext(sandbox);
-  new vm.Script(appSource(), { filename: "index.html<script>" }).runInContext(ctx);   // kastar vid syntaxfel
-  const ev = code => vm.runInContext(code, ctx);
-  const evj = code => { const s = vm.runInContext(`JSON.stringify(${code})`, ctx); return s === undefined ? undefined : JSON.parse(s); };
+  new vm.Script(code, { filename }).runInContext(ctx);   // kastar vid syntaxfel och vid fel under start
+  const ev = c => vm.runInContext(c, ctx);
+  const evj = c => { const s = vm.runInContext(`JSON.stringify(${c})`, ctx); return s === undefined ? undefined : JSON.parse(s); };
   const set = (name, value) => { sandbox[name] = value; };   // lägg in ett värde som global i sandboxen
   return { ev, evj, set, el: bySel, downloads };
+}
+
+/** Laddar appen. ev(kod) ger råvärdet, evj(kod) ger en JSON-klon (jämförbar med deepEqual),
+ *  el(selektor) ger det stubbade elementet (t.ex. el("#cards").innerHTML). */
+export function loadApp() { return run(appSource(), "index.html<script>"); }
+
+/** Kör skriptet i en exporterad rapport (HTML-sträng) på samma sätt. Det som sidan ritar hamnar i
+ *  de stubbade elementens innerHTML och kan läsas med el(). */
+export function runHtml(html) {
+  const blocks = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+  if (!blocks.length) throw new Error("Rapporten innehåller inget skript");
+  return run(blocks.reduce((a, b) => (b.length > a.length ? b : a)), "rapport<script>");
 }
 
 /** Sammanfattning av allt som statistiken bygger på, som JSON-sträng. Två indata som ger samma
