@@ -27,7 +27,8 @@ function makeEl() {
       contains(c) { return cls.has(c); } },
     style: {}, dataset: {}, files: [], children: [],
     innerHTML: "", textContent: "", value: "", disabled: false, checked: false,
-    addEventListener() {}, removeEventListener() {}, appendChild() {}, remove() {},
+    listeners: {},
+    addEventListener(type, fn) { (el.listeners[type] ||= []).push(fn); }, removeEventListener() {}, appendChild() {}, remove() {},
     setAttribute() {}, getAttribute() { return null; }, click() {}, focus() {}, scrollIntoView() {},
     querySelector() { return makeEl(); }, querySelectorAll() { return []; }, closest() { return null; },
   };

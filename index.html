@@ -3240,6 +3240,8 @@ $("#compute").addEventListener("click", async ()=>{ await tryRun(); if(state.jso
 $("#demo").addEventListener("click", ()=>{ if(state.prep){ state.prepDemo=true; refreshPrep(); } else loadDemo(); });
 $("#role-prep").addEventListener("click", ()=>{ if(!state.prep) setPrep(true); });
 $("#role-exam").addEventListener("click", ()=>{ if(state.prep) setPrep(false); });
+$("#prep-save").addEventListener("click", saveExaminerFile);
+$("#reopen").addEventListener("click", expandUpload);
 {
   const emb=readEmbedded();
   if(emb){
