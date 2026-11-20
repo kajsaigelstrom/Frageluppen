@@ -17,6 +17,10 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
 ## Integritet (viktigast)
 - **Inga tentadata får checkas in.** `.gitignore` blockerar `*.json/*.xlsx/*.pdf/*.csv`.
   Riktiga studentresultat hör aldrig hemma i repot.
+- **Tentapaketet byggs med vitlista** (`minimizeInspera`): bara de fält som räknas upp där
+  följer med. Lägg aldrig till ett fält utan att det behövs för statistiken, och bygg aldrig
+  paketet genom att kopiera ett objekt och ta bort fält i efterhand. Paketet är minimerat,
+  inte anonymt.
 - Den delbara HTML-**exporten får bara innehålla aggregat** (antal per alternativ, n,
   diskriminering, teman). Aldrig kandidatsvar eller rådata på individnivå. Bryt inte
   det löftet när du ändrar exportlogiken.
@@ -54,6 +58,9 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
 - **Tre rapportvyer**, knutna till rättningsflödet: Preliminär MCQ (kriterium = MCQ-delen,
   före rättning), Slutrapport MCQ (kriterium = hela tentan, efter rättning), Totalrapport
   (hela tentan inkl. fritext/flersvar). Diskriminering = punkt-biseriell / item–total.
+- **Kurssamordnaren** kan förbereda tentan (läget "Förbered tentan"): ser bara ett kvitto,
+  aldrig resultat, och sparar ett tentapaket som examinatorn öppnar i rutan för resultat.
+  Examinatorns egen PDF eller taggfil gäller före paketets.
 - **Två användargrupper:** examinatorer (laddar upp, utvärderar, exporterar) och
   temaansvariga (får den interaktiva HTML-exporten – alla funktioner *utom* uppladdning).
 

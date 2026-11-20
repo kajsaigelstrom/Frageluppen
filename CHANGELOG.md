@@ -6,6 +6,21 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.25.0
+- **Tentapaket och läget "Förbered tentan".** Kurssamordnaren kan nu förbereda tentan åt
+  examinatorn: släpp resultatfilerna från Inspera, tentans PDF och taggfilen om den finns,
+  och spara **en** fil. Resultatdatan minimeras med en vitlista – bara frågenummer,
+  frågetitel, maxpoäng, poäng och valt flervalsalternativ följer med. Fritextsvar,
+  rättarnamn, tider, extratid, betyg och alla Inspera-id tas bort, och kandidatnumren
+  ersätts av löpnummer. Examinatorn släpper paketet i den vanliga rutan för resultat; en
+  egen PDF eller taggfil som laddas samtidigt gäller före paketets. Ett paket kan inte
+  kombineras med råfiler, och tillfälleskontrollens varning följer med i paketet.
+  Paketet är minimerat, inte anonymt, och hanteras som tentamaterial. Vägen med råfiler
+  är oförändrad. Kontrollerat mot riktiga exporter: identisk statistik, inget läcker.
+- **Tester i `tools/`.** Verktygets logik körs i en Node-sandbox mot syntetisk data ur
+  demoläget (`node --test tools/*.test.mjs`). `tools/compare-local.mjs` jämför råfiler
+  mot paket lokalt utan att skriva ut data.
+
 ## 3.24.1
 - **Buggfix (demo → riktiga filer):** att klicka "Visa exempel" och därefter ladda upp
   riktiga filer blandade demons tillstånd med de riktiga: taggfil-stubben kraschade

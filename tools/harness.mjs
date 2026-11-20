@@ -57,7 +57,8 @@ export function loadApp() {
   new vm.Script(appSource(), { filename: "index.html<script>" }).runInContext(ctx);   // kastar vid syntaxfel
   const ev = code => vm.runInContext(code, ctx);
   const evj = code => { const s = vm.runInContext(`JSON.stringify(${code})`, ctx); return s === undefined ? undefined : JSON.parse(s); };
-  return { ev, evj, el: bySel, downloads };
+  const set = (name, value) => { sandbox[name] = value; };   // lägg in ett värde som global i sandboxen
+  return { ev, evj, set, el: bySel, downloads };
 }
 
 /** Sammanfattning av allt som statistiken bygger på, som JSON-sträng. Två indata som ger samma

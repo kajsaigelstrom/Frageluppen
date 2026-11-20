@@ -592,8 +592,8 @@ const MIN_N_DIST = 20;
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum.
    Låt filnamnet följa samma nummer (mcq_analys_v3_12_0.html). */
-const VERSION = "3.24.1";
-const UPDATED = "2026-09-01";
+const VERSION = "3.25.0";
+const UPDATED = "2026-11-20";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
    modal (rena <details>-sektioner, ingen extern kod). Tolkningsdelen först eftersom den är
@@ -629,6 +629,16 @@ JSON</b>. Valfritt: en <b>Excel</b> med kolumnerna Nr, Fråga och Tema för tema
 <p><b>3.</b> Exportera till Excel, CSV eller PDF, eller skapa en <b>interaktiv HTML</b> att dela
 med temaansvariga. Den innehåller alla vyer men ingen uppladdning, och bara aggregerade
 resultat – aldrig enskilda kandidatsvar.</p>
+</div></details>
+<details class="helpsec"><summary>Tentapaket från kurssamordnaren</summary><div class="body">
+<p>Kurssamordnaren kan förbereda tentan åt examinatorn: välj <b>Förbered tentan åt
+examinatorn</b> under filrutorna, släpp resultatfilerna från Inspera, tentans PDF och
+taggfilen om den finns, och spara ett <b>tentapaket</b>. Fritextsvar, rättarnamn, tider,
+extratid, betyg och alla id tas bort, och kandidatnumren ersätts av löpnummer.</p>
+<p>Examinatorn släpper paketet i rutan för resultat och klickar Beräkna. En egen PDF eller
+taggfil som laddas samtidigt gäller före paketets.</p>
+<p>Paketet är minimerat, inte anonymt: varje rad är en students poängmönster. Behandla det
+som tentamaterial.</p>
 </div></details>`;
 
 function openHelp(){ const m=document.getElementById("helpModal"); if(m) m.classList.remove("hidden"); }
