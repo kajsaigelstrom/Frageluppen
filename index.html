@@ -187,6 +187,12 @@
   .setinp{font:inherit;font-size:13.5px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;width:5.5em;text-align:right}
   .setrange{font-size:12px;color:var(--muted);min-width:5em}
   .sethint{font-size:12.5px;color:var(--muted);margin:10px 0}
+  .selwrap{display:inline-flex;align-items:center;margin-right:8px;vertical-align:middle;cursor:pointer}
+  .selbox{width:16px;height:16px;cursor:pointer;accent-color:var(--accent)}
+  #selbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .selsave{border-color:var(--accent)!important;color:var(--accent)!important;font-weight:600}
+  .subsettag{display:inline-block;margin:6px 0 2px;padding:3px 10px;border-radius:999px;background:var(--accent);color:#fff;font-size:12.5px;font-weight:600}
+  @media print{ .selwrap,.selbox,#selbar,#settings-open,#settings{display:none!important} }
   .levelnote{margin:12px 0 0;padding:9px 13px;border-left:3px solid var(--accent);background:var(--card);font-size:13px;max-width:78ch}
   .askbox{margin-top:12px;padding:11px 14px;border:1px solid var(--line);border-radius:8px;background:#fbfaf6}
   .askhead{font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
@@ -2101,7 +2107,9 @@ function drawCards(){
   const activeSummary=Object.keys(state.activeTags).map(col=>`${col}: ${[...state.activeTags[col]].join(", ")}`).join(" · ");
   $("#count").textContent = `Visar ${v.length} av ${state.vm.view.length} frågor`
     + (activeSummary?` · ${activeSummary}`:"");
-  $("#cards").innerHTML = v.map(card).join("") || `<div class="panel">Inga frågor matchar filtret.</div>`;
+  const emptySubset = (typeof EMBED!=="undefined" && EMBED && EMBED.subset && !state.vm.view.length);
+  $("#cards").innerHTML = v.map(card).join("")
+    || (emptySubset ? `<div class="panel">Inga flervalsfrågor i urvalet. Se Totalrapporten.</div>` : `<div class="panel">Inga frågor matchar filtret.</div>`);
   updateClearBtn();
 }
 
@@ -2230,7 +2238,7 @@ function card(v){
   if(excluded) advHtml="";   // exkluderad fråga: ingen åtgärdsruta – beslutet är taget, talen visas som dokumentation
   return `<div class="q ${flag?'flag':''}${excluded?' excluded':''}" id="card-${esc(String(v.seq))}">
     <div class="top">
-      <div class="code">Fråga ${esc(String(v.seq))}${(v.title && v.title!==String(v.seq))?`<span class="qtitle">${esc(v.title)}</span>`:""}${v.pts?`<span class="pts">${esc(v.pts)}</span>`:""}${tags}</div>
+      <div class="code">${(typeof EMBED!=="undefined" && EMBED && EMBED.kind==="tema") ? `<label class="selwrap" title="Välj frågan till en egen sida"><input type="checkbox" class="selbox" data-seq="${esc(String(v.seq))}"${(state.sel && state.sel.has(String(v.seq)))?" checked":""}></label>` : ""}Fråga ${esc(String(v.seq))}${(v.title && v.title!==String(v.seq))?`<span class="qtitle">${esc(v.title)}</span>`:""}${v.pts?`<span class="pts">${esc(v.pts)}</span>`:""}${tags}</div>
       <div class="metrics">${badge}
         <div class="pc">${v.pcorr.toFixed(1)} % rätt <small>(n=${v.n})</small></div>
         ${rpbHtml}
@@ -2438,24 +2446,26 @@ function xExportTabs(){
 function xExportTotal(){
   const host=$("#totalreport"); if(!host) return;
   const h=EMBED.views[state.viewIdx].total.head;
-  const head='<div class="trhead">'
+  const head = EMBED.subset
+    ? '<div class="trhead">'
+      +`<span class="stat"><b>${h.n}</b><span>kandidater</span></span>`
+      +`<span class="stat"><b>${h.nq}</b><span>frågor i urvalet</span></span>`
+      +'</div>'
+    : '<div class="trhead">'
     +`<span class="stat"><b>${h.n}</b><span>kandidater</span></span>`
     +`<span class="stat"><b>${h.nq}</b><span>frågor (${h.nmcq} MCQ)</span></span>`
     +(h.nExcl?`<span class="stat"><b>${h.nExcl}</b><span>exkluderade</span></span>`:"")
     +`<span class="stat"><b>${h.maxRed}</b><span>maxpoäng${h.nExcl?` (av ${h.maxTotal})`:""}</span></span>`
     +(h.pass!=null?`<span class="stat"><b>${h.pass} / ${h.n}</b><span>nått ${state.th.pass} %-gränsen (${h.passPct} %)</span></span>`:"")
     +'</div>';
-  const q=key($("#search").value);
-  let rows=state.totalRows.slice();
-  if(q) rows=rows.filter(r=> key(String(r.num)).includes(q)||key(r.title||"").includes(q)||key(r.typeLabel).includes(q));
-  rows=rows.filter(r=>tagPass(r.tagVals));
+  const rows=totalVisibleRows();
   const body=rows.map(r0=>{
     const r=Object.assign({}, r0, {info:thInfo(r0.info, r0.r)});
     const exTag=r.excluded?` <span class="trexcltag" title="${esc(r.reason||"Exkluderad ur tentan")}">exkl.</span>`:"";
     const diff = r.isSingle ? `${r.diffPc.toFixed(0)} % rätt`
       : `${(+r.diffMean.toFixed(2))} / ${r.max} <span style="color:var(--muted)">(${r.diffPct.toFixed(0)} %)</span>`;
     return `<tr class="${r.excluded?'trexcl':''}">`
-      +`<td class="num">${esc(String(r.num))}</td>`
+      +`<td class="num">${EMBED.kind==="tema" ? `<input type="checkbox" class="selbox" data-seq="${esc(String(r.num))}"${state.sel.has(String(r.num))?" checked":""}> ` : ""}${esc(String(r.num))}</td>`
       +`<td><span class="tcode">${esc(r.title||String(r.num))}</span>${exTag}</td>`
       +`<td><span class="ttype ${r.typeCls}">${esc(r.typeLabel)}</span></td>`
       +`<td class="num">${r.max}</td>`
@@ -2518,7 +2528,7 @@ function xExportRender(){
   if(!modes.some(m=>m.id===state.mode)) state.mode=modes[0].id;
   $("#modeseg").innerHTML=modes.map(m=>`<button class="modebtn ${m.id===state.mode?'on':''}" data-mode="${esc(m.id)}">${esc(m.label)}</button>`).join("");
   $("#modehint").textContent=modeHint(state.mode);
-  if(spec.showPassMetric) renderPassMetric(); else $("#passmetric").innerHTML="";
+  if(spec.showPassMetric && !EMBED.subset) renderPassMetric(); else $("#passmetric").innerHTML="";
   $("#freetext").innerHTML="";                  // fritextfördelning visas i Totalrapporten
   refreshLists(); buildTagbar(); drawCards();
 }
@@ -2612,6 +2622,15 @@ function xExportInit(){
   });
   wireSettings(false, ()=>{ xExportRender(); });
   renderThCustom(false);
+  { const sl=$("#subsetline"); if(sl) sl.innerHTML = EMBED.subset ? `<span class="subsettag">Urval: ${EMBED.subset.n} av ${EMBED.subset.of} frågor</span>` : ""; }
+  document.addEventListener("change", e=>{
+    const b=e.target && e.target.closest && e.target.closest(".selbox"); if(!b) return;
+    if(b.checked) state.sel.add(String(b.dataset.seq)); else state.sel.delete(String(b.dataset.seq));
+    renderSelBar();
+  });
+  { const a=$("#sel-all"), c=$("#sel-clear"), sv=$("#sel-save");
+    if(a) a.addEventListener("click", selAllVisible); if(c) c.addEventListener("click", selClear); if(sv) sv.addEventListener("click", saveSubset); }
+  renderSelBar();
   xExportTabs(); xExportRender();
 }
 
@@ -2657,6 +2676,13 @@ ingen ruta.</p>
 <details class="helpsec"><summary>De två vyerna</summary><div class="body">
 <p><b>Slutrapport MCQ</b> – ett kort per flervalsfråga, med diskriminering mot hela tentans poäng.</p>
 <p><b>Totalrapport</b> – alla frågor i tentans ordning, även fritext och flersvar.</p>
+</div></details>
+<details class="helpsec"><summary>Välj ut frågor till en egen sida</summary><div class="body">
+<p>Bocka för frågor på korten eller i Totalrapporten. <b>Markera alla visade</b> väljer allt som
+visas just nu, så filtrera först på ett tema för att välja hela temat. <b>Spara sida med valda
+frågor</b> ger en ny fristående fil med bara de frågorna, som går att ge vidare till den som
+skrev dem. Den sidan fungerar som den här och kan delas upp igen.</p>
+<p>En urvalssida visar inte godkäntandel eller andra siffror för hela tentan.</p>
 </div></details>
 <details class="helpsec"><summary>Inställningar</summary><div class="body">
 <p>Under <b>Inställningar</b> kan gränserna för märkningarna Lätt och Svår och för god diskriminering
@@ -2733,6 +2759,54 @@ function temaEmbed(){
                   passSnapshot: snap, freeDist: (state.freeDist||freeTextDist()||[]),
                   excluded: [...state.excluded.entries()], mode: "ask", th: Object.assign({},state.th) };
 }
+/* Urval: en kopia av rapportens data med bara de valda frågorna. Helhetssiffror (godkäntandel, maxpoäng)
+   följer inte med – de gäller inte urvalet. Vid urval ur ett urval behålls ursprungstentans antal frågor. */
+function subsetEmbed(embed, sel, th){
+  const S=new Set([...sel].map(String));
+  const out=JSON.parse(JSON.stringify(embed));
+  const found=new Set(); let cand=embed.candCount, origN=0;
+  for(const v of out.views){
+    if(v.layout==="total" && v.total){
+      origN = v.total.head.nq;
+      v.total.rows = v.total.rows.filter(r=>S.has(String(r.num)));
+      v.total.rows.forEach(r=>found.add(String(r.num)));
+      v.total.head = { n:v.total.head.n, nq:v.total.rows.length };
+    } else if(Array.isArray(v.view)){
+      if(!origN) origN = v.view.length;
+      v.view = v.view.filter(c=>S.has(String(c.seq)));
+      v.view.forEach(c=>found.add(String(c.seq)));
+    }
+  }
+  out.passSnapshot = null;
+  out.freeDist = (out.freeDist||[]).filter(f=>S.has(String(f.num)));
+  out.excluded = (out.excluded||[]).filter(e=>S.has(String(e[0])));
+  out.subset = { n:found.size, of: embed.subset ? embed.subset.of : origN };
+  out.th = Object.assign({}, th||embed.th);
+  out.viewIdx = 0; out.mode = "ask";
+  return out;
+}
+/* Urvalet i temarapporten (körs bara där). state.sel = Set med frågenummer som strängar, gemensamt för vyerna. */
+function totalVisibleRows(){
+  const q=key($("#search").value);
+  let rows=state.totalRows.slice();
+  if(q) rows=rows.filter(r=> key(String(r.num)).includes(q)||key(r.title||"").includes(q)||key(r.typeLabel).includes(q));
+  return rows.filter(r=>tagPass(r.tagVals));
+}
+function selVisible(){
+  return EMBED.views[state.viewIdx].layout==="total" ? totalVisibleRows().map(r=>String(r.num)) : currentView().map(v=>String(v.seq));
+}
+function renderSelBar(){
+  const n=state.sel.size, sv=$("#sel-save"), cl=$("#sel-clear");
+  if(sv){ sv.textContent=`Spara sida med valda frågor (${n})`; sv.classList.toggle("hidden", n===0); }
+  if(cl) cl.classList.toggle("hidden", n===0);
+}
+function selRedraw(){ if(EMBED.views[state.viewIdx].layout==="total") xExportTotal(); else drawCards(); renderSelBar(); }
+function selAllVisible(){ selVisible().forEach(x=>state.sel.add(x)); selRedraw(); }
+function selClear(){ state.sel.clear(); selRedraw(); }
+function saveSubset(){
+  if(!state.sel.size) return;
+  downloadText(`temarapport_urval_${stamp()}.html`, buildTemaReport(subsetEmbed(EMBED, state.sel, state.th)), "text/html;charset=utf-8");
+}
 /* Funktioner och konstanter som den fristående rapporten behöver. Listorna används både när appen bygger
    rapporten och när rapporten själv bygger en urvalssida – därför måste de innehålla sig själva. */
 function temaFns(){
@@ -2742,6 +2816,7 @@ function temaFns(){
              currentView,drawCards,jumpToCard,passMetric,renderPassMetric,freeTextDist,renderFreeText,buildActionList,buildGoodList,buildTagbar,
              setThreshold,thresholdsCustom,resetThresholds,thFmt,thresholdsText,settingsHtml,renderThCustom,wireSettings,thInfo,neutralInfo,
              temaFns,temaConsts,buildTemaReport,downloadText,stamp,
+             subsetEmbed,totalVisibleRows,selVisible,renderSelBar,selRedraw,selAllVisible,selClear,saveSubset,
              xExportTabs,xExportTotal,xExportRender,xExportRows,xExportCSV,xLoadXLSX,xExportXLSX,xExportPrint,openHelp,closeHelp,wireHelp,xExportInit];
 }
 function temaConsts(){
@@ -2813,6 +2888,12 @@ function buildTemaReport(EMBED){
           <button id="dlxlsx" class="btn-ghost" title="Ladda ner de filtrerade frågorna som Excel (.xlsx). Hämtar Excel-stödet via internet; faller tillbaka på CSV offline.">Excel (.xlsx)</button>
           <button id="dlcsv" class="btn-ghost" title="Ladda ner de filtrerade frågorna som CSV (öppnas i Excel, fungerar offline)">CSV</button>
           <button id="dlprint" class="btn-ghost" title="Skriv ut eller spara den aktuella vyn som PDF">Skriv ut / PDF</button>
+        </div>
+        <div id="selbar">
+          <span class="lbl">Urval</span>
+          <button id="sel-all" class="btn-ghost" type="button" title="Bocka för alla frågor som visas just nu. Filtrera på tema först för att välja ett helt tema.">Markera alla visade</button>
+          <button id="sel-clear" class="btn-ghost hidden" type="button">Avmarkera alla</button>
+          <button id="sel-save" class="btn-ghost selsave hidden" type="button" title="Sparar en ny fristående sida med bara de valda frågorna, att ge vidare.">Spara sida med valda frågor (0)</button>
         </div>
         <div class="tagbar" id="tagbar"></div>
       </div>
