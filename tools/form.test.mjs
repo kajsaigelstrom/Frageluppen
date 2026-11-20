@@ -49,14 +49,17 @@ test("formfyndet visas som förklaring under en fråga på kortet", () => {
   assert.ok(html.includes('class="askform"'));
   assert.ok(html.split('class="askform"')[1].split("</details>")[0].includes("Ur MCQ-lathunden"));
 });
-test("formkontrollen körs inte alls på en fråga utan statistisk svaghet", () => {
+test("formkontrollen körs bara på frågor med en svaghet och på tänkbara förebilder", () => {
   const { ev } = fresh();
   ev("globalThis.CALLS = 0; { const kor = KONTROLL.kor; KONTROLL.kor = function(){ CALLS++; return kor.apply(this, arguments); }; }");
-  const html = ev(`card(mk({n:90, counts:[60,12,10,8], rpb:0.35, opts:[${JSON.stringify(LONG)},"Hypotyreos","Depression","Sömnapné"]}))`);
+  // varken svag eller tänkbar förebild (skiljer för svagt): prövas inte
+  const html = ev(`card(mk({n:100, counts:[70,10,10,10], rpb:0.15, opts:[${JSON.stringify(LONG)},"Hypotyreos","Depression","Sömnapné"]}))`);
   assert.equal(ev("CALLS"), 0);
   assert.ok(!html.includes("Rätt svar sticker ut.") && !html.includes("askbox") && !html.includes("Ur MCQ-lathunden"));
   ev(`card(mk({n:80, counts:[76,2,1,1], rpb:0.05, opts:[${JSON.stringify(LONG)},"Hypotyreos","Depression","Sömnapné"]}))`);
-  assert.ok(ev("CALLS") > 0);
+  const afterWeak = ev("CALLS"); assert.ok(afterWeak > 0);
+  ev("card(mk({n:90, counts:[65,9,8,8], rpb:0.35}))");                     // tänkbar förebild: prövas
+  assert.ok(ev("CALLS") > afterWeak);
 });
 test("en mycket lätt fråga får formfyndet som möjlig förklaring på kortet", () => {
   const { ev } = fresh();
@@ -100,16 +103,22 @@ test("högst tre formfynd per kort", () => {
   assert.ok(evj(`rules(${many})`).length > 3);
   assert.ok(evj(`Object.values(formFor(${many}, askQuestions(${many}))).flat().length`) <= 3);
 });
-test("förebild: lagom svår, skiljer väl och ingen fråga på kortet", () => {
+test("förebild: lagom svår, skiljer väl, ingen fråga på kortet och utan fynd i formkontrollen", () => {
   const { ev } = fresh();
   assert.equal(ev("isForebild(mk({n:90, counts:[65,9,8,8], rpb:0.35}))"), true);
+  // en fråga med formfynd ska inte hållas fram som förebild, även om statistiken är bra
+  const flawed = `mk({n:90, counts:[65,9,8,8], rpb:0.35, opts:[${JSON.stringify(LONG)},"Hypotyreos","Depression","Sömnapné"]})`;
+  assert.equal(ev(`isForebild(${flawed})`), false);
+  assert.ok(!ev(`card(${flawed})`).includes("förebild"));
+  assert.ok(!ev(`card(${flawed})`).includes("Rätt svar sticker ut."));          // fyndet visas inte: frågan har ingen svaghet att förklara
+  // fynd som bara är tips i lathunden hindrar inte (t.ex. parallella alternativ)
+  assert.equal(ev(`isForebild(mk({n:90, counts:[65,9,8,8], rpb:0.35, stem:"Vilken dos är lämpligast?", opts:["1000 mg 2 gånger per dygn","1000 mg 3 gånger per dygn","1500 mg 3 gånger per dygn","1500 mg 2 gånger per dygn"]}))`), true);
   assert.equal(ev("isForebild(mk({n:90, counts:[81,3,3,3], rpb:0.35}))"), false);     // 90 % rätt, för lätt
   assert.equal(ev("isForebild(mk({n:90, counts:[40,20,15,15], rpb:0.35}))"), false);  // 44 % rätt, för svår
   assert.equal(ev("isForebild(mk({n:90, counts:[65,9,8,8], rpb:0.15}))"), false);     // skiljer för svagt
   assert.equal(ev("isForebild(mk({n:25, counts:[18,3,2,2], rpb:0.35}))"), false);     // för litet underlag
-  const html = ev("card(mk({n:90, counts:[65,9,8,8], rpb:0.35}))");
-  assert.ok(html.includes("Fungerar som förebild"));
-  assert.ok(!html.includes("formkontrollen"));
+  assert.equal(ev("isForebild(mk({n:90, counts:[65,9,8,8], rpb:0.35, stem:''}))"), false);   // ingen text att kontrollera
+  assert.ok(ev("card(mk({n:90, counts:[65,9,8,8], rpb:0.35}))").includes("utan fynd i formkontrollen"));
 });
 test("kortet har ingen kopiera-knapp och ingen formkontroll-ruta", () => {
   const { ev } = fresh();
