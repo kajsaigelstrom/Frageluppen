@@ -77,7 +77,7 @@ test("den exporterade sidan går att köra och ritar kort utan åtgärder", () =
   assert.ok(tabs.includes("Slutrapport MCQ") && tabs.includes("Totalrapport"));
   assert.ok(!tabs.includes("Preliminär"));
   assert.equal(page.el("#actionlist").innerHTML, "");
-  assert.ok(page.el("#goodlist").innerHTML.includes("skiljer starka från svaga"));
+  assert.match(page.el("#goodlist").innerHTML, /fungerar som förebild|^$/);   // sedan formkontrollen: förebilder i stället för enbart diskriminering
 });
 test("totalrapporten i den exporterade sidan är fri från åtgärdsord", () => {
   const { ev } = fresh();

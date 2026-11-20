@@ -198,6 +198,21 @@
   .askhead{font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
   .askq{font-size:14px;line-height:1.5;margin:6px 0}
   .askfact{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .askform{margin-top:6px;padding:7px 10px;border-left:3px solid #c9b06a;background:#fff;font-size:13px;line-height:1.5}
+  .formitem{margin:8px 0;font-size:13px;line-height:1.5}
+  .formrub{font-weight:600}
+  .formfynd{color:var(--muted)}
+  .formrad{margin-top:4px}
+  .formrad summary,.formall summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-weight:600}
+  .formtext{margin-top:5px}
+  .formvarfor{margin-top:5px;color:var(--muted)}
+  .formref{margin-top:5px;font-size:11.5px;color:var(--muted)}
+  .formall{margin-top:10px}
+  .formallbody{margin-top:8px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:#fbfaf6}
+  .formfoot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .copyhint{font-size:12px;color:var(--muted)}
+  .forebild{margin-top:12px;padding:8px 12px;border-left:3px solid var(--accent);background:var(--card);font-size:13.5px}
+  @media print{ .formall{display:none!important} }
   .askpsy{font-size:12.5px;color:var(--muted);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line)}
   .thcustom{margin:10px 0 0;padding:8px 12px;border:1px solid #c9b06a;border-radius:8px;background:#faf6ea;font-size:13px}
   .linkbtn{font:inherit;font-size:13px;background:none;border:none;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer}
@@ -1702,6 +1717,374 @@ function advice(v){
   return out;
 }
 
+/* ---------- Formkontrollen ur MCQ-lathunden ----------
+   Lathundens mekaniska kontroll (längd, ordeko, inledning, led, negation, samlingsalternativ m.m.) körs på
+   frågornas text. MCQ-lathunden är källan: de två märkta avsnitten nedan skrivs av tools/sync-lathund.mjs och
+   ändras aldrig för hand. Lathundens innehåll är © Kajsa Igelström, CC BY-NC-SA 4.0 (se FORM_META). */
+function lathundKontrollInit(){
+/* <LATHUND-KONTROLL> */
+/* MCQ-lathunden — den mekaniska kontrollen.
+   Rena textregler (längd, absoluta ord, ordeko, inledning, led, tvådelad form, negation)
+   plus några formregler ur NBME. Körs i webbläsaren och i Node-testerna. Ser bara formen. */
+(function (root) {
+  /* Snowball-stammaren för svenska (Porter, snowballstem.org): tar bort böjningsändelser så att
+     "kortisonbehandlingen" och "kortisonbehandling" räknas som samma ord. */
+  const VOK = /[aeiouyäåö]/;
+  function r1(w) {
+    let i = 0;
+    while (i < w.length && !VOK.test(w[i])) i++;
+    while (i < w.length && VOK.test(w[i])) i++;
+    i++;                                    // R1 börjar efter första icke-vokalen som följer på en vokal
+    return Math.min(Math.max(i, 3), w.length);
+  }
+  const S1 = ['heterna', 'hetens', 'anden', 'heten', 'heter', 'arnas', 'ernas', 'ornas', 'arens', 'andes', 'andet', 'arna', 'erna', 'orna', 'ande', 'arne', 'aste', 'aren', 'erns', 'ades', 'ade', 'are', 'ern', 'ens', 'het', 'ast', 'ad', 'en', 'ar', 'er', 'or', 'as', 'es', 'at', 'a', 'e'];
+  const SEND = 'bcdfghjklmnoprtvy';
+  function stam(w) {
+    w = w.toLowerCase();
+    const p = r1(w);
+    let träff = S1.find(s => w.endsWith(s) && w.length - s.length >= p);
+    if (träff) w = w.slice(0, -träff.length);
+    else if (w.endsWith('s') && w.length - 1 >= p && SEND.includes(w[w.length - 2])) w = w.slice(0, -1);
+    if (/(dd|gd|nn|dt|gt|kt|tt)$/.test(w) && w.length - 2 >= p) w = w.slice(0, -1);
+    const s3 = ['lig', 'ig', 'els'].find(s => w.endsWith(s) && w.length - s.length >= p);
+    if (s3) w = w.slice(0, -s3.length);
+    else if (w.endsWith('löst') && w.length - 4 >= p) w = w.slice(0, -1);
+    else if (w.endsWith('fullt') && w.length - 5 >= p) w = w.slice(0, -1);
+    if (w.length > 4 && w.endsWith('s')) w = w.slice(0, -1);   // utjämning utöver Snowball: "diagnos" och "diagnoserna" ska mötas
+    return w;
+  }
+
+  /* NLTK:s svenska stoppordslista plus ord som är generiska i tentafrågor. Jämförs som stammar. */
+  const STOP = new Set(('och det att i en jag hon som han på den med var sig för så till är men ett om hade de av icke mig du henne då sin nu har inte hans honom skulle hennes där min man ej vid kunde något från ut när efter upp vi dem vara vad över än dig kan sina här ha mot alla under någon eller allt mycket sedan ju denna själv detta åt utan varit hur ingen mitt ni bli blev oss din dessa några deras blir mina samma vilken er sådan vår blivit dess inom mellan sådant varför varje vilka ditt vem vilket sitta sådana vart dina vars vårt våra ert era vilkas').split(' ').map(stam));
+  ['denna', 'detta', 'eller', 'efter', 'finns', 'genom', 'gäller', 'vilket', 'vilka', 'vilken',
+    'mellan', 'inom', 'utan', 'varje', 'många', 'flera', 'samma', 'annan', 'andra', 'första', 'patient', 'patienten',
+    'symtom', 'söker', 'visar', 'beskriver', 'berättar', 'istället', 'således', 'sedan', 'under', 'kommer', 'hennes',
+    'hans', 'också', 'mycket', 'dagar', 'veckor', 'månader', 'timmar', 'gånger', 'följande', 'troligaste', 'troligast',
+    'mest', 'bäst', 'bästa', 'främst', 'orsak', 'orsaken', 'förklaring', 'förklaringen', 'mekanism', 'mekanismen',
+    'behandling', 'behandlingen', 'diagnos', 'diagnosen', 'åtgärd', 'åtgärden', 'sannolika', 'sannolikaste', 'rimligaste',
+    'patientens', 'dagarna', 'veckorna', 'tidigare', 'senaste', 'sedan', 'därefter', 'också', 'eftersom', 'medan', 'genom', 'enligt'].forEach(w => STOP.add(stam(w)));
+  const ABS = ['alltid', 'aldrig', 'endast', 'uteslutande', 'samtliga', 'inga', 'enbart'];
+  const NEG_VINJ = /\b(inte|aldrig|ingen|inget|inga|utan|saknar|negativt?|förnekar|varken)\b/gi;
+  const NEG_STAM = /\b(inte|ej|utom|förutom|aldrig|felaktig[t]?|minst (?:trolig|sannolik)[a-z]*|stämmer inte)\b/i;
+  const PASTAENDE = /\b(vilket av följande (?:påståenden? )?(?:stämmer|är (?:korrekt|sant|riktigt|falskt|fel))|vilket påstående|stämmer inte|är inte (?:korrekt|sant|riktigt))\b/i;
+  const PEKAR = /\b(vilket alternativ|vilket av följande|vilken av följande|vilket av nedanstående|vilket påstående)\b/i;
+  const BASTA = /\b(bäst|bästa|mest|främst|främsta|troligast|troligaste|sannolikast|sannolikaste|huvudsaklig\w*|viktigast\w*|lämpligast\w*|första hand)\b/i;
+  const LED = /\b(så att|vilket|som|eftersom|medan|därför|därmed|när|om|och)\b|[;,]/gi;
+  const TVA = /\b(både|samtidigt|och därmed|liksom)\b|;/i;
+  const SAMLING = /\b(alla|samtliga|inget|ingen|inga|ingetdera) (?:av )?(?:ovanstående|ovan|de ovanstående|nedanstående|alternativen)\b|\b(?:både|såväl) [a-eA-E] (?:och|som) [a-eA-E]\b|\b[a-eA-E] (?:och|\+) [a-eA-E]\b/i;
+
+  const ord = (t, min) => {
+    const m = new Map();
+    (t.toLowerCase().match(new RegExp('[a-zåäö]{' + (min || 4) + ',}', 'g')) || []).forEach(w => { const s = stam(w); if (!STOP.has(s) && !m.has(s)) m.set(s, w); });
+    return m;
+  };
+  const norm = s => s.toLowerCase().replace(/[.!?;:,]+$/, '').replace(/\s+/g, ' ').trim();
+  /* Fyndtext för ordträffar: ordet som det står i rätt svar, och i parentes formen i
+     vinjetten eller stammen när den skiljer sig ("kortisonbehandling", i vinjetten "kortisonbehandlingen"). */
+  const par = (har, dar, plats) => har.toLowerCase() === dar.toLowerCase() ? '"' + har + '"' : '"' + har + '" (i ' + plats + ' "' + dar + '")';
+  const strip = s => s.replace(/^\s*(?:[-–•*]|\(?[a-hA-H1-9][.):]|[a-hA-H]\))\s*/, '').trim();
+
+  function kor(I, inp) {
+    const vinjett = (inp.vinjett || '').trim();
+    const stam = (inp.stam || '').trim();
+    const ratt = strip(inp.ratt || '');
+    const ds = (inp.distraktorer || []).map(strip).filter(Boolean);
+    const alla = [ratt].concat(ds);
+    const F = [];
+    const f = (regel, fynd, extra) => F.push(Object.assign({ regel, fynd }, I.kontroll.regler[regel], extra || {}));
+    if (!stam || !ratt || ds.length < 1) return F;
+
+    /* K1 längd (marginal 10 % och 5 tecken) */
+    const rl = ratt.length, dl = ds.map(d => d.length), maxD = Math.max.apply(null, dl), medelD = dl.reduce((a, b) => a + b, 0) / dl.length;
+    if (rl > maxD && rl - maxD >= 5 && (rl - maxD) / maxD >= 0.10) f('langst', 'Rätt svar är ' + rl + ' tecken, den längsta distraktorn ' + maxD + ' (' + Math.round(100 * (rl - maxD) / maxD) + ' % längre).');
+    else if (rl < 0.7 * medelD) f('kortast', 'Rätt svar är ' + rl + ' tecken, distraktorerna i snitt ' + Math.round(medelD) + '.');
+    const lens = alla.map(a => a.length), kvot = Math.max.apply(null, lens) / Math.min.apply(null, lens);
+    const enord = alla.every(a => !/\s/.test(a)) && Math.max.apply(null, lens) <= 20;
+    if (kvot > 2 && !enord) f('kvot', 'Längsta alternativet är ' + kvot.toFixed(1) + ' gånger det kortaste (' + lens.join(', ') + ' tecken).');
+
+    /* K2 absoluta ord */
+    alla.forEach((a, i) => ABS.forEach(t => { if (!SAMLING.test(a) && new RegExp('\\b' + t + '\\b', 'i').test(a)) f('absolut', '"' + t + '" i ' + (i === 0 ? 'rätt svar' : 'distraktor ' + i) + '.'); }));
+
+    /* K3 ordeko stam/vinjett → rätt svar, saknas i distraktorerna. Spegelregeln (vinjettord bara i en
+       distraktor) togs bort 5 nov 2026: slog på var femte vinjettfråga i tentaanalysen utan samband med B. */
+    const dOrd = new Set(); ds.forEach(d => ord(d).forEach((w, s) => dOrd.add(s)));
+    const rOrd = ord(ratt), sOrd = ord(stam), vOrd = ord(vinjett, 6);
+    const eko = [...sOrd.keys()].filter(s => rOrd.has(s) && !dOrd.has(s));
+    if (eko.length) f('eko', 'I rätt svar: ' + eko.map(s => par(rOrd.get(s), sOrd.get(s), 'stammen')).join(', ') + '.');
+    const vEko = [...vOrd.keys()].filter(s => rOrd.has(s) && !dOrd.has(s) && !eko.includes(s));
+    if (vEko.length) f('eko', 'I rätt svar: ' + vEko.map(s => par(rOrd.get(s), vOrd.get(s), 'vinjetten')).join(', ') + '.');
+
+    /* K4 inledning */
+    const led = s => s.toLowerCase().split(/\s+/).slice(0, 2).join(' ');
+    const L = alla.map(led);
+    if (ds.length >= 3 && ds.every(d => led(d) === L[1]) && L[0] !== L[1]) f('inledning', 'Distraktorerna börjar "' + L[1] + '", rätt svar "' + L[0] + '".');
+    else if (ds.length >= 2 && ![1, alla.length].includes(new Set(L).size)) f('inledning2', L.map(x => '"' + x + '"').join(', ') + '.');
+
+    /* K5 led */
+    const n = alla.map(a => (a.match(LED) || []).length);
+    if (ds.length >= 2 && n.slice(1).every(x => Math.abs(n[0] - x) >= 2)) f('led', 'Rätt svar har ' + n[0] + ' led, distraktorerna ' + n.slice(1).join(', ') + '.');
+
+    /* K6 tvådelad form */
+    if (TVA.test(ratt) && !ds.some(d => TVA.test(d))) f('tvadelad', 'Bara rätt svar har "både", "samtidigt" eller semikolon.');
+
+    /* K7 negation i vinjetten */
+    const negs = vinjett.match(NEG_VINJ);
+    if (negs) f('negation', [...new Set(negs.map(w => w.toLowerCase()))].join(', ') + '.');
+
+    /* K8 stammen (NBME) */
+    if (PASTAENDE.test(stam)) f('pastaende', '"' + stam.match(PASTAENDE)[0] + '".');
+    else if (NEG_STAM.test(stam)) f('negstam', '"' + stam.match(NEG_STAM)[0] + '".');
+    if (PEKAR.test(stam) && !PASTAENDE.test(stam)) f('pekar', '"' + stam.match(PEKAR)[0] + '".');
+    if (!BASTA.test(stam) && !PEKAR.test(stam) && !PASTAENDE.test(stam)) f('markor', '');
+
+    /* K9 samlingsalternativ (NBME) */
+    alla.forEach((a, i) => { if (SAMLING.test(a)) f('samling', '"' + a.match(SAMLING)[0] + '" i ' + (i === 0 ? 'rätt svar' : 'distraktor ' + i) + '.'); });
+
+    /* K10 dubbletter och grammatisk ojämnhet (NBME) */
+    const sett = {};
+    alla.forEach((a, i) => { const k = norm(a); if (sett[k] != null) f('dubblett', (sett[k] === 0 ? 'Rätt svar' : 'Distraktor ' + sett[k]) + ' och ' + (i === 0 ? 'rätt svar' : 'distraktor ' + i) + ' är samma text.'); else sett[k] = i; });
+    const stor = alla.map(a => /^[A-ZÅÄÖ]/.test(a)), punkt = alla.map(a => /[.!?]$/.test(a));
+    if (alla.length > 2 && (new Set(stor).size > 1 || new Set(punkt).size > 1)) f('ojamn', 'Blandad stor och liten begynnelsebokstav eller punkt bara i vissa alternativ.');
+
+    /* K11 antal distraktorer */
+    if (ds.length > 3) f('antal', ds.length + ' distraktorer.');
+
+    const P = { start: 0, battre: 1, tips: 2 };
+    F.forEach((x, i) => { x._i = i; });
+    F.sort((a, b) => (P[a.prio] - P[b.prio]) || (a._i - b._i));
+    F.forEach(x => delete x._i);
+    return F;
+  }
+
+  const api = { kor, stam };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.KONTROLL = api;
+})(typeof window !== 'undefined' ? window : this);
+/* </LATHUND-KONTROLL> */
+}
+/* <LATHUND-REGLER> */
+const FORM_META = {"version":"Betaversion 0.9","datum":"5 november 2026","licens":"CC BY-NC-SA 4.0","upphov":"© 2026 Kajsa Igelström"};
+const FORM_REGLER = {
+ "langst": {
+  "prio": "battre",
+  "rubrik": "Rätt svar sticker ut.",
+  "text": "Flytta detaljen till vinjetten eller korta rätt svar, och gör distraktorerna lika utförliga. Det längsta och mest garderade alternativet väljs oftare oavsett kunskap.",
+  "varfor": "Konstruktörer skriver ofta rätt svar först och lägger till förbehåll, parenteser och undervisande tillägg för att det ska vara oantastligt. Studenter lär sig att det mest specifika eller mest garderade alternativet oftast är rätt, och kan använda det utan ämneskunskap.",
+  "ref": "NBME, Item-Writing Guide, 6 uppl. (2024), \"Correct option stands out\" s. 23; Haladyna, Downing & Rodriguez (2002), riktlinjerna 24 och 28d.",
+  "belagg": "Mer detalj i rätt svar var ett av de åtta fel som stod för 85 % av felen hos Tarrant & Ware (2008). Ledtrådar gör frågan lättare för den som är van vid tentor, inte för den som kan ämnet. Hos Tarrant & Ware (2008) skilde felbyggda frågor sämre mellan starka och svaga studenter, fler gränsfall klarade tentan tack vare dem, och färre av de starkaste nådde 80 %."
+ },
+ "kortast": {
+  "prio": "battre",
+  "rubrik": "Rätt svar är markant kortast.",
+  "text": "Ett alternativ som är mycket kortare än de andra sticker ut lika mycket som ett som är längst. Gör distraktorerna lika korta, eller rätt svar lika utförligt.",
+  "varfor": "Konstruktörer skriver ofta rätt svar först och lägger till förbehåll, parenteser och undervisande tillägg för att det ska vara oantastligt. Studenter lär sig att det mest specifika eller mest garderade alternativet oftast är rätt, och kan använda det utan ämneskunskap.",
+  "ref": "NBME, Item-Writing Guide, 6 uppl. (2024), \"Correct option stands out\" s. 23; Haladyna, Downing & Rodriguez (2002), riktlinjerna 24 och 28d.",
+  "belagg": "Mer detalj i rätt svar var ett av de åtta fel som stod för 85 % av felen hos Tarrant & Ware (2008). Ledtrådar gör frågan lättare för den som är van vid tentor, inte för den som kan ämnet. Hos Tarrant & Ware (2008) skilde felbyggda frågor sämre mellan starka och svaga studenter, fler gränsfall klarade tentan tack vare dem, och färre av de starkaste nådde 80 %."
+ },
+ "kvot": {
+  "prio": "tips",
+  "rubrik": "Alternativen är ojämna i längd eller detalj.",
+  "text": "Gör dem lika utförliga. Är det rätt svar som är längst, se rådet om rätt svar. Är det en distraktor som är längst drar den uppmärksamhet utan att mäta.",
+  "varfor": "Ojämna alternativ ger ledtrådar åt båda hållen. Det längsta uppfattas som mest genomtänkt, det kortaste som ett fyllnadsalternativ.",
+  "ref": "NBME, Item-Writing Guide, 6 uppl. (2024), \"Long or complex options\" s. 17 och \"Nonparallel options\" s. 19; Haladyna, Downing & Rodriguez (2002), riktlinje 24.",
+  "belagg": ""
+ },
+ "absolut": {
+  "prio": "battre",
+  "rubrik": "Absoluta ord och grammatik pekar ut svaret.",
+  "text": "Stryk alltid, aldrig och enbart. Absoluta ord smyger sig in när verbet står i alternativen; flytta verbet till stammen och korta alternativen. Läs sedan stammen ihop med varje alternativ och se att alla passar grammatiskt, till exempel att alla står i singular.",
+  "varfor": "Studenter lär sig att alternativ med absoluta ord oftast är fel och att alternativ som inte passar grammatiskt med stammen kan uteslutas. Båda är ledtrådar som inte har med ämneskunskap att göra.",
+  "ref": "NBME, Item-Writing Guide, 6 uppl. (2024), \"Grammatical cues\" s. 21 och \"Absolute terms\" s. 22; Haladyna, Downing & Rodriguez (2002), riktlinjerna 28a och 28c.",
+  "belagg": "Absoluta ord och grammatiska ledtrådar var sällsynta hos Tarrant & Ware (2008), men hör till samma familj som de vanliga ledtrådsfelen. Ledtrådar gör frågan lättare för den som är van vid tentor, inte för den som kan ämnet. Hos Tarrant & Ware (2008) skilde felbyggda frågor sämre mellan starka och svaga studenter, fler gränsfall klarade tentan tack vare dem, och färre av de starkaste nådde 80 %."
+ },
+ "eko": {
+  "prio": "battre",
+  "rubrik": "Ordekon ger en ledtråd.",
+  "text": "Ett ord som återkommer i stammen och bara i rätt svar pekar ut svaret. Byt ut ordet i stammen eller i alternativet, eller låt det förekomma i alla alternativ. Det gäller även ordstammar, som \"osteo-\" i vinjetten och i rätt svar.",
+  "varfor": "Lexikala ledtrådar är den sortens fel som en van tentaskrivare hittar utan att kunna ämnet. De sänker frågans förmåga att skilja kunniga från mindre kunniga studenter.",
+  "ref": "NBME, Item-Writing Guide, 6 uppl. (2024), \"Word repetition\" s. 23 och s. 25; Haladyna, Downing & Rodriguez (2002), riktlinje 28b.",
+  "belagg": "Ordupprepningar och logiska ledtrådar var tillsammans var åttonde fel hos Tarrant & Ware (2008). Ledtrådar gör frågan lättare för den som är van vid tentor, inte för den som kan ämnet. Hos Tarrant & Ware (2008) skilde felbyggda frågor sämre mellan starka och svaga studenter, fler gränsfall klarade tentan tack vare dem, och färre av de starkaste nådde 80 %."
+ },
+ "inledning": {
+  "prio": "battre",
+  "rubrik": "Distraktorerna delar inledning, rätt svar avviker.",
+  "text": "Tre alternativ som börjar likadant och ett som börjar annorlunda pekar ut det fjärde. Ge alla fyra samma satsbyggnad.",
+  "varfor": "Konstruktörer skriver ofta rätt svar först och lägger till förbehåll, parenteser och undervisande tillägg för att det ska vara oantastligt. Studenter lär sig att det mest specifika eller mest garderade alternativet oftast är rätt, och kan använda det utan ämneskunskap.",
+  "ref": "NBME, Item-Writing Guide, 6 uppl. (2024), \"Correct option stands out\" s. 23; Haladyna, Downing & Rodriguez (2002), riktlinjerna 24 och 28d.",
+  "belagg": "Mer detalj i rätt svar var ett av de åtta fel som stod för 85 % av felen hos Tarrant & Ware (2008). Ledtrådar gör frågan lättare för den som är van vid tentor, inte för den som kan ämnet. Hos Tarrant & Ware (2008) skilde felbyggda frågor sämre mellan starka och svaga studenter, fler gränsfall klarade tentan tack vare dem, och färre av de starkaste nådde 80 %."
+ },
+ "inledning2": {
+  "prio": "tips",
+  "rubrik": "Inledningarna är ojämna.",
+  "text": "Några alternativ börjar likadant och andra inte, så en grupp sticker ut. Ge alla samma satsbyggnad.",
+  "varfor": "Ojämna alternativ ger ledtrådar åt båda hållen. Det längsta uppfattas som mest genomtänkt, det kortaste som ett fyllnadsalternativ.",
+  "ref": "NBME, Item-Writing Guide, 6 uppl. (2024), \"Long or complex options\" s. 17 och \"Nonparallel options\" s. 19; Haladyna, Downing & Rodriguez (2002), riktlinje 24.",
+  "belagg": ""
+ },
+ "led": {
+  "prio": "tips",
+  "rubrik": "Rätt svar har fler eller färre led än distraktorerna.",
+  "text": "Räkna bindeord och skiljetecken. Ett alternativ med två led mer än de andra är det mest garderade, och det väljs oftare oavsett kunskap.",
+  "varfor": "Ojämna alternativ ger ledtrådar åt båda hållen. Det längsta uppfattas som mest genomtänkt, det kortaste som ett fyllnadsalternativ.",
+  "ref": "NBME, Item-Writing Guide, 6 uppl. (2024), \"Long or complex options\" s. 17 och \"Nonparallel options\" s. 19; Haladyna, Downing & Rodriguez (2002), riktlinje 24.",
+  "belagg": ""
+ },
+ "tvadelad": {
+  "prio": "battre",
+  "rubrik": "Tvådelad form finns bara i rätt svar.",
+  "text": "\"Både\", \"samtidigt\" och semikolon i rätt svar men inte i distraktorerna gör rätt svar till det mest garderade alternativet. Ge distraktorerna samma form eller förenkla rätt svar.",
+  "varfor": "Konstruktörer skriver ofta rätt svar först och lägger till förbehåll, parenteser och undervisande tillägg för att det ska vara oantastligt. Studenter lär sig att det mest specifika eller mest garderade alternativet oftast är rätt, och kan använda det utan ämneskunskap.",
+  "ref": "NBME, Item-Writing Guide, 6 uppl. (2024), \"Correct option stands out\" s. 23; Haladyna, Downing & Rodriguez (2002), riktlinjerna 24 och 28d.",
+  "belagg": "Mer detalj i rätt svar var ett av de åtta fel som stod för 85 % av felen hos Tarrant & Ware (2008). Ledtrådar gör frågan lättare för den som är van vid tentor, inte för den som kan ämnet. Hos Tarrant & Ware (2008) skilde felbyggda frågor sämre mellan starka och svaga studenter, fler gränsfall klarade tentan tack vare dem, och färre av de starkaste nådde 80 %."
+ },
+ "negation": {
+  "prio": "tips",
+  "rubrik": "Vinjetten innehåller en negation.",
+  "text": "Kontrollera att den bär information som behövs för svaret och inte bara finns för att slå ut en distraktor. En negation studenten missar ger fel som inte har med kunskap att göra.",
+  "varfor": "",
+  "ref": "",
+  "belagg": ""
+ },
+ "pastaende": {
+  "prio": "start",
+  "rubrik": "Påståendeformen mäter något annat än målet.",
+  "text": "Välj det påstående som bär målet och gör det till frågan. \"Vilket av följande stämmer\" prövar fyra eller fem lösryckta fakta i stället för ett resonemang, och \"stämmer inte\" blir dessutom en negativ fråga där studenten letar efter det som är fel. Då går frågan dessutom att besvara innan alternativen är lästa, vilket är det första kravet på en stam.",
+  "varfor": "Alternativen i en påståendefråga hör inte ihop och går inte att rangordna på en dimension. Studenten måste bedöma varje påstående för sig, och frågan blir en samling sant-eller-falskt-uppgifter som ofta prövar lösryckta fakta. NBME avråder från sant/falskt-formen och visar hur \"Which of the following is true\" ger alternativ som inte går att väga mot varandra.",
+  "ref": "NBME, Item-Writing Guide, 6 uppl. (2024), exemplet \"Which of the following is true\" s. 13 och sant/falskt-familjen s. 15–16; Haladyna, Downing & Rodriguez (2002), riktlinjerna 14 och 23.",
+  "belagg": "Ofokuserad stam, där alternativen blir fristående sant/falskt-påståenden, var det vanligaste felet hos både Downing (2005) och Tarrant & Ware (2008). Downings första exempel på en felbyggd fråga är just \"It is correct that:\". Hos honom var felbyggda frågor upp till 15 procentenheter svårare än korrekt byggda, en svårighet som inte mäter kunskap."
+ },
+ "negstam": {
+  "prio": "battre",
+  "rubrik": "En negativ fråga belönar noggrann läsning mer än kunskap.",
+  "text": "Vänd frågan så att studenten letar efter det som gäller: \"Vilket läkemedel är kontraindicerat?\" i stället för \"Vilket läkemedel ska inte ges?\". Går det inte, sätt negationen i versaler och se till att alla alternativ är entydigt rätt eller fel.",
+  "varfor": "En negativ fråga ber studenten hitta det minst riktiga alternativet medan de övriga är riktiga. När nästan alla andra frågor är positivt formulerade missar en del studenter negationen även i fetstil eller versaler, och felet har då inget med kunskap att göra.",
+  "ref": "NBME, Item-Writing Guide, 6 uppl. (2024), \"Negatively phrased lead-ins\" s. 21; Haladyna, Downing & Rodriguez (2002), riktlinje 17.",
+  "belagg": "Negativ stam var det näst vanligaste felet hos både Downing (2005) och Tarrant & Ware (2008). Hos Downing var felbyggda frågor upp till 15 procentenheter svårare än korrekt byggda, en svårighet som inte mäter kunskap, och uppskattningsvis 10–15 % av studenterna underkändes på frågor de borde ha klarat."
+ },
+ "pekar": {
+  "prio": "start",
+  "rubrik": "Stammen bär inte frågan ännu.",
+  "text": "Skriv om så att stammen ställer en fullständig fråga, till exempel \"Vilken mekanism förklarar fyndet?\", i stället för att vara en påbörjad mening eller en uppmaning att välja bland alternativen. En sluten fråga bestämmer sedan vad alternativen ska vara och vilken form de får, så att de blir enhetliga och de flesta grammatiska ledtrådar försvinner.",
+  "varfor": "Att täcka över alternativen och se om frågan går att besvara är NBME:s grundkontroll av stammen. När stammen inte bär frågan blir alternativen i praktiken fem små sant-eller-falskt-påståenden, och frågan mäter spridd faktakunskap i stället för ett resonemang. En sluten, fullständig fråga i stammen förebygger dessutom grammatiska ledtrådar.",
+  "ref": "NBME, Item-Writing Guide, 6 uppl. (2024), \"cover-the-options\"-regeln s. 13 och regel 3 s. 34; Haladyna, Downing & Rodriguez (2002), riktlinjerna 14 och 15.",
+  "belagg": "Ofokuserad stam var det vanligaste felet i de två studier som mätt vad felbyggda frågor gör med resultatet. Hos Downing (2005) var felbyggda frågor upp till 15 procentenheter svårare än korrekt byggda frågor om samma innehåll, och uppskattningsvis 10–15 % av studenterna underkändes på frågor de borde ha klarat."
+ },
+ "markor": {
+  "prio": "tips",
+  "rubrik": "Stammen har ingen bästa-svar-markör.",
+  "text": "Den behövs om någon distraktor är sann men underordnad, till exempel \"mest trolig\", \"främsta\" eller \"i första hand\". Är alla distraktorer helt fel behövs den inte.",
+  "varfor": "",
+  "ref": "",
+  "belagg": ""
+ },
+ "samling": {
+  "prio": "battre",
+  "rubrik": "Samlingsalternativ och kombinationer mäter något annat än målet.",
+  "text": "Ersätt dem med vanliga alternativ. \"Alla ovanstående\" belönar den som känner igen två rätta. \"Inget av ovanstående\" byts mot ett konkret alternativ, till exempel \"Ingen läkemedelsbehandling just nu\". Kombinationer som \"A och C\" prövar logik mer än kunskap.",
+  "varfor": "Med \"alla ovanstående\" räcker det att veta att två alternativ är rätta. \"Inget av ovanstående\" gör frågan till en sant/falskt-uppgift där varje alternativ måste vägas mot allt som inte står där, och den kunniga studenten hamnar i ett dilemma mellan det alternativ konstruktören tänkt sig och det som rymmer allt annat. Kombinationsalternativ ökar läsbördan och går ofta att lösa genom uteslutning.",
+  "ref": "NBME, Item-Writing Guide, 6 uppl. (2024), \"None of the above\" s. 19 och K-typen s. 11; Haladyna, Downing & Rodriguez (2002), riktlinjerna 9, 25 och 26.",
+  "belagg": "\"Alla ovanstående\", \"inget av ovanstående\" och kombinationsalternativ stod för närmare en fjärdedel av felen hos Downing (2005). Han räknar dem till de fem feltyper som, om de tas bort, får bort nästan alla felbyggda frågor från en tenta."
+ },
+ "dubblett": {
+  "prio": "start",
+  "rubrik": "Två alternativ är samma text.",
+  "text": "Byt ut det ena.",
+  "varfor": "",
+  "ref": "",
+  "belagg": ""
+ },
+ "ojamn": {
+  "prio": "tips",
+  "rubrik": "Alternativen är ojämna i form.",
+  "text": "Låt alla börja med samma slags bokstav och sluta likadant, med eller utan punkt. Små formskillnader läses som ledtrådar.",
+  "varfor": "Studenter lär sig att alternativ med absoluta ord oftast är fel och att alternativ som inte passar grammatiskt med stammen kan uteslutas. Båda är ledtrådar som inte har med ämneskunskap att göra.",
+  "ref": "NBME, Item-Writing Guide, 6 uppl. (2024), \"Grammatical cues\" s. 21 och \"Absolute terms\" s. 22; Haladyna, Downing & Rodriguez (2002), riktlinjerna 28a och 28c.",
+  "belagg": "Absoluta ord och grammatiska ledtrådar var sällsynta hos Tarrant & Ware (2008), men hör till samma familj som de vanliga ledtrådsfelen. Ledtrådar gör frågan lättare för den som är van vid tentor, inte för den som kan ämnet. Hos Tarrant & Ware (2008) skilde felbyggda frågor sämre mellan starka och svaga studenter, fler gränsfall klarade tentan tack vare dem, och färre av de starkaste nådde 80 %."
+ },
+ "antal": {
+  "prio": "tips",
+  "rubrik": "Tre bra distraktorer räcker.",
+  "text": "Har du svårt att hitta en fjärde eller femte distraktor som lockar, är det bättre att låta bli än att fylla på med en som är uppenbar. Hur många alternativ en fråga har spelar mindre roll än att alla fungerar.",
+  "varfor": "En sammanvägning av åttio års forskning visar att tre alternativ ger lika bra mätning som fyra eller fem, eftersom den fjärde och femte distraktorn sällan fungerar. NBME skriver att konstruktörer ofta lägger till alternativ bara för att komma upp i fem, och att det inte förbättrar frågan. En uppenbar distraktor tillför ingenting utom lästid.",
+  "ref": "Rodriguez (2005), Educational Measurement: Issues and Practice 24(2); Haladyna, Downing & Rodriguez (2002), riktlinje 18; NBME, Item-Writing Guide, 6 uppl. (2024), s. 22.",
+  "belagg": ""
+ }
+};
+/* </LATHUND-REGLER> */
+lathundKontrollInit();
+/* Vilka formfynd som kan förklara vilket statistiskt mönster (nycklarna är ASK_ORDER). Ett fynd visas på kortet
+   bara under en fråga det kan förklara – formregler slår ofta, och utan mönster i utfallet är fyndet bara brus.
+   Hela kontrollen finns alltid i den hopfällda rutan "Formkontroll" på kortet. */
+const FORM_CUE = ["langst","kortast","eko","inledning","tvadelad","led","absolut","inledning2","kvot","ojamn"];
+const FORM_EXPLAINS = {
+  latt: FORM_CUE, ledtrad: FORM_CUE,
+  distraktor: ["absolut","samling","kvot","ojamn","inledning2","antal"],
+  tydlig: ["pastaende","negstam","pekar","negation","samling","dubblett"],
+  facit: ["dubblett","pastaende","negstam","negation","markor"],
+  forsvar: ["markor","pastaende","samling","dubblett"],
+  undervisning: ["negation","negstam"]
+};
+/* Frågetexten ur PDF:en är ett stycke; lathundens kontroll vill ha vinjett och stam var för sig.
+   Sista meningen räknas som stam. Blir delningen fel tystnar några regler, de ger inte falska fynd. */
+function splitStem(text){
+  const t=String(text||"").replace(/\s+/g," ").trim();
+  if(!t) return {vinjett:"", stam:""};
+  const m=t.match(/^(.*[.!?])\s+([^.!?]+[.!?:]?)$/);
+  return m ? {vinjett:m[1].trim(), stam:m[2].trim()} : {vinjett:"", stam:t};
+}
+function formFindings(v){
+  if(typeof KONTROLL==="undefined" || !v || !(v.correctIdx>=0) || !v.stem || !v.opts || v.opts.length<2) return [];
+  const sp=splitStem(v.stem);
+  const ratt=String(v.opts[v.correctIdx]), ds=v.opts.filter((_,i)=>i!==v.correctIdx).map(String);
+  try{ return KONTROLL.kor({kontroll:{regler:FORM_REGLER}}, {vinjett:sp.vinjett, stam:sp.stam, ratt, distraktorer:ds}); }
+  catch(_){ return []; }
+}
+/* Fördelar formfynden på kortets frågor: {nyckel: [fynd]}. Högst två per fråga och tre per kort, varje fynd en gång. */
+function formFor(v, qs){
+  const out={}, used=new Set(); let total=0;
+  const all=formFindings(v);
+  for(const q of (qs||[])){
+    const ok=FORM_EXPLAINS[q.key]||[];
+    for(const f of all){
+      if(total>=3 || (out[q.key]||[]).length>=2) break;
+      if(used.has(f) || !ok.includes(f.regel)) continue;
+      (out[q.key]||(out[q.key]=[])).push(f); used.add(f); total++;
+    }
+  }
+  return out;
+}
+function renderForm(f, cls){
+  return `<div class="${cls}"><span class="formrub">${esc(f.rubrik||"")}</span>${f.fynd?` <span class="formfynd">${esc(f.fynd)}</span>`:""}`
+    + ((f.text||f.varfor) ? `<details class="formrad"><summary>Ur MCQ-lathunden</summary>`
+      + (f.text?`<div class="formtext">${esc(f.text)}</div>`:"")
+      + (f.varfor?`<div class="formvarfor">${esc(f.varfor)}</div>`:"")
+      + (f.ref?`<div class="formref">${esc(f.ref)}</div>`:"") + `</details>` : "") + `</div>`;
+}
+/* Förebild = samma kriterier som urvalet av goda exempel i MCQ-lathunden: lagom svår (50–85 % rätt), skiljer väl,
+   inga formfynd utöver tips, och inget mönster som ger en fråga på kortet. */
+function isForebild(v){
+  if(!v || isExcluded(v.seq) || !v.stem || !(v.correctIdx>=0)) return false;
+  const minority=Math.min(v.ncorr, v.n-v.ncorr);
+  if(!(v.rpb!=null && v.n>=30 && minority>=10 && v.rpb>=state.th.goodDisc)) return false;
+  if(!(v.pcorr>=50 && v.pcorr<=85)) return false;
+  if(askQuestions(v).length) return false;
+  return !formFindings(v).some(f=>f.prio!=="tips");
+}
+/* Frågan som text i samma fältordning som lathundens mekaniska kontroll (Vinjett · Stam · Rätt svar · Distraktorer). */
+function questionAsText(v){
+  const sp=splitStem(v.stem);
+  const ratt = v.correctIdx>=0 ? String(v.opts[v.correctIdx]) : "";
+  const ds=v.opts.filter((_,i)=>i!==v.correctIdx).map(String);
+  return `Vinjett:\n${sp.vinjett}\n\nStam:\n${sp.stam}\n\nRätt svar:\n${ratt}\n\nDistraktorer:\n${ds.join("\n")}`;
+}
+function copyText(text){
+  if(typeof navigator!=="undefined" && navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text);
+  return new Promise((ok,fail)=>{ try{
+    const ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select(); const done=document.execCommand("copy"); ta.remove(); done?ok():fail(new Error("kopiering nekades"));
+  }catch(e){ fail(e); } });
+}
+
 /* ---------- Att fråga sig (temarapporten) ----------
    Samma villkor som advice(), men formulerade som frågor till den som skrev frågan – aldrig som
    åtgärder. Högst två per kort, i ASK_ORDER. Lydelserna är samlade här så att de är lätta att ändra.
@@ -1717,6 +2100,10 @@ const ASK_TEXT = {
   distraktor: "Var alternativet ett rimligt svar för en student som inte kan området?",
   latt: "Nästan alla svarade rätt. Är det väntat för det här målet, eller prövar frågan något enklare än ni avsåg?"
 };
+/* Frågor som bara visas när formkontrollen har ett fynd som kan förklara mönstret (FORM_EXPLAINS). På en riktig
+   tenta fick nästan hälften av korten annars frågan om ett alternativ som nästan ingen valde. Saknar frågan
+   text att kontrollera (JSON-läge) visas frågan som förut. Töm listan för att stänga av regeln. */
+const ASK_NEEDS_FORM = ["distraktor"];
 const ASK_PSY = { "rpb-neg":"facit", "dist-pos":"forsvar", "hard":"tydlig", "misconception":"undervisning",
                   "target-vs-norm":"ledtrad", "distractor-eff":"distraktor" };
 function askQuestions(v){
@@ -1730,6 +2117,10 @@ function askQuestions(v){
     hit[k]=q;
   }
   if(!hit.ledtrad && v.pcorr>=state.th.easy) hit.latt={key:"latt", psy:"target-vs-norm", text:ASK_TEXT.latt};
+  if(ASK_NEEDS_FORM.length && v.stem && v.correctIdx>=0){
+    const found=formFindings(v).map(f=>f.regel);
+    for(const k of ASK_NEEDS_FORM) if(hit[k] && !(FORM_EXPLAINS[k]||[]).some(r=>found.includes(r))) delete hit[k];
+  }
   return ASK_ORDER.filter(k=>hit[k]).slice(0,2).map(k=>hit[k]);
 }
 
@@ -2075,14 +2466,15 @@ function buildActionList(){
 }
 function buildGoodList(){
   const el=$("#goodlist"); if(!el) return;
-  const items=state.vm.view.filter(v=>isExemplary(v) && !isExcluded(v.seq)).sort((a,b)=>b.rpb-a.rpb);
+  const tema = state.mode==="ask" || state.mode==="ask-explain";
+  const items=state.vm.view.filter(v=>(tema ? isForebild(v) : isExemplary(v)) && !isExcluded(v.seq)).sort((a,b)=>b.rpb-a.rpb);
   if(!items.length){ el.innerHTML=""; return; }
-  el.innerHTML = `<div class="goodbox"><div class="goodhead">${items.length} fråga(or) som skiljer starka från svaga väl</div>`
-    + ((state.mode==="ask" || state.mode==="ask-explain")
-        ? `<div class="goodnote">De här frågorna skilde tydligt mellan studenter med höga och låga totalpoäng i den här studentgruppen.</div>`
+  el.innerHTML = `<div class="goodbox"><div class="goodhead">${items.length} fråga(or) ${tema ? "som fungerar som förebild" : "som skiljer starka från svaga väl"}</div>`
+    + (tema
+        ? `<div class="goodnote">Lagom svåra (50–85 % rätt), skilde tydligt mellan studenter med höga och låga totalpoäng, och utan fynd i formkontrollen ur MCQ-lathunden.</div>`
         : `<div class="goodnote">Diskriminerar väl i den här kohorten – det är evidens, inte bevis. Bekräfta att det beror på att frågan testar rätt sak, inte på en form-ledtråd, innan du återanvänder den.</div>`)
     + items.map(v=>`<button class="goodrow" data-seq="${esc(String(v.seq))}"><span class="acode">${esc(v.code)}</span>
-        <span class="greason">${exemplaryReason(v)}</span>
+        <span class="greason">${tema ? `r<sub>pb</sub> +${v.rpb.toFixed(2)}` : exemplaryReason(v)}</span>
         <span class="apc">${v.pcorr.toFixed(0)} % rätt</span></button>`).join("")
     + `</div>`;
   el.querySelectorAll(".goodrow").forEach(b=>b.addEventListener("click",()=>jumpToCard(b.dataset.seq)));
@@ -2289,10 +2681,22 @@ function card(v){
       </details></div>`;
   }
   if(askMode){
-    const qs=askQuestions(v);
+    const qs=askQuestions(v), forms=formFor(v, qs);
     advHtml = (qs.length || adv.note) ? `<div class="askbox">${noteHtml}${qs.length ? `<div class="askhead">Att fråga sig</div>`
-      + qs.map(q=>`<div class="askq">${esc(q.text)}${q.fact?`<div class="askfact">${esc(q.fact)}</div>`:""}`
-        + ((state.mode==="ask-explain" && PSY[q.psy]) ? `<div class="askpsy">${esc(PSY[q.psy])}</div>` : "") + `</div>`).join("") : ""}</div>` : "";
+      + qs.map(q=>{ const fs=forms[q.key]||[];
+          return `<div class="askq">${esc(q.text)}${(q.fact && !fs.length)?`<div class="askfact">${esc(q.fact)}</div>`:""}`
+            + fs.map(f=>renderForm(f,"askform")).join("")
+            + ((state.mode==="ask-explain" && PSY[q.psy]) ? `<div class="askpsy">${esc(PSY[q.psy])}</div>` : "") + `</div>`; }).join("") : ""}</div>` : "";
+    if(isForebild(v)) advHtml += `<div class="forebild">✓ Fungerar som förebild: lagom svår, skiljer väl mellan studenter med höga och låga totalpoäng, och utan fynd i formkontrollen.</div>`;
+    if(v.stem && v.correctIdx>=0 && v.opts.length>=2){
+      const all=formFindings(v);
+      advHtml += `<details class="formall"><summary>Formkontroll och kopiera frågan</summary><div class="formallbody">`
+        + (all.length ? all.map(f=>renderForm(f,"formitem")).join("")
+                      : `<div class="formitem">Inga mekaniska fynd. Kontrollen ser bara formen: längd, ordval, ledtrådar och samlingsalternativ.</div>`)
+        + `<div class="formfoot"><button type="button" class="btn-ghost copyq" data-seq="${esc(String(v.seq))}">Kopiera frågan</button>`
+        + `<span class="copyhint">Frågan kopieras med rubrikerna Vinjett, Stam, Rätt svar och Distraktorer, som fälten i MCQ-lathundens mekaniska kontroll.</span></div>`
+        + `<div class="formref">Formreglerna och råden kommer ur MCQ-lathunden (${esc(FORM_META.version||"")}).</div></div></details>`;
+    }
   }
   if(excluded) advHtml="";   // exkluderad fråga: ingen åtgärdsruta – beslutet är taget, talen visas som dokumentation
   return `<div class="q ${flag?'flag':''}${excluded?' excluded':''}" id="card-${esc(String(v.seq))}">
@@ -2575,12 +2979,12 @@ function xExportRender(){
   const meanPc=scored.length?scored.reduce((s,v)=>s+v.pcorr,0)/scored.length:0;
   const nAction=scored.filter(has1).length, nTips=scored.filter(v=>!has1(v)&&has2(v)).length;
   const showExe=!!spec.showExemplary;
-  const nExe=showExe?scored.filter(isExemplary).length:0;
+  const nExe=showExe?scored.filter(isForebild).length:0;
   const nClean=scored.filter(v=>!has1(v)&&!has2(v)&&(!showExe||!isExemplary(v))).length;
   $("#summary").innerHTML = stat(EMBED.candCount,"kandidater","","s-muted")+stat(view.length,"MCQ-frågor","","s-muted")
     + (nExcl?stat(nExcl,"exkluderade","Dragna ur poängsättningen – visas kvar men bidrar inte till total, diskriminering eller godkäntgränsen."):"")
     + stat(meanPc.toFixed(1)+" %","genomsnittlig andel rätt")
-    + (state.smallN||!showExe?"":stat(nExe,"stark diskriminering"))
+    + (state.smallN||!showExe?"":stat(nExe,"förebilder","Lagom svåra, skiljer väl och utan fynd i formkontrollen."))
     + (state.tags?stat(state.tags.tagCols.map(c=>c.name).join(" · "),"taggkolumner","","s-muted"):"");
   $("#nnote").innerHTML = state.smallN ? '<div class="advnote">Litet underlag: '+EMBED.candCount+' kandidater. Tolka enskilda procenttal försiktigt.</div>' : "";
   const modes=(spec.modes&&spec.modes.length)?spec.modes:[{id:"edu",label:"Alla frågor"}];
@@ -2687,6 +3091,12 @@ function xExportInit(){
     if(b.checked) state.sel.add(String(b.dataset.seq)); else state.sel.delete(String(b.dataset.seq));
     renderSelBar();
   });
+  document.addEventListener("click", e=>{
+    const b=e.target && e.target.closest && e.target.closest(".copyq"); if(!b) return;
+    const v=(EMBED.views.find(x=>Array.isArray(x.view))||{view:[]}).view.find(c=>String(c.seq)===String(b.dataset.seq)); if(!v) return;
+    copyText(questionAsText(v)).then(()=>{ b.textContent="Kopierad"; setTimeout(()=>{ b.textContent="Kopiera frågan"; },1800); },
+                                     ()=>{ b.textContent="Kunde inte kopiera"; });
+  });
   { const a=$("#sel-all"), c=$("#sel-clear"), sv=$("#sel-save");
     if(a) a.addEventListener("click", selAllVisible); if(c) c.addEventListener("click", selClear); if(sv) sv.addEventListener("click", saveSubset); }
   renderSelBar();
@@ -2731,6 +3141,17 @@ kursplanen.</p>
 kortet. De är frågor till den som skrev uppgiften, inte bedömningar. Kort utan sådana mönster har
 ingen ruta.</p>
 <p>Läget <b>Med förklaringar</b> visar dessutom vad måttet bakom varje fråga betyder.</p>
+</div></details>
+<details class="helpsec"><summary>Formkontrollen och förebilderna</summary><div class="body">
+<p>Varje flervalsfråga går igenom den mekaniska kontrollen ur <b>MCQ-lathunden</b>. Den ser bara
+formen: längd, ordval, ledtrådar, negationer och samlingsalternativ. Ett fynd visas under en fråga
+i "Att fråga sig" bara när det kan förklara mönstret i svaren, till exempel att rätt svar är
+mycket längre än distraktorerna i en fråga som nästan alla klarade. Under "Ur MCQ-lathunden"
+står lathundens råd inför nästa gång och källan.</p>
+<p>Hela kontrollen för en fråga finns under <b>Formkontroll och kopiera frågan</b> längst ned på
+kortet. Där går frågan också att kopiera, för att klistra in i lathunden eller i ett mejl.</p>
+<p><b>Förebilder</b> är frågor som var lagom svåra (50–85 % rätt), skilde tydligt mellan studenter
+med höga och låga totalpoäng och inte gav några fynd i formkontrollen.</p>
 </div></details>
 <details class="helpsec"><summary>De två vyerna</summary><div class="body">
 <p><b>Slutrapport MCQ</b> – ett kort per flervalsfråga, med diskriminering mot hela tentans poäng.</p>
@@ -2875,13 +3296,15 @@ function temaFns(){
              currentView,drawCards,jumpToCard,passMetric,renderPassMetric,freeTextDist,renderFreeText,buildActionList,buildGoodList,buildTagbar,
              setThreshold,thresholdsCustom,resetThresholds,thFmt,thresholdsText,settingsHtml,renderThCustom,wireSettings,thInfo,neutralInfo,
              temaFns,temaConsts,buildTemaReport,downloadText,stamp,
+             lathundKontrollInit,splitStem,formFindings,formFor,renderForm,isForebild,questionAsText,copyText,
              subsetEmbed,totalVisibleRows,selVisible,renderSelBar,selRedraw,selAllVisible,selClear,saveSubset,
              xExportTabs,xExportTotal,xExportRender,xExportRows,xExportCSV,xLoadXLSX,xExportXLSX,xExportPrint,openHelp,closeHelp,wireHelp,xExportInit];
 }
 function temaConsts(){
   return `const MIN_N_DIST=${MIN_N_DIST};const TH_DEFAULT=${JSON.stringify(TH_DEFAULT)};const TH_RANGE=${JSON.stringify(TH_RANGE)};const TH_LABEL=${JSON.stringify(TH_LABEL)};const PSY=${JSON.stringify(PSY)};`
     + `const TW=${JSON.stringify(TW)};const CUE_ABS=${JSON.stringify(CUE_ABS)};const CUE_HEDGE=${JSON.stringify(CUE_HEDGE)};`
-    + `const ASK_ORDER=${JSON.stringify(ASK_ORDER)};const ASK_TEXT=${JSON.stringify(ASK_TEXT)};const ASK_PSY=${JSON.stringify(ASK_PSY)};`
+    + `const FORM_META=${JSON.stringify(FORM_META)};const FORM_REGLER=${JSON.stringify(FORM_REGLER)};const FORM_CUE=${JSON.stringify(FORM_CUE)};const FORM_EXPLAINS=${JSON.stringify(FORM_EXPLAINS)};`
+    + `const ASK_NEEDS_FORM=${JSON.stringify(ASK_NEEDS_FORM)};const ASK_ORDER=${JSON.stringify(ASK_ORDER)};const ASK_TEXT=${JSON.stringify(ASK_TEXT)};const ASK_PSY=${JSON.stringify(ASK_PSY)};`
     + `const HELP_HTML=${JSON.stringify(HELP_TEMA_HTML)};const HELP_TEMA_HTML=HELP_HTML;`;
 }
 /* Bygger hela den fristående temarapporten som en HTML-sträng. Använder bara embed, funktionslistan
@@ -2895,7 +3318,7 @@ function buildTemaReport(EMBED){
     + `mode:EMBED.mode,viewIdx:EMBED.viewIdx,totalRows:[],passSnapshot:EMBED.passSnapshot,freeDist:EMBED.freeDist,excluded:new Map(EMBED.excluded||[]),th:Object.assign({},TH_DEFAULT,EMBED.th||{}),sel:new Set()};`
     + `const activeView=()=>EMBED.views[state.viewIdx];`
     + `const renderTotal=()=>xExportTotal();`
-    + `xExportInit();`;
+    + `lathundKontrollInit();xExportInit();`;
   let js = `"use strict";\n${consts}\n${FNS.map(f=>f.toString()).join("\n")}\n${wrapper}`;
   js = js.replace(/<\/(script)/gi, "<\\/$1");
 

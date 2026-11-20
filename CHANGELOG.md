@@ -43,6 +43,19 @@ inte dokumenterad här.
   rättningen och temarapporten efter. Filen visar överst att den har en rad per student och
   inte ska skickas vidare. Adressen följer ingången (`#samordnare`, `#examinator`).
   Tentapaket i JSON-format från 3.25.0 går fortfarande att släppa i rutan för resultat.
+- **Formkontrollen ur MCQ-lathunden i temarapporten.** Lathundens mekaniska kontroll (längd,
+  ordeko, inledning, led, tvådelad form, negation, påståendeform, samlingsalternativ m.m.) körs
+  på varje flervalsfråga. Ett fynd visas under en fråga i "Att fråga sig" bara när det kan
+  förklara mönstret i svaren, med lathundens råd, motivering och källa i en utfällning. Hela
+  kontrollen för en fråga finns hopfälld längst ned på kortet, tillsammans med knappen
+  **Kopiera frågan** (i lathundens fältordning). Frågan om ett alternativ som nästan ingen
+  valde visas nu bara när formkontrollen hittar en möjlig förklaring; på en riktig tenta med
+  39 flervalsfrågor gick antalet kort med ruta från 36 till 28.
+- **Förebilder.** Listan över starkt diskriminerande frågor i temarapporten ersätts av frågor
+  som fungerar som förebild, med samma kriterier som MCQ-lathundens goda exempel: 50–85 %
+  rätt, god diskriminering, inga formfynd och inget mönster som ger en fråga på kortet.
+- **`tools/sync-lathund.mjs`** hämtar regelkoden och rådtexterna oförändrade ur MCQ-lathunden.
+  Lathunden är källan; avsnitten i `index.html` ändras aldrig för hand.
 - **PDF-exporten heter nu "PDF (examinatorns)"** och är orörd i övrigt. Den innehåller
   åtgärdsförslagen och är inte tänkt för utskick till lärare.
 
