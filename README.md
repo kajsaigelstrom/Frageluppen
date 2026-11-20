@@ -13,11 +13,10 @@ Hela verktyget är **en enda fil**, `index.html`. Du behöver inte installera n�
 1. Klicka på **[`index.html`](index.html)** här ovanför i fillistan.
 2. Klicka på **nedladdningsknappen** (ikonen med en pil, "Download raw file", uppe till höger i filvyn).
 3. **Öppna den nedladdade filen** i en webbläsare (dubbelklicka på den, eller dra den till ett webbläsarfönster).
-4. Väl inne: klicka på **"Visa exempel"** för att se en färdig analys på en avidentifierad exempeltenta – ingen egen data behövs.
 
 > Vill du hellre ha allt på en gång: klicka på den gröna **Code**-knappen högst upp på repot → **Download ZIP**, packa upp, och öppna `index.html`.
 >
-> Verktyget behöver internetuppkoppling för att kunna läsa PDF- och Excel-filer (biblioteken hämtas från nätet). "Visa exempel" fungerar även utan.
+> Kurssamordnaren behöver internetuppkoppling för att verktyget ska kunna läsa PDF- och Excel-filer (biblioteken hämtas från nätet). Examinatorn kan öppna filen från kurssamordnaren utan nät.
 
 ---
 
@@ -72,7 +71,7 @@ Totalrapporten ger en översikt över hela tentan – varje frågas svårighet o
 
 ![Frågeluppen – totalrapport](docs/shot-total.png)
 
-*(Skärmbilderna är tagna med den inbyggda exempeltentan – syntetiska, avidentifierade data.)*
+*(Skärmbilderna visar syntetiska, avidentifierade data och en äldre version av verktyget.)*
 
 ---
 

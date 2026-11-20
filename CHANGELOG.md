@@ -41,6 +41,8 @@ inte dokumenterad här.
   flervalsfrågorna att se över, exkludering på kortet och PDF till rättarna) och **Se hela
   rapporten** (vyerna efter rättning, med Temarapport och Excel; kräver färdig rättning).
   De tre filrutorna för Insperas filer finns bara hos kurssamordnaren.
+- **Den inbyggda exempeltentan ("Visa exempel") är borttagen.** Den syntetiska tentan finns kvar
+  hos testerna. Verktygets fil blev omkring 45 kB mindre, och därmed även filen till examinatorn.
 - **Godkäntstatistiken visas inte längre i vyerna eller i temarapporten** (panelen "Nått
   65 %-gränsen", raden i Totalrapporten och godkäntgränsen under Inställningar). Den är tänkt
   som en egen export senare. Exkludering görs på korten, som förut, och dessutom per rad i

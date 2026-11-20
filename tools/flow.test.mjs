@@ -89,10 +89,9 @@ test("en fil som öppnas med dubbelklick hamnar också i valet", async () => {
   assert.equal(page.el("#stepchoice").classList.contains("hidden"), false);
   assert.equal(page.el("#results").classList.contains("hidden"), true);
 });
-test("Visa exempel hos examinatorn leder till valet", () => {
-  const { ev } = fresh();
-  ev("setPrep(false); loadDemo();");
-  assert.equal(ev("state.step"), "choose");
+test("verktyget har ingen inbyggd exempeltenta", () => {
+  const src = fs.readFileSync(INDEX, "utf8");
+  for (const gone of ['id="demo"', "Visa exempel", "DEMO_DATA", "loadDemo", "demoToInspera"]) assert.ok(!src.includes(gone), gone);
 });
 test("ingen godkäntstatistik i vyerna eller i temarapporten", async () => {
   const { ev, el } = fresh();
@@ -111,7 +110,7 @@ test("ingen godkäntstatistik i vyerna eller i temarapporten", async () => {
 });
 test("kurssamordnarens ingång visar aldrig valet eller resultaten", () => {
   const { ev, el } = fresh();
-  ev("setPrep(false); loadDemo(); setStep('report'); setPrep(true);");
+  ev("setPrep(false); loadSynthetic(); setStep('report'); setPrep(true);");
   assert.equal(el("#stepchoice").classList.contains("hidden"), true);
   assert.equal(el("#results").classList.contains("hidden"), true);
 });
@@ -119,7 +118,7 @@ test("kurssamordnarens ingång visar aldrig valet eller resultaten", () => {
 // ---- exkludering av valfri fråga (även essäfrågor) i Totalrapporten ----
 test("en essäfråga kan exkluderas och återinkluderas i Totalrapporten", () => {
   const { ev, el } = fresh();
-  ev(`setPrep(false); loadDemo(); setStep('report'); state.view = 'total'; render();
+  ev(`setPrep(false); loadSynthetic(); setStep('report'); state.view = 'total'; render();
       globalThis.ESSQ = String(state.json.qMeta.find(q => q.type === 'text' && q.max > 0).num);
       globalThis.fire = (type, cls, extra) => document.querySelector("#totalreport").listeners[type]
         .forEach(f => f({ target: Object.assign({ closest: s => s === cls ? { dataset: { qnum: ESSQ }, value: (extra||{}).value } : null }, extra||{}) }));`);
@@ -144,7 +143,7 @@ test("en essäfråga kan exkluderas och återinkluderas i Totalrapporten", () =>
 });
 test("temarapportens Totalrapport har ingen exkluderingskolumn", () => {
   const { ev } = fresh();
-  ev("setPrep(false); loadDemo(); setStep('report');");
+  ev("setPrep(false); loadSynthetic(); setStep('report');");
   const page = runHtml(ev("buildTemaReport(temaEmbed())"));
   page.ev("state.viewIdx = EMBED.views.findIndex(v=>v.layout==='total'); xExportTabs(); xExportRender();");
   assert.ok(!/tr-exclude|Exkludering<\/th>/.test(page.el("#totalreport").innerHTML));

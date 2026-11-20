@@ -100,7 +100,7 @@ test("från kurssamordnarens ingång tillbaka till examinatorns: valet visas ige
 });
 test("examinatorns fil sparas utan att länken dras in direkt", async () => {
   const { ev, downloads, urlEvents } = fresh();
-  ev("state.prep = true; state.prepDemo = true;");
+  ev("state.prep = true; prepSynthetic();");
   await ev("saveExaminerFile()");
   assert.equal(downloads.length, 1);
   assert.match(downloads[0].parts[0], /^<!DOCTYPE html>/);

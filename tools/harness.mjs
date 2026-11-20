@@ -71,7 +71,12 @@ function run(code, filename, docHtml) {
 
 /** Laddar appen. ev(kod) ger råvärdet, evj(kod) ger en JSON-klon (jämförbar med deepEqual),
  *  el(selektor) ger det stubbade elementet (t.ex. el("#cards").innerHTML). */
-export function loadApp() { return run(appSource(), "index.html<script>", fs.readFileSync(INDEX, "utf8")); }
+export function loadApp() {
+  const app = run(appSource(), "index.html<script>", fs.readFileSync(INDEX, "utf8"));
+  // Den syntetiska tentan ligger hos testerna, inte i verktyget. Den läggs in i samma sandbox.
+  app.ev(fs.readFileSync(path.join(HERE, "fixtures", "syntetisk-tenta.js"), "utf8"));
+  return app;
+}
 
 /** Kör skriptet i en exporterad rapport (HTML-sträng) på samma sätt. Det som sidan ritar hamnar i
  *  de stubbade elementens innerHTML och kan läsas med el(). */

@@ -13,7 +13,7 @@ test("varje knapp i sidan har en klickkoppling", () => {
 });
 test("klick på Spara examinatorns fil ger en fil", async () => {
   const { ev, el, downloads } = loadApp();
-  ev("state.prepDemo = true");
+  ev("prepSynthetic()");
   const handlers = el("#prep-save").listeners.click || [];
   assert.equal(handlers.length, 1);
   await handlers[0]({});
