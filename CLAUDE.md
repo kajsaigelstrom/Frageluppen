@@ -61,8 +61,18 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
 - **Kurssamordnaren** kan förbereda tentan (läget "Förbered tentan"): ser bara ett kvitto,
   aldrig resultat, och sparar ett tentapaket som examinatorn öppnar i rutan för resultat.
   Examinatorns egen PDF eller taggfil gäller före paketets.
-- **Två användargrupper:** examinatorer (laddar upp, utvärderar, exporterar) och
-  temaansvariga (får den interaktiva HTML-exporten – alla funktioner *utom* uppladdning).
+- **Tre roller:** kurssamordnaren (förbereder tentapaketet), examinatorn (laddar upp, flaggar,
+  exkluderar, exporterar) och temagrupperna (får temarapporten).
+- **Temarapporten visar frågor, aldrig åtgärder.** Den innehåller bara vyerna efter rättning,
+  ingen triage, inga åtgärdsrutor och inga uppmaningar i etiketter eller verktygstips
+  (`neutralInfo`). Mönstren hittas med samma villkor som `advice()` men formuleras som frågor
+  (`askQuestions`, lydelserna i `ASK_TEXT`). Statistiken säger inget om en frågas nivå mot
+  kursplanen – verktyget bedömer aldrig taxonomisk nivå. Lägg inte tillbaka åtgärdsspråk.
+- **Temarapporten måste kunna bygga sig själv** (urvalssidan skapas inne i den exporterade
+  filen). En funktion eller konstant som rapporten använder måste därför stå i `temaFns()`
+  respektive `temaConsts()`. Testet "en exporterad sida kan själv bygga en urvalssida" fångar missar.
+- **Gränserna i `state.th` är justerbara** och ändrar bara märkningar och vilka kort som får en
+  kommentar. Minsta underlag (`MIN_N_DIST`, n ≥ 30) ligger fast.
 
 ## Språk och ton
 - Gränssnittet är på **svenska**. Behåll svensk text i UI och i exporten.

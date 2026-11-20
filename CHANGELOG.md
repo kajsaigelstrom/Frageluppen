@@ -6,6 +6,29 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.26.0
+- **Temarapport ersätter den interaktiva HTML-exporten.** Rapporten till temagrupperna
+  innehåller bara vyerna efter rättning (Slutrapport MCQ och Totalrapport) och ingen triage:
+  inga åtgärdsrutor, ingen åtgärdslista och inga uppmaningar i etiketter eller verktygstips.
+  Där svaren följer ett mönster står i stället en ruta **Att fråga sig** med högst två frågor
+  till den som skrev uppgiften. Mönstren hittas med samma villkor och trösklar som
+  rådgivningen i appen. Nytt är att en mycket lätt fråga får frågan om den prövar något
+  enklare än avsett. Överst står att statistiken inte säger något om en frågas nivå mot
+  kursplanen. Knappen är inaktiv tills tentan är färdigrättad. Excel/CSV ur rapporten har
+  kolumnen "Att fråga sig" i stället för "Flaggor" (som tidigare skrev "undefined").
+- **Urval och egen sida.** I temarapporten kan frågor bockas för, på korten och i
+  Totalrapporten, och sparas som en ny fristående sida med bara dem. "Markera alla visade"
+  väljer ett helt tema efter filtrering. Urvalssidan visar "Urval: N av M frågor", saknar
+  godkäntandel och andra siffror för hela tentan, och kan själv delas upp igen.
+- **Justerbara gränser.** Under "Inställningar" (dold tills man klickar) kan gränserna för
+  Lätt (90 %), Svår (60 %), god diskriminering (0,20) och godkänt (65 %) ändras.
+  Märkningsgränserna ändrar bara etiketter och vilka kort som får en kommentar.
+  Godkäntgränsen finns bara i appen. Avvikelse från standard visas överst på sidan, och
+  temarapporten och urvalssidan bär med sig gränserna. Med standardvärdena är allt utfall
+  oförändrat (kontrollerat mot sparat utgångsläge).
+- **PDF-exporten heter nu "PDF (examinatorns)"** och är orörd i övrigt. Den innehåller
+  åtgärdsförslagen och är inte tänkt för utskick till lärare.
+
 ## 3.25.0
 - **Tentapaket och läget "Förbered tentan".** Kurssamordnaren kan nu förbereda tentan åt
   examinatorn: släpp resultatfilerna från Inspera, tentans PDF och taggfilen om den finns,

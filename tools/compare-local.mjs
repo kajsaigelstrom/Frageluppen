@@ -4,7 +4,8 @@
 //
 // Bygger ett tentapaket i minnet ur råfilerna och kontrollerar att
 //   1. statistiken blir identisk oavsett om tentan läses som råfiler eller som paket,
-//   2. paketet inte innehåller något av det som ska bort.
+//   2. paketet inte innehåller något av det som ska bort,
+//   3. temarapporten bara innehåller sammanräknade resultat.
 // Skriver ALDRIG ut data – bara utfallet och, vid fel, vilken sorts uppgift det gäller.
 // Skapar inga filer. Riktiga exporter får aldrig checkas in (se .gitignore).
 import fs from "node:fs";
@@ -49,5 +50,16 @@ if (longest.length >= 40 && pkgText.includes(JSON.stringify(longest.slice(0, 40)
 const ids = ev("PKG.data.flatMap(d => d.ext_inspera_candidates.map(c => c.result.ext_inspera_candidateId))");
 if (ids.some((id, i) => !/^\d+$/.test(id)) ) leaks.push("kandidatnummer (inte löpnummer)");
 if (leaks.length) { ok = false; console.log("LÄCKER: " + leaks.join(", ")); } else console.log("INGET LÄCKER");
+// 3. temarapporten innehåller bara aggregat
+ev(`state.json = parseJSON(RAW); state.pdfMcqs = null; state.synthMcqs = synthMcqsFromJson(state.json);
+    state.tags = null; state.excluded = new Map(); globalThis.TEMA = temaEmbed();`);
+if (ev("TEMA === null")) console.log("TEMARAPPORT: hoppas över (tentan är inte färdigrättad)");
+else {
+  const t = ev("JSON.stringify(TEMA)"), tl = [];
+  for (const k of KEYS.concat(["cohortScores", "candMeta", "mcqSlot", "optData", "candidateId", "manualScore"])) if (t.includes(k)) tl.push("fältnamn " + k);
+  for (const name of teachers) if (name.length >= 4 && t.includes(name)) { tl.push("ett rättarnamn"); break; }
+  if (longest.length >= 40 && t.includes(JSON.stringify(longest.slice(0, 40)).slice(1, -1))) tl.push("ett fritextsvar");
+  if (tl.length) { ok = false; console.log("TEMARAPPORT LÄCKER: " + tl.join(", ")); } else console.log("TEMARAPPORT: BARA AGGREGAT");
+}
 console.log(`(${files.length} fil(er), ${a.candCount} kandidater, ${teachers.size} rättare och ${longest.length ? "fritextsvar" : "inga fritextsvar"} fanns i råfilerna)`);
 process.exit(ok ? 0 : 1);

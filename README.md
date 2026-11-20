@@ -32,6 +32,17 @@ Paketet innehåller bara det verktyget behöver. Fritextsvar, rättarnamn, tider
 betyg och alla id tas bort, och kandidatnumren ersätts av löpnummer. Paketet är minimerat,
 inte anonymt, och ska behandlas som tentamaterial.
 
+## För temagrupper: temarapporten
+
+Examinatorn skickar en fil, `temarapport_….html`, som öppnas i webbläsaren. Den visar hur
+tentans frågor fungerade och innehåller bara sammanräknade resultat.
+
+- Filtrera på tema och klicka **Markera alla visade**, eller bocka för enskilda frågor.
+- **Spara sida med valda frågor** ger en ny fil med bara de frågorna, att ge vidare till den
+  som skrev dem. Den sidan fungerar likadant och kan delas upp igen.
+- Statistiken visar hur frågorna fungerade i studentgruppen. Den säger inget om huruvida en
+  fråga ligger på rätt nivå i förhållande till kursplanen.
+
 ## Så här ser det ut
 
 Tre rapportvyer överst följer rättningsflödet; sammanfattningen visar hur många frågor som behöver åtgärdas:
@@ -51,7 +62,9 @@ Totalrapporten ger en översikt över hela tentan – varje frågas svårighet o
 - Läser tentans **PDF** och ett eller flera **JSON-resultat** från Inspera, samt en valfri **Excel** med teman per fråga.
 - Visar per fråga: **svarsfördelning** per alternativ, **andel rätt** (svårighet) och **diskriminering** (punkt-biseriell item–total-korrelation), med färgkodad distraktoranalys.
 - Tre rapportvyer: **Preliminär MCQ** (före rättning), **Slutrapport MCQ** (efter rättning) och **Totalrapport** (hela tentan, inför betygskollegiet).
-- Filtrering på tema, exkludering av trasiga frågor, och export till **Excel, CSV, PDF** samt en fristående **interaktiv HTML** att dela.
+- Filtrering på tema, exkludering av trasiga frågor, och export till **Excel, CSV och PDF**.
+- En fristående **Temarapport** att dela med temagrupperna: utan triage och åtgärdsförslag, med frågor att ställa sig där svaren följer ett mönster, och med möjlighet att bocka för frågor och spara en egen sida att ge vidare.
+- **Justerbara gränser** för märkningarna Lätt och Svår, god diskriminering och godkänt, i en hopfälld inställningspanel.
 - En inbyggd **"? Hjälp"** förklarar hur måtten tolkas.
 
 Allt körs lokalt i webbläsaren – **inga data laddas upp någonstans**.
