@@ -28,6 +28,8 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
 
 ## Verifiering före "klart"
 - Miljön är ofta offline; CDN-biblioteken (pdf.js/xlsx) laddas då inte. Räkna med det.
+- Kör testerna efter varje ändring: `node --test tools/*.test.mjs`. De kör verktygets logik i en
+  Node-sandbox (`tools/harness.mjs`) mot syntetisk data ur demoläget och fångar även syntaxfel.
 - Validera JS-syntax efter varje ändring (t.ex. extrahera det stora `<script>` och kör
   `node --check`).
 - Verifiera beteende headless innan något anses klart. Den **exporterade** filen har
