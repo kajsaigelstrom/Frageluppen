@@ -32,7 +32,7 @@ export function setupDirty(ev) {
 /** Ställer appen som efter "Visa exempel" i vyn Slutrapport MCQ och lägger korten i globalen `VIEW`. */
 export function setupDemoView(ev) {
   ev(`state.json = parseJSON([demoToInspera(DEMO_DATA.DEMO)]); state.pdfMcqs = DEMO_DATA.PDF;
-      state.tags = parseTagsRows(DEMO_DATA.TAGS); state.view = "final-mcq"; state.mode = "edu"; state.excluded = new Map();
+      state.tags = parseTagsRows(DEMO_DATA.TAGS); state.view = "final"; state.mode = "edu"; state.excluded = new Map();
       globalThis.rebuildView = function(){
         state.disc = computeDiscrimination(state.json, {criterion:"whole", excluded:state.excluded});
         state.optDisc = computeOptDisc(state.json, {criterion:"whole", excluded:state.excluded});

@@ -56,16 +56,20 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
   faktiskt valda alternativ, så ett alternativ som ingen valde saknar slot. Blev ingen slot
   över är fördelningen fullständig och raden har noll svar (visas som 0 %). Flagga "ej kopplad"
   bara när minst en svars-slot inte kunde knytas till en rad.
-- **Tre rapportvyer**, knutna till rättningsflödet: Preliminär MCQ (kriterium = MCQ-delen,
-  före rättning), Slutrapport MCQ (kriterium = hela tentan, efter rättning), Totalrapport
-  (hela tentan inkl. fritext/flersvar). Diskriminering = punkt-biseriell / item–total.
+- **Två vyer**, knutna till rättningsflödet: Preliminär MCQ (kriterium = MCQ-delen, före
+  rättning) och Hela rapporten (`id: "final"`, `layout: "all"`, kriterium = hela tentan, efter
+  rättning). Hela rapporten är EN sida med kort för alla frågetyper (Kajsas beslut 20 nov 2026):
+  MCQ-korten ur `state.vm.view`, essä- och flersvarskorten ur `state.scored` (`scoredItems`,
+  `scoreCard`), blandade och sorterade av `pageItems`. Lägg inte tillbaka flikar per frågetyp.
+  Tabellen över alla frågor är exporten Översiktstabell (`overviewPayload`, `overviewHtml`,
+  `exportOverview`), en fristående sida utan skript. Diskriminering = punkt-biseriell / item–total.
 - **Två ingångar** högst upp i filpanelen: Kurssamordnare (landningsstället) och Examinator.
   Adressen följer valet (`#samordnare`, `#examinator`). De tre filrutorna för Insperas filer
   finns bara hos kurssamordnaren. Examinatorn har en enda filruta för kurssamordnarens fil
   (`extractEmbedded`, `loadExaminerFile`) – lägg inte tillbaka en råfilsväg där.
 - **Examinatorns flöde är två steg** (`state.step`, `setStep`): först valet, sedan antingen
-  `triage` (bara Preliminär MCQ i triageläge, PDF till rättarna) eller `report` (Slutrapport
-  MCQ och Totalrapport med export). Vyerna väljs aldrig fritt bland alla tre.
+  `triage` (bara Preliminär MCQ i triageläge, PDF till rättarna) eller `report` (Hela
+  rapporten med export). Vyerna väljs aldrig fritt.
 - **Ingen godkäntstatistik i vyerna eller i temarapporten** (Kajsas beslut 20 nov 2026). Den
   ska bli en egen export. `passMetric` finns kvar för det, men ritas inte.
 - **Examinatorns fil** (`buildExaminerFile`): kurssamordnaren sparar hela verktyget med
@@ -95,16 +99,17 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
   prio `tips` i lathunden används inte (undantag: bästa-svar-markören vid försvarbar
   distraktor). Lathundens råd är det enda undantaget från "aldrig åtgärder" i temarapporten,
   och bara i utfällningen "Ur MCQ-lathunden". Appens egna vyer använder `cueScan` och är orörda.
-- **Essäfrågorna** (typ `text`) har en egen flik i temarapporten (`layout: "essay"`, `essayCard`).
+- **Essä- och flersvarsfrågorna** (typ `text` och `multi`) har kort på samma sida som MCQ
+  (`scoreCard`, `scoreQuestions`: bedömningsmallen för essä, facit och poängregeln för flersvar).
   Bara sammanräknade tal. Inga förebilder och ingen formkontroll för essäfrågor. Frågetexten
   läses ur PDF:en med `parseEssayLines` (ren funktion, testas med påhittade rader): allt
   mellan rubriken vid vänstermarginalen och raden "Skriv ditt svar här". Den ligger som
   `pdfMcqs.essays` och i paketet som `pdf.essays`.
 - **Förebilder kräver en ren formkontroll** (inga fynd utöver lathundens tips). Håll aldrig fram
   en fråga som förebild utan att den har gått igenom kontrollen.
-- **Filterraden** (`FACETS`, `filterGroups`, `buildTagbar`) är en och samma i alla flikar och i
-  temarapporten. Varje fliks synlighetsfunktion (`currentView`, `essayVisible`, `totalVisibleRows`,
-  `appTotalRows` i `renderTotal`) filtrerar med `tagPass` + `facetPass`; `{noFacets:true}` ger
+- **Filterraden** (`FACETS`, `filterGroups`, `buildTagbar`) är en och samma i appen och i
+  temarapporten. Synlighetsfunktionerna (`currentView` för MCQ, `scoredVisible` för essä och
+  flersvar, `pageItems` för båda) filtrerar med `tagPass` + `facetPass`; `{noFacets:true}` ger
   underlaget för räkningen. Diskrimineringsgruppen tas ur den etikett som visas (`discBucket`),
   så att filter och kort aldrig säger olika saker.
 - **Sammanfattning före kort.** En regel vars budskap är detsamma för varje fråga den träffar

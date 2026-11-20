@@ -66,14 +66,13 @@ test("essäkortet visar frågetexten, och den går att söka på", () => {
   ev(`globalThis.firstText = String(state.json.qMeta.find(q => q.type === "text" && q.max > 0).num);
       state.pdfMcqs = (function(){ const x = DEMO_DATA.PDF.slice(); x.essays = [{seq:+firstText, code:"A1.1", pts:"4 p", stem:"UNIK_ESSATEXT om hypoteser"}]; return x; })();
       globalThis.E = temaEmbed();`);
-  assert.equal(ev("E.views.find(v => v.layout === 'essay').essays.find(e => e.seq === firstText).stem"), "UNIK_ESSATEXT om hypoteser");
-  assert.equal(ev("E.views.find(v => v.layout === 'essay').essays.filter(e => e.stem).length"), 1);
+  assert.equal(ev("E.views[0].scored.find(e => e.seq === firstText).stem"), "UNIK_ESSATEXT om hypoteser");
+  assert.equal(ev("E.views[0].scored.filter(e => e.stem).length"), 1);
   const page = runHtml(ev("buildTemaReport(E)"));
-  page.ev("state.viewIdx = EMBED.views.findIndex(v=>v.layout==='essay'); state.mode='edu'; xExportTabs(); xExportRender();");
   assert.ok(page.el("#cards").innerHTML.includes("UNIK_ESSATEXT om hypoteser"));
   page.ev(`document.querySelector("#search").value = "unik_essatext"; applyFilters();`);
   assert.equal(page.ev("selVisible().length"), 1);
   // en ovald essäfrågas text följer inte med till en urvalssida
-  const other = page.ev("EMBED.views.find(v=>v.layout==='essay').essays.find(e => !e.stem).seq");
+  const other = page.ev("EMBED.views[0].scored.find(e => !e.stem).seq");
   assert.ok(!page.ev(`buildTemaReport(subsetEmbed(EMBED, [${JSON.stringify(other)}], state.th))`).includes("UNIK_ESSATEXT"));
 });

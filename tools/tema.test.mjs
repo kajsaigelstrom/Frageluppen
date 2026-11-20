@@ -5,9 +5,10 @@ const fresh = () => { const a = loadApp(); setupDemoView(a.ev); return a; };
 const NOTE = "Statistiken visar hur frågorna fungerade i den här studentgruppen. Den säger inget om huruvida en fråga ligger på rätt nivå i förhållande till kursplanen.";
 const ACTION_WORDS = /Dubbelkolla facit|dubbelkolla facit|[Uu]tesluta|Att se över|Till nästa gång|Inga anmärkningar|Exkludera frågan|Triage|att åtgärda|automatiska flaggor|Förbättra svarsalternativen|Ta upp i undervisningen/;
 
-test("temarapporten har bara vyerna efter rättning", () => {
+test("temarapporten är en sida med frågorna efter rättning", () => {
   const { evj } = fresh();
-  assert.deepEqual(evj("temaEmbed().views.map(v=>v.id)"), ["final-mcq", "essay", "total"]);
+  assert.deepEqual(evj("temaEmbed().views.map(v=>v.id)"), ["final"]);
+  assert.deepEqual(evj("temaEmbed().views.map(v=>v.layout)"), ["all"]);
   assert.equal(evj("temaEmbed().kind"), "tema");
   assert.equal(evj("temaEmbed().subset"), null);
   assert.deepEqual(evj("temaEmbed().views[0].modes.map(m=>m.id)"), ["ask", "ask-explain"]);
@@ -74,16 +75,16 @@ test("den exporterade sidan går att köra och ritar kort utan åtgärder", () =
   assert.doesNotMatch(page.el("#summary").innerHTML, /att åtgärda|tips|automatiska flaggor/);
   assert.ok(page.el("#summary").innerHTML.includes("kandidater"));
   const tabs = page.el("#viewtabs").innerHTML;
-  assert.ok(tabs.includes("Slutrapport MCQ") && tabs.includes("Essäfrågor") && tabs.includes("Totalrapport"));
+  assert.ok(!tabs.includes("reptab") && tabs.includes("Välj frågetyp i filtret"));
   assert.ok(!tabs.includes("Preliminär"));
   assert.equal(page.el("#actionlist").innerHTML, "");
   assert.match(page.el("#goodlist").innerHTML, /fungerar som förebild|^$/);   // sedan formkontrollen: förebilder i stället för enbart diskriminering
 });
-test("totalrapporten i den exporterade sidan är fri från åtgärdsord", () => {
+test("översiktstabellen ur den exporterade sidan är fri från åtgärdsord", () => {
   const { ev } = fresh();
   const page = runHtml(ev("buildTemaReport(temaEmbed())"));
-  page.ev("state.viewIdx = EMBED.views.findIndex(v=>v.layout==='total'); xExportTabs(); xExportRender();");
-  const t = page.el("#totalreport").innerHTML;
+  page.ev("exportOverview()");
+  const t = page.downloads[page.downloads.length - 1].parts.join("");
   assert.ok(t.includes("totaltable"));
   assert.doesNotMatch(t, ACTION_WORDS);
   assert.doesNotMatch(t, /Granska bedömningsmatrisen/);
@@ -112,10 +113,9 @@ test("exkluderad fråga visas med orsak i temarapporten", () => {
   assert.ok(page.el("#cards").innerHTML.includes("Exkluderad ur tentan"));
   assert.ok(page.el("#cards").innerHTML.includes("Tekniskt fel"));
 });
-test("fritextfrågornas poängfördelning följer med i temarapporten", () => {
+test("essä- och flersvarsfrågornas poängfördelning följer med i temarapporten", () => {
   const { ev } = fresh();
-  ev("state.freeDist = []");                                    // så står den när examinatorn exporterar från kortvyn
-  const nText = ev("state.json.qMeta.filter(q => q.type === 'text' && q.max > 0).length");
-  assert.ok(nText > 0);
-  assert.equal(ev("temaEmbed().views.find(v => v.layout === 'essay').essays.filter(e => e.dist.length).length"), nText);
+  const n = ev("state.json.qMeta.filter(q => q.type !== 'single' && q.max > 0).length");
+  assert.ok(n > 0);
+  assert.equal(ev("temaEmbed().views[0].scored.filter(e => e.dist.length).length"), n);
 });

@@ -7,8 +7,19 @@ Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare histori
 inte dokumenterad här.
 
 ## 3.26.0
+- **En sida i stället för tre flikar.** Hela rapporten efter rättningen är en enda sida med
+  kort för alla frågetyper i tentans ordning: flervalsfrågor (MCQ), essäfrågor och, nytt,
+  flersvarsfrågor. Frågetyp väljs i filtret. Flikarna Slutrapport MCQ, Essäfrågor och
+  Totalrapport finns inte längre, varken hos examinatorn eller i temarapporten. Tabellen över
+  alla frågor är i stället exporten **Översiktstabell**: en fristående sida utan skript, med en
+  rad per fråga, att skriva ut eller skicka vidare. Den följer filtret och har bara
+  sammanräknade tal. Examinatorn exkluderar essä- och flersvarsfrågor med knappen på kortet,
+  precis som flervalsfrågorna. Ett flersvarskort visar poängfördelningen och, när poängen inte
+  följer resten av tentan, frågan "Stämmer facit och poängregeln?" (för essäfrågor gäller
+  bedömningsmallen). Mönsterraderna säger "MCQ-frågor" och "essäfrågor" så att de inte blandas
+  ihop. Excel och CSV ur temarapporten har en rad per synlig fråga med kolumnen Typ.
 - **Temarapport ersätter den interaktiva HTML-exporten.** Rapporten till temagrupperna
-  innehåller bara vyerna efter rättning (Slutrapport MCQ och Totalrapport) och ingen triage:
+  innehåller bara frågorna efter rättning och ingen triage:
   inga åtgärdsrutor, ingen åtgärdslista och inga uppmaningar i etiketter eller verktygstips.
   Där svaren följer ett mönster står i stället en ruta **Att fråga sig** med högst två frågor
   till den som skrev uppgiften. Mönstren hittas med samma villkor och trösklar som
@@ -16,8 +27,7 @@ inte dokumenterad här.
   enklare än avsett. Överst står att statistiken inte säger något om en frågas nivå mot
   kursplanen. Knappen är inaktiv tills tentan är färdigrättad. Excel/CSV ur rapporten har
   kolumnen "Att fråga sig" i stället för "Flaggor" (som tidigare skrev "undefined").
-- **Urval och egen sida.** I temarapporten kan frågor bockas för, på korten och i
-  Totalrapporten, och sparas som en ny fristående sida med bara dem. "Markera alla visade"
+- **Urval och egen sida.** I temarapporten kan frågor bockas för på korten och sparas som en ny fristående sida med bara dem. "Markera alla visade"
   väljer ett helt tema efter filtrering. Urvalssidan visar "Urval: N av M frågor", saknar
   godkäntandel och andra siffror för hela tentan, och kan själv delas upp igen.
 - **Justerbara gränser.** Under "Inställningar" (dold tills man klickar) kan gränserna för
@@ -39,23 +49,22 @@ inte dokumenterad här.
   från kurssamordnaren väljs (den går också att öppna med ett dubbelklick). Sedan väljer
   examinatorn mellan **Hitta problemfrågor före betygssättning** (en egen vy med bara
   flervalsfrågorna att se över, exkludering på kortet och PDF till rättarna) och **Se hela
-  rapporten** (vyerna efter rättning, med Temarapport och Excel; kräver färdig rättning).
+  rapporten** (alla frågor efter rättning, med Temarapport, Översiktstabell och Excel; kräver
+  färdig rättning).
   De tre filrutorna för Insperas filer finns bara hos kurssamordnaren.
 - **Filterraden.** En rad knappar per grupp: tema (ur taggfilen), frågetyp, svårighet,
   diskriminering och "att titta på" (fråga på kortet eller att se över, förebild, exkluderad).
   Flera val i samma grupp breddar urvalet, val i olika grupper smalnar av det, och varje knapp
   visar hur många frågor ett klick ger. Valda filter står på en egen rad och tas bort med ✕.
-  Samma rad finns i alla flikar, i examinatorns vyer och i temarapporten, och valen följer med
-  mellan flikarna. Mönstersammanfattningen, förebildslistan, åtgärdslistan, "Markera alla
+  Samma rad finns i examinatorns vyer och i temarapporten. Mönstersammanfattningen, förebildslistan, åtgärdslistan, "Markera alla
   visade" och Excel/CSV följer filtret. Frågetyperna heter nu MCQ, Flersvar och Essä i tabellen.
   Svårighetsgruppen heter Lätt, Medel och Svår, och förebilder beskrivs som medelsvåra, så att
   texten inte antyder att en viss svårighetsgrad är ett mål i sig.
 - **Den inbyggda exempeltentan ("Visa exempel") är borttagen.** Den syntetiska tentan finns kvar
   hos testerna. Verktygets fil blev omkring 45 kB mindre, och därmed även filen till examinatorn.
 - **Godkäntstatistiken visas inte längre i vyerna eller i temarapporten** (panelen "Nått
-  65 %-gränsen", raden i Totalrapporten och godkäntgränsen under Inställningar). Den är tänkt
-  som en egen export senare. Exkludering görs på korten, som förut, och dessutom per rad i
-  Totalrapporten, där även essäfrågor och flersvarsfrågor kan exkluderas och återinkluderas.
+  65 %-gränsen" och godkäntgränsen under Inställningar). Den är tänkt som en egen export
+  senare. Exkludering görs på korten, för alla frågetyper.
 - **Kurssamordnaren är landningsstället, och lämnar en fil som examinatorn bara öppnar.**
   Högst upp i filpanelen väljs **Kurssamordnare** eller **Examinator**, och sidan öppnar hos
   kurssamordnaren. I stället för ett paket som examinatorn måste ladda upp sparar
@@ -79,18 +88,16 @@ inte dokumenterad här.
   flervalsfrågor som var medelsvåra (50–85 % rätt), skilde väl, inte har någon fråga på
   kortet och inte ger några fynd i formkontrollen. Kontrollen körs därför även på tänkbara
   förebilder. Essäfrågor märks inte som förebilder, eftersom formen inte går att kontrollera.
-- **Essäfrågor får en egen flik i temarapporten**, med ett kort per fråga: medelpoäng av max,
+- **Essäfrågor får egna kort**, ett per fråga: medelpoäng av max,
   item–total-korrelation mot resten av tentan och poängfördelning. När poängen inte följer
   resten av tentan står en fråga om bedömningsmallen på kortet, och essäfrågor med ett medel
   över gränsen för "Lätt" sammanfattas en gång överst. Kryssrutor, temafilter, urvalssida och
-  Excel/CSV fungerar som för flervalsfrågorna. Totalrapporten upprepar inte längre
-  poängfördelningarna.
+  Excel/CSV fungerar som för flervalsfrågorna.
 - **Essäfrågornas text läses ur tentans PDF** (allt mellan frågerubriken och svarsrutan, även
   över sidbrytning) och visas på essäkorten. Texten följer med i kurssamordnarens fil. På en
   riktig tenta lästes 30 av 30 essäfrågor, och flervalsfrågornas inläsning är oförändrad.
 - **Buggfix:** fritextfrågornas poängfördelning följde aldrig med i den delade rapporten när den
-  skapades från kortvyn (listan var tom vid exporten). Nu räknas den alltid om. Dessutom
-  döljs sortering, visningsläge och färgförklaring på riktigt i de flikar där de inte gäller.
+  skapades från kortvyn (listan var tom vid exporten). Nu räknas den alltid om.
 - **Licens:** koden MIT som förut, texterna CC BY 4.0 (står i README).
 - **`tools/sync-lathund.mjs`** hämtar regelkoden och rådtexterna oförändrade ur MCQ-lathunden.
   Lathunden är källan; avsnitten i `index.html` ändras aldrig för hand.

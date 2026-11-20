@@ -1,4 +1,4 @@
-// Filterraden: tema (ur taggfilen), frågetyp, svårighet, diskriminering och "att titta på", i alla flikar och i
+// Filterraden: tema (ur taggfilen), frågetyp, svårighet, diskriminering och "att titta på", på rapportsidan och i
 // temarapporten. Inom en grupp breddar flera val urvalet; mellan grupper smalnar de av. Varje knapp visar hur
 // många frågor den träffar givet de andra gruppernas val.
 import test from "node:test"; import assert from "node:assert/strict";
@@ -6,7 +6,6 @@ import { loadApp, runHtml } from "./harness.mjs";
 import { setupDemoView } from "./fixtures.mjs";
 const fresh = () => { const a = loadApp(); setupDemoView(a.ev); return a; };
 const tema = () => { const a = fresh(); const page = runHtml(a.ev("buildTemaReport(temaEmbed())")); return { ...a, page }; };
-const goTab = (page, layout) => page.ev(`state.viewIdx = EMBED.views.findIndex(v=>v.layout==='${layout}'); state.mode = (EMBED.views[state.viewIdx].modes||[])[0]?.id || 'edu'; xExportTabs(); xExportRender();`);
 const group = (pg, key) => pg.evj(`filterGroups().find(g => g.key === ${JSON.stringify(key)}) || null`);
 const count = (g, val) => (g.values.find(v => v.val === val) || { n: null }).n;
 
@@ -34,6 +33,7 @@ test("svårighet och diskriminering delas in efter gränserna under Inställning
 });
 test("flera val i samma grupp breddar, val i olika grupper smalnar av", () => {
   const { page } = tema();
+  page.ev("toggleFacet('typ','single')");                       // räkna på flervalsfrågorna
   const all = page.ev("EMBED.views[0].view");
   const n = pred => page.ev(`EMBED.views[0].view.filter(v => ${pred}).length`);
   page.ev("toggleFacet('svar','latt')");
@@ -47,6 +47,7 @@ test("flera val i samma grupp breddar, val i olika grupper smalnar av", () => {
 });
 test("knapparna räknar med de andra gruppernas val men inte sin egen", () => {
   const { page } = tema();
+  page.ev("toggleFacet('typ','single')");
   const before = group(page, "svar");
   page.ev("toggleFacet('svar','latt')");
   assert.deepEqual(group(page, "svar").values.map(v => v.n), before.values.map(v => v.n));      // egen grupp oförändrad
@@ -56,29 +57,22 @@ test("knapparna räknar med de andra gruppernas val men inte sin egen", () => {
   assert.equal(group(page, "svar").values.find(v => v.val === "latt").on, true);
 });
 test("en grupp med bara ett värde visas inte, utom när den har ett val", () => {
-  const { page } = tema();
-  assert.equal(group(page, "typ"), null);                     // flervalsfliken har bara MCQ
-  goTab(page, "total");
+  const { ev, page } = tema();
   const typ = group(page, "typ");
   assert.ok(typ && typ.values.length >= 2);
   assert.ok(count(typ, "single") > 0 && count(typ, "text") > 0);
+  const onlyMcq = runHtml(ev("buildTemaReport(subsetEmbed(temaEmbed(), temaEmbed().views[0].view.slice(0,3).map(v => String(v.seq)), state.th))"));
+  assert.equal(group(onlyMcq, "typ"), null);                    // ett urval med bara MCQ har ingen grupp för frågetyp
+  onlyMcq.ev("toggleFacet('typ','single')");
+  assert.ok(group(onlyMcq, "typ"));                              // utom när den har ett val
 });
-test("frågetyp i Totalrapporten", () => {
+test("essä- och flersvarskorten filtreras på svårighet och diskriminering", () => {
   const { page } = tema();
-  goTab(page, "total");
-  page.ev("toggleFacet('typ','text')");
-  const rows = page.evj("totalVisibleRows().map(r => r.typeCls)");
-  assert.ok(rows.length > 0 && rows.every(t => t === "text"));
-  assert.match(page.el("#totalreport").innerHTML, new RegExp(`Visar ${rows.length} av \\d+ frågor`));
-});
-test("essäfliken filtreras på svårighet och diskriminering", () => {
-  const { page } = tema();
-  goTab(page, "essay");
-  page.ev("toggleFacet('svar','latt')");
-  const vis = page.evj("essayVisible().map(e => e.pct)");
+  page.ev("toggleFacet('typ','text'); toggleFacet('svar','latt')");
+  const vis = page.evj("scoredVisible().map(e => e.pct)");
   assert.ok(vis.every(p => p >= 90));
-  assert.equal(vis.length, page.ev("EMBED.views.find(v=>v.layout==='essay').essays.filter(e => e.pct >= 90).length"));
-  assert.match(page.el("#count").textContent, new RegExp(`Visar ${vis.length} av \\d+ essäfrågor`));
+  assert.equal(vis.length, page.ev("EMBED.views[0].scored.filter(e => e.typ === 'text' && e.pct >= 90).length"));
+  assert.match(page.el("#count").textContent, new RegExp(`Visar ${vis.length} av \\d+ frågor`));
 });
 test("att titta på: fråga på kortet, förebild och exkluderad", () => {
   const { ev, page } = tema();
@@ -109,38 +103,37 @@ test("mönster, urval och Excel följer filtret", () => {
   const { page } = tema();
   page.ev("toggleFacet('disk','mgod')");
   const n = page.ev("selVisible().length");
-  assert.ok(n > 0 && n < page.ev("EMBED.views[0].view.length"));
+  assert.ok(n > 0 && n < page.ev("EMBED.views[0].view.length + EMBED.views[0].scored.length"));
   assert.equal(page.evj("xExportRows().aoa").length - 1, n);
   const pat = page.evj("patternSummary(currentView({ignorePattern:true}))");
   assert.ok(pat.every(r => r.seqs.length <= n));
   page.ev("selAllVisible()");
   assert.equal(page.ev("state.sel.size"), n);
 });
-test("filtren följer med mellan flikarna", () => {
+test("filtret gäller alla frågetyper samtidigt", () => {
   const { page } = tema();
   page.ev("toggleFacet('svar','latt')");
-  goTab(page, "essay");
-  assert.ok(page.evj("essayVisible().map(e => e.pct)").every(p => p >= 90));
-  goTab(page, "mcq");
+  assert.ok(page.evj("scoredVisible().map(e => e.pct)").every(p => p >= 90));
   assert.ok(page.evj("currentView().map(v => v.pcorr)").every(p => p >= 90));
 });
-test("filterraden i examinatorns rapportvy, även i Totalrapporten", () => {
+test("filterraden i examinatorns rapportvy", () => {
   const { ev, el } = fresh();
   ev("setPrep(false); loadSynthetic(); setStep('report');");
   assert.match(el("#tagbar").innerHTML, /Svårighet/);
   assert.match(el("#tagbar").innerHTML, /Att se över/);              // appens kort har "Att se över", inte frågor
+  assert.match(el("#tagbar").innerHTML, /Frågetyp/);
   ev("toggleFacet('svar','svar')");
   assert.ok(ev("currentView().every(v => v.pcorr < 60)"));
-  ev("state.view = 'total'; render(); clearFilters(); toggleFacet('typ','text');");
-  const rows = (el("#totalreport").innerHTML.match(/<tr class=/g) || []).length;
-  assert.equal(rows, ev("state.json.qMeta.filter(q => q.type === 'text').length"));
-  assert.match(el("#tagbar").innerHTML, /Frågetyp/);
+  assert.ok(ev("scoredVisible().every(e => e.pct < 60)"));
+  ev("clearFilters(); toggleFacet('typ','text');");
+  const cards = (el("#cards").innerHTML.match(/class="fttag">Essä</g) || []).length;
+  assert.equal(cards, ev("state.json.qMeta.filter(q => q.type === 'text' && q.max > 0).length"));
 });
-test("frågetyperna heter MCQ, Flersvar och Essä i tabellen", () => {
-  const { ev, el, page } = tema();
-  goTab(page, "total");
-  const t = page.el("#totalreport").innerHTML;
-  assert.ok(t.includes(">Essä<") && !t.includes(">Fritext<"));
+test("frågetyperna heter MCQ, Flersvar och Essä i översiktstabellen", () => {
+  const { page } = tema();
+  page.ev("exportOverview()");
+  const t = page.downloads[page.downloads.length - 1].parts.join("");
+  assert.ok(t.includes(">Essä<") && t.includes(">MCQ<") && !t.includes(">Fritext<"));
 });
 test("listan över förebilder och åtgärdslistan följer filtret", () => {
   const { ev, el, page } = tema();

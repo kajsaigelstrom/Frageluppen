@@ -56,8 +56,11 @@ tentans frågor fungerade och innehåller bara sammanräknade resultat.
   mycket lätta. Korten har en ruta bara när något gäller just den frågan.
 - **Filtrera** på tema, frågetyp, svårighet, diskriminering och sådant att titta på. Siffran
   på varje knapp säger hur många frågor ett klick ger.
-- **Essäfrågorna** har en egen flik med ett kort per fråga: medelpoäng, diskriminering och
-  poängfördelning.
+- **Alla frågetyper på en sida**, i tentans ordning: flervalsfrågor (MCQ) med svarsfördelning,
+  essä- och flersvarsfrågor med medelpoäng, diskriminering och poängfördelning. Frågetyp väljs
+  i filtret.
+- **Översiktstabell**: en tabell med en rad per fråga att skriva ut eller skicka vidare. Den
+  följer filtret.
 - Har en fråga en svaghet i statistiken prövas den mot den mekaniska kontrollen ur
   **MCQ-lathunden**, och ett fynd visas när det är en trolig förklaring.
 - Statistiken visar hur frågorna fungerade i studentgruppen. Den säger inget om huruvida en
@@ -65,11 +68,11 @@ tentans frågor fungerade och innehåller bara sammanräknade resultat.
 
 ## Så här ser det ut
 
-Tre rapportvyer överst följer rättningsflödet; sammanfattningen visar hur många frågor som behöver åtgärdas:
+Sammanfattningen överst visar hur många frågor som behöver åtgärdas:
 
 ![Frågeluppen – MCQ-vy med sammanfattning](docs/shot-cards.png)
 
-Totalrapporten ger en översikt över hela tentan – varje frågas svårighet och diskriminering, filtrerbar på tema, med export till Excel:
+Översikten över hela tentan, varje frågas svårighet och diskriminering, är numera exporten Översiktstabell:
 
 ![Frågeluppen – totalrapport](docs/shot-total.png)
 
@@ -81,7 +84,7 @@ Totalrapporten ger en översikt över hela tentan – varje frågas svårighet o
 
 - Läser tentans **PDF** och ett eller flera **JSON-resultat** från Inspera, samt en valfri **Excel** med teman per fråga.
 - Visar per fråga: **svarsfördelning** per alternativ, **andel rätt** (svårighet) och **diskriminering** (punkt-biseriell item–total-korrelation), med färgkodad distraktoranalys.
-- Tre rapportvyer: **Preliminär MCQ** (före rättning), **Slutrapport MCQ** (efter rättning) och **Totalrapport** (hela tentan, inför betygskollegiet).
+- Två vägar för examinatorn: **problemfrågor före betygssättning** (flervalsfrågorna, före rättningen av essäfrågorna) och **hela rapporten** (alla frågetyper på en sida efter rättning, med Översiktstabell inför betygskollegiet).
 - Filtrering på tema, exkludering av trasiga frågor, och export till **Excel, CSV och PDF**.
 - En fristående **Temarapport** att dela med temagrupperna: utan triage och åtgärdsförslag, med frågor att ställa sig där svaren följer ett mönster, och med möjlighet att bocka för frågor och spara en egen sida att ge vidare.
 - **Justerbara gränser** för märkningarna Lätt och Svår, god diskriminering och godkänt, i en hopfälld inställningspanel.

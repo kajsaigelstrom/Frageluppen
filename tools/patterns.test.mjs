@@ -34,7 +34,7 @@ test("en mycket lätt fråga har ingen ruta på kortet men behåller märkningen
 test("mycket lätta frågor sammanfattas en gång, med nivåfrågan", () => {
   const { ev, evj } = fresh();
   const r = evj("row(V3, 'latt')");
-  assert.equal(r.head, "2 av 3 frågor klarades av minst 90 %.");
+  assert.equal(r.head, "2 av 3 MCQ-frågor klarades av minst 90 %.");
   assert.deepEqual(r.seqs, ["1", "2"]);
   assert.equal(r.ask, "Är det väntat för de här målen, eller prövar frågorna något enklare än ni avsåg?");
   ev("setThreshold('easy', 96)");
@@ -43,7 +43,7 @@ test("mycket lätta frågor sammanfattas en gång, med nivåfrågan", () => {
 test("alternativ som nästan ingen valde sammanfattas en gång", () => {
   const { evj } = fresh();
   const r = evj("row([mk({seq:'1', counts:[70,20,9,1]}), mk({seq:'2'}), mk({seq:'3'})], 'distraktor')");
-  assert.equal(r.head, "I 1 av 3 frågor valdes minst ett alternativ av färre än 5 %.");
+  assert.equal(r.head, "I 1 av 3 MCQ-frågor valdes minst ett alternativ av färre än 5 %.");
   assert.deepEqual(r.seqs, ["1"]);
   assert.equal(r.ask, "Var alternativen rimliga svar för en student som inte kan området?");
 });
@@ -59,7 +59,7 @@ test("sammanfattningen har bara de statistiska mönstren, med antal som har en m
 test("exkluderade frågor och för små underlag räknas inte", () => {
   const { ev, evj } = fresh();
   ev("state.excluded.set('1', 'Tekniskt fel')");
-  assert.equal(evj("row(V3, 'latt')").head, "1 av 2 frågor klarades av minst 90 %.");
+  assert.equal(evj("row(V3, 'latt')").head, "1 av 2 MCQ-frågor klarades av minst 90 %.");
   assert.equal(evj("row([mk({seq:'9', n:5, counts:[5,0,0,0], rpb:null})], 'latt')"), null);
 });
 test("inga mönster ger en tom sammanfattning", () => {
@@ -72,7 +72,7 @@ test("rapporten visar sammanfattningen och kan filtrera korten på ett mönster"
   const page = runHtml(ev("buildTemaReport(temaEmbed())"));
   const p = page.el("#patterns").innerHTML;
   assert.ok(p.includes("Mönster i de här frågorna"));
-  assert.match(p, /\d+ av 47 frågor klarades av minst 90 %\./);
+  assert.match(p, /\d+ av 47 MCQ-frågor klarades av minst 90 %\./);
   assert.ok(p.includes("Visa frågorna"));
   assert.ok(!p.includes("Mindre formfynd") && !p.includes("Ur MCQ-lathunden"));
   const nEasy = page.ev("EMBED.views[0].view.filter(v => v.pcorr >= 90).length");
@@ -81,7 +81,7 @@ test("rapporten visar sammanfattningen och kan filtrera korten på ett mönster"
   assert.equal(page.ev("selVisible().length"), nEasy);                      // "Markera alla visade" väljer just de frågorna
   assert.ok(page.el("#patterns").innerHTML.includes("Visa alla"));
   page.ev("togglePattern('latt')");
-  assert.equal((page.el("#cards").innerHTML.match(/class="q /g) || []).length, 47);
+  assert.equal((page.el("#cards").innerHTML.match(/class="q /g) || []).length, page.ev("EMBED.views[0].view.length + EMBED.views[0].scored.length"));
 });
 test("sammanfattningen följer temafiltret", () => {
   const { ev } = fresh();
@@ -89,19 +89,17 @@ test("sammanfattningen följer temafiltret", () => {
   const tag = page.ev("EMBED.views[0].view[0].tagVals[0]"), col = page.ev("state.tags.tagCols[0].name");
   const n = page.ev(`EMBED.views[0].view.filter(v => v.tagVals[0] === ${JSON.stringify(tag)}).length`);
   page.ev(`togglePattern('latt'); state.activeTags[${JSON.stringify(col)}] = new Set([${JSON.stringify(tag)}]); applyFilters();`);
-  assert.match(page.el("#patterns").innerHTML, new RegExp(` av ${n} frågor`));
-  assert.ok(!page.el("#patterns").innerHTML.includes(" av 47 frågor"));
+  assert.match(page.el("#patterns").innerHTML, new RegExp(` av ${n} MCQ-frågor`));
+  assert.ok(!page.el("#patterns").innerHTML.includes(" av 47 MCQ-frågor"));
   assert.ok(page.ev("selVisible().length") <= n);
   page.ev("clearFilters()");
   assert.equal(page.ev("state.patternKey || null"), null);                  // Rensa filter tar även bort mönsterfiltret
 });
-test("Totalrapporten har ingen mönstersammanfattning, urvalssidan har sin egen", () => {
+test("urvalssidan har sin egen mönstersammanfattning", () => {
   const { ev } = fresh();
   const page = runHtml(ev("buildTemaReport(temaEmbed())"));
-  page.ev("state.viewIdx = EMBED.views.findIndex(v=>v.layout==='total'); xExportTabs(); xExportRender();");
-  assert.equal(page.el("#patterns").innerHTML, "");
   const easy = page.evj("EMBED.views[0].view.filter(v => v.pcorr >= 90).slice(0,2).map(v => String(v.seq))");
   const other = page.ev("String(EMBED.views[0].view.find(v => v.pcorr < 90).seq)");
   const child = runHtml(page.ev(`buildTemaReport(subsetEmbed(EMBED, ${JSON.stringify(easy.concat(other))}, state.th))`));
-  assert.ok(child.el("#patterns").innerHTML.includes("2 av 3 frågor klarades av minst 90 %."));
+  assert.ok(child.el("#patterns").innerHTML.includes("2 av 3 MCQ-frågor klarades av minst 90 %."));
 });

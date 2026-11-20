@@ -59,15 +59,15 @@ test("problemfrågor före betygssättning: en egen vy med bara flervalsfrågorn
   assert.equal(el("#exp-xlsx").classList.contains("hidden"), true);
   assert.equal(el("#exp-pdf").classList.contains("hidden"), false);          // listan till rättarna
 });
-test("hela rapporten: vyerna efter rättning, med export", async () => {
+test("hela rapporten: en sida efter rättning, med export", async () => {
   const { ev, el } = fresh();
   ev("setPrep(false)"); await ev("loadExaminerFile(FILE, 'f.html')");
   ev("setStep('report')");
   assert.equal(ev("state.step"), "report");
-  assert.equal(ev("state.view"), "final-mcq");
+  assert.equal(ev("state.view"), "final");
   const tabs = el("#viewtabs").innerHTML;
-  assert.ok(tabs.includes("Slutrapport MCQ") && tabs.includes("Totalrapport") && !tabs.includes("Preliminär"));
-  for (const id of ["#exp-html", "#exp-xlsx", "#exp-pdf"]) assert.equal(el(id).classList.contains("hidden"), false, id);
+  assert.ok(tabs.includes("Hela rapporten") && !tabs.includes("reptab") && !tabs.includes("Preliminär"));
+  for (const id of ["#exp-html", "#exp-xlsx", "#exp-pdf", "#exp-overview"]) assert.equal(el(id).classList.contains("hidden"), false, id);
   ev("setStep('choose')");
   assert.equal(el("#stepchoice").classList.contains("hidden"), false);
   assert.equal(el("#results").classList.contains("hidden"), true);
@@ -105,8 +105,7 @@ test("ingen godkäntstatistik i vyerna eller i temarapporten", async () => {
   assert.equal(ev("temaEmbed().passSnapshot"), null);
   const page = runHtml(ev("buildTemaReport(temaEmbed())"));
   assert.equal(page.el("#passmetric").innerHTML, "");
-  page.ev("state.viewIdx = EMBED.views.findIndex(v=>v.layout==='total'); xExportTabs(); xExportRender();");
-  assert.ok(!/-gränsen/.test(page.el("#totalreport").innerHTML));
+  assert.ok(!/-gränsen/.test(page.el("#cards").innerHTML + page.el("#summary").innerHTML));
 });
 test("kurssamordnarens ingång visar aldrig valet eller resultaten", () => {
   const { ev, el } = fresh();
@@ -115,36 +114,34 @@ test("kurssamordnarens ingång visar aldrig valet eller resultaten", () => {
   assert.equal(el("#results").classList.contains("hidden"), true);
 });
 
-// ---- exkludering av valfri fråga (även essäfrågor) i Totalrapporten ----
-test("en essäfråga kan exkluderas och återinkluderas i Totalrapporten", () => {
+// ---- exkludering av valfri fråga (även essä- och flersvarsfrågor) på kortet ----
+test("en essäfråga kan exkluderas och återinkluderas på sitt kort", () => {
   const { ev, el } = fresh();
-  ev(`setPrep(false); loadSynthetic(); setStep('report'); state.view = 'total'; render();
+  ev(`setPrep(false); loadSynthetic(); setStep('report');
       globalThis.ESSQ = String(state.json.qMeta.find(q => q.type === 'text' && q.max > 0).num);
-      globalThis.fire = (type, cls, extra) => document.querySelector("#totalreport").listeners[type]
+      globalThis.fire = (type, cls, extra) => document.querySelector("#cards").listeners[type]
         .forEach(f => f({ target: Object.assign({ closest: s => s === cls ? { dataset: { qnum: ESSQ }, value: (extra||{}).value } : null }, extra||{}) }));`);
-  const html0 = el("#totalreport").innerHTML;
-  assert.ok(html0.includes(`class="card-exclude tr-exclude" data-qnum="${ev("ESSQ")}"`));
-  assert.ok(html0.includes('<th class="trex">Exkludering</th>'));
+  const html0 = el("#cards").innerHTML;
+  assert.ok(html0.includes(`class="card-exclude" data-qnum="${ev("ESSQ")}"`));
   const max0 = ev("reducedMax(state.json)");
-  ev("fire('click', '.tr-exclude')");
+  ev("fire('click', '.card-exclude')");
   assert.equal(ev("isExcluded(ESSQ)"), true);
   assert.ok(ev("reducedMax(state.json)") < max0);
-  const html1 = el("#totalreport").innerHTML;
-  assert.ok(html1.includes(`class="card-reinclude tr-reinclude" data-qnum="${ev("ESSQ")}"`));
-  assert.ok(html1.includes(`class="card-reason tr-reason" data-qnum="${ev("ESSQ")}"`));
-  ev("fire('change', '.tr-reason', {value:'Låg kvalitet'})");
+  const html1 = el("#cards").innerHTML;
+  assert.ok(html1.includes(`class="card-reinclude" data-qnum="${ev("ESSQ")}"`));
+  assert.ok(html1.includes(`class="card-reason" data-qnum="${ev("ESSQ")}"`));
+  ev("fire('change', '.card-reason', {value:'Låg kvalitet'})");
   assert.equal(ev("exclReason(ESSQ)"), "Låg kvalitet");
   // exkluderingen följer med till temarapportens essäkort
-  assert.equal(ev("temaEmbed().views.find(v => v.layout === 'essay').essays.find(e => e.seq === ESSQ).excluded"), true);
-  assert.equal(ev("temaEmbed().views.find(v => v.layout === 'essay').essays.find(e => e.seq === ESSQ).reason"), "Låg kvalitet");
-  ev("fire('click', '.tr-reinclude')");
+  assert.equal(ev("temaEmbed().views[0].scored.find(e => e.seq === ESSQ).excluded"), true);
+  assert.equal(ev("temaEmbed().views[0].scored.find(e => e.seq === ESSQ).reason"), "Låg kvalitet");
+  ev("fire('click', '.card-reinclude')");
   assert.equal(ev("isExcluded(ESSQ)"), false);
   assert.equal(ev("reducedMax(state.json)"), max0);
 });
-test("temarapportens Totalrapport har ingen exkluderingskolumn", () => {
+test("temarapportens kort har inga exkluderingsknappar", () => {
   const { ev } = fresh();
   ev("setPrep(false); loadSynthetic(); setStep('report');");
   const page = runHtml(ev("buildTemaReport(temaEmbed())"));
-  page.ev("state.viewIdx = EMBED.views.findIndex(v=>v.layout==='total'); xExportTabs(); xExportRender();");
-  assert.ok(!/tr-exclude|Exkludering<\/th>/.test(page.el("#totalreport").innerHTML));
+  assert.ok(!/card-exclude|card-reinclude/.test(page.el("#cards").innerHTML));
 });
