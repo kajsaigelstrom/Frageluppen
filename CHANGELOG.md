@@ -43,7 +43,8 @@ inte dokumenterad här.
   De tre filrutorna för Insperas filer finns bara hos kurssamordnaren.
 - **Godkäntstatistiken visas inte längre i vyerna eller i temarapporten** (panelen "Nått
   65 %-gränsen", raden i Totalrapporten och godkäntgränsen under Inställningar). Den är tänkt
-  som en egen export senare. Exkludering görs på korten, som förut.
+  som en egen export senare. Exkludering görs på korten, som förut, och dessutom per rad i
+  Totalrapporten, där även essäfrågor och flersvarsfrågor kan exkluderas och återinkluderas.
 - **Kurssamordnaren är landningsstället, och lämnar en fil som examinatorn bara öppnar.**
   Högst upp i filpanelen väljs **Kurssamordnare** eller **Examinator**, och sidan öppnar hos
   kurssamordnaren. I stället för ett paket som examinatorn måste ladda upp sparar

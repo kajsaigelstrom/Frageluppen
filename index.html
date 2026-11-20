@@ -311,6 +311,10 @@
   table.totaltable th.num,table.totaltable td.num{text-align:right;font-family:"IBM Plex Mono",monospace}
   table.totaltable td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
   table.totaltable tr.trexcl td{background:#f0ede5;opacity:.7}
+  table.totaltable tr.trexcl td.trex{opacity:1}
+  table.totaltable .trex{white-space:nowrap}
+  table.totaltable td.trex .card-reason{font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:#fff}
+  @media print{ table.totaltable .trex{display:none} }
   table.totaltable tr.trexcl .tcode{text-decoration:line-through}
   .trexcltag{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
     color:#7a5a14;background:#f0e6cc;border-radius:4px;padding:1px 5px;margin-left:4px;vertical-align:middle}
@@ -2523,6 +2527,11 @@ function renderTotal(){
       `<td class="tdiff">${diff}</td>`+
       `<td><span class="trbadge ${info.cls}" title="${esc(info.tip)}">${esc(info.value)}</span> `+
         `<span style="font-size:11.5px;color:var(--muted)">${esc(info.label||"")}</span></td>`+
+      // Exkludering av valfri fråga, även essäfrågor och flersvar (flervalsfrågor har också knappen på sitt kort).
+      `<td class="trex">` + (ex
+        ? `<select class="card-reason tr-reason" data-qnum="${esc(String(m.num))}"><option value=""${exclReason(m.num)?'':' selected'}>Orsak…</option>${EXCL_REASONS.map(x=>`<option ${x===exclReason(m.num)?'selected':''}>${esc(x)}</option>`).join("")}</select> `
+          + `<button type="button" class="card-reinclude tr-reinclude" data-qnum="${esc(String(m.num))}">Återinkludera</button>`
+        : `<button type="button" class="card-exclude tr-exclude" data-qnum="${esc(String(m.num))}">Exkludera</button>`) + `</td>`+
     `</tr>`;
   }).join("");
   const filtered = metaRows.length!==J.qMeta.length;
@@ -2531,6 +2540,7 @@ function renderTotal(){
     ? `<table class="totaltable"><thead><tr>`+
       `<th class="num">#</th><th>Fråga</th><th>Typ</th><th class="num">Max</th><th>Svårighet</th>`+
       `<th>Diskriminering (item–total mot ${critLabel()})</th>`+
+      `<th class="trex">Exkludering</th>`+
       `</tr></thead><tbody>${rows}</tbody></table>`
     : `<div class="panel">Inga frågor matchar filtret.</div>`;
   host.innerHTML = head + countLine + tableHtml +
@@ -3991,6 +4001,20 @@ $("#modeseg").addEventListener("click", e=>{
     });
     cards.addEventListener("change", e=>{
       const sel=e.target.closest(".card-reason"); if(!sel) return;
+      state.excluded.set(String(sel.dataset.qnum), sel.value); render();
+    });
+  }
+}
+// Samma sak i Totalrapporten, för alla frågetyper.
+{ const tr=$("#totalreport");
+  if(tr){
+    tr.addEventListener("click", e=>{
+      const ex=e.target.closest(".tr-exclude"), re=e.target.closest(".tr-reinclude");
+      if(ex){ state.excluded.set(String(ex.dataset.qnum), ""); render(); }
+      else if(re){ state.excluded.delete(String(re.dataset.qnum)); render(); }
+    });
+    tr.addEventListener("change", e=>{
+      const sel=e.target.closest(".tr-reason"); if(!sel) return;
       state.excluded.set(String(sel.dataset.qnum), sel.value); render();
     });
   }

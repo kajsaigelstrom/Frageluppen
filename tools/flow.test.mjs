@@ -115,3 +115,37 @@ test("kurssamordnarens ingång visar aldrig valet eller resultaten", () => {
   assert.equal(el("#stepchoice").classList.contains("hidden"), true);
   assert.equal(el("#results").classList.contains("hidden"), true);
 });
+
+// ---- exkludering av valfri fråga (även essäfrågor) i Totalrapporten ----
+test("en essäfråga kan exkluderas och återinkluderas i Totalrapporten", () => {
+  const { ev, el } = fresh();
+  ev(`setPrep(false); loadDemo(); setStep('report'); state.view = 'total'; render();
+      globalThis.ESSQ = String(state.json.qMeta.find(q => q.type === 'text' && q.max > 0).num);
+      globalThis.fire = (type, cls, extra) => document.querySelector("#totalreport").listeners[type]
+        .forEach(f => f({ target: Object.assign({ closest: s => s === cls ? { dataset: { qnum: ESSQ }, value: (extra||{}).value } : null }, extra||{}) }));`);
+  const html0 = el("#totalreport").innerHTML;
+  assert.ok(html0.includes(`class="card-exclude tr-exclude" data-qnum="${ev("ESSQ")}"`));
+  assert.ok(html0.includes('<th class="trex">Exkludering</th>'));
+  const max0 = ev("reducedMax(state.json)");
+  ev("fire('click', '.tr-exclude')");
+  assert.equal(ev("isExcluded(ESSQ)"), true);
+  assert.ok(ev("reducedMax(state.json)") < max0);
+  const html1 = el("#totalreport").innerHTML;
+  assert.ok(html1.includes(`class="card-reinclude tr-reinclude" data-qnum="${ev("ESSQ")}"`));
+  assert.ok(html1.includes(`class="card-reason tr-reason" data-qnum="${ev("ESSQ")}"`));
+  ev("fire('change', '.tr-reason', {value:'Låg kvalitet'})");
+  assert.equal(ev("exclReason(ESSQ)"), "Låg kvalitet");
+  // exkluderingen följer med till temarapportens essäkort
+  assert.equal(ev("temaEmbed().views.find(v => v.layout === 'essay').essays.find(e => e.seq === ESSQ).excluded"), true);
+  assert.equal(ev("temaEmbed().views.find(v => v.layout === 'essay').essays.find(e => e.seq === ESSQ).reason"), "Låg kvalitet");
+  ev("fire('click', '.tr-reinclude')");
+  assert.equal(ev("isExcluded(ESSQ)"), false);
+  assert.equal(ev("reducedMax(state.json)"), max0);
+});
+test("temarapportens Totalrapport har ingen exkluderingskolumn", () => {
+  const { ev } = fresh();
+  ev("setPrep(false); loadDemo(); setStep('report');");
+  const page = runHtml(ev("buildTemaReport(temaEmbed())"));
+  page.ev("state.viewIdx = EMBED.views.findIndex(v=>v.layout==='total'); xExportTabs(); xExportRender();");
+  assert.ok(!/tr-exclude|Exkludering<\/th>/.test(page.el("#totalreport").innerHTML));
+});
