@@ -81,8 +81,7 @@ inte dokumenterad här.
   kurssamordnaren. I stället för ett paket som examinatorn måste ladda upp sparar
   kurssamordnaren **examinatorns fil**: hela verktyget med den minimerade tentan inbäddad.
   Examinatorn dubbelklickar och hamnar direkt i analysen, med triage och exkludering före
-  rättningen och temarapporten efter. Filen visar överst att den har en rad per student och
-  inte ska skickas vidare. Adressen följer ingången (`#samordnare`, `#examinator`).
+  rättningen och temarapporten efter. Adressen följer ingången (`#samordnare`, `#examinator`).
   Tentapaket i JSON-format från 3.25.0 går fortfarande att släppa i rutan för resultat.
 - **Formkontrollen ur MCQ-lathunden, där den är en trolig förklaring.** När en flervalsfråga
   har en svaghet i statistiken prövas den mot lathundens mekaniska kontroll. Ett fynd visas

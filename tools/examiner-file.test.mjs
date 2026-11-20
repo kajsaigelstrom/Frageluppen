@@ -40,15 +40,12 @@ test("filen öppnar direkt i analysen med samma siffror som råfilen", async () 
   assert.equal(page.ev("state.pdfMcqs.length"), ev("pdf.length"));
   assert.ok(page.ev("!!state.tags"));
 });
-test("den öppnade filen visar varningen och döljer ingångarna", async () => {
+test("den öppnade filen döljer ingångarna och har ingen ruta överst", async () => {
   const { ev } = fresh();
   const page = runHtml(ev("FILE"));
   await page.ev("state.embeddedReady");
   assert.equal(page.el("#rolebar").classList.contains("hidden"), true);
-  assert.equal(page.el("#embnote").classList.contains("hidden"), false);
-  const note = page.el("#embnote").innerHTML;
-  assert.ok(note.includes("inte anonym") && note.includes("skicka den inte vidare"));
-  assert.ok(note.includes(ev("dirty.ext_inspera_assessmentRunTitle")));
+  assert.ok(!ev("FILE").includes("embnote"));                    // rutan överst är borttagen (Kajsa 21 nov 2026)
   assert.ok(page.el("#uploadfull").classList.contains("hidden"));
 });
 test("vanliga sidan har ingen inbäddad tenta och landar hos kurssamordnaren", () => {
@@ -56,7 +53,6 @@ test("vanliga sidan har ingen inbäddad tenta och landar hos kurssamordnaren", (
   assert.equal(ev("state.embedded || null"), null);
   assert.equal(ev("state.prep"), true);
   assert.equal(el("#role-prep").classList.contains("on"), true);
-  assert.equal(el("#embnote").innerHTML, "");          // varningsrutan fylls bara i en examinatorsfil
 });
 test("tillfällesvarningen följer med in i filen", async () => {
   const { ev } = fresh();

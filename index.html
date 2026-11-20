@@ -231,7 +231,6 @@
   .linkbtn:hover{color:var(--ink)}
   .expbtn:disabled{opacity:.45;cursor:not-allowed}
   .expbtn.hidden{display:none}
-  .embnote{margin-bottom:14px;padding:10px 14px;border:1px solid #c9b06a;border-radius:8px;background:#faf6ea;font-size:13px;line-height:1.55}
   .rolebar.hidden{display:none}
   .exambox{max-width:560px}
   .exambox.hidden,.drops.hidden,#stepchoice.hidden{display:none}
@@ -456,7 +455,6 @@
   </div>
 
   <div class="panel" id="uploadpanel">
-    <div id="embnote" class="embnote hidden"></div>
     <div class="rolebar" id="rolebar">
       <span class="modelabel">Jag är</span>
       <div class="modeseg" id="roleseg">
@@ -3842,12 +3840,6 @@ $("#reopen").addEventListener("click", expandUpload);
     state.embeddedReady = tryRun().then(()=>{
       if(!state.json) return;
       collapseUpload(); setStep("choose");
-      const n=$("#embnote"); if(!n) return;
-      let pk={}; try{ pk=JSON.parse(emb.text)||{}; }catch(_){}
-      n.classList.remove("hidden");
-      n.innerHTML = `<b>${esc(pk.examName||"Tenta")}</b> · ${state.json.candCount} studenter`
-        + (pk.created?` · förberedd ${esc(pk.created)}`:"")
-        + `<br>Den här filen har en rad per student. Den är minimerad men inte anonym. Behandla den som tentamaterial och skicka den inte vidare. Det som ska till temagrupperna är <b>Temarapporten</b>.`;
     });
   } else {
     // Vanliga sidan: kurssamordnaren är landningsstället (hen är den enda som kan hämta filerna ur Inspera).
