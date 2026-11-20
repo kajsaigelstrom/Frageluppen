@@ -181,6 +181,14 @@
     background:var(--accent);color:#fff;cursor:pointer;transition:.12s;box-shadow:0 1px 2px rgba(0,0,0,.08)}
   .btn-primary:hover:not(:disabled){background:#1a5e47}
   .btn-primary:disabled{background:var(--line);color:var(--faint);cursor:not-allowed;box-shadow:none}
+  .linkbtn{font:inherit;font-size:13px;background:none;border:none;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer}
+  .linkbtn:hover{color:var(--ink)}
+  .prepline{margin-top:12px}
+  .prephead h2{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:20px;margin:0 0 4px}
+  .prephead p{margin:0 0 14px;font-size:13.5px;color:var(--muted);max-width:70ch}
+  #prep-receipt{margin-top:14px;font-size:13.5px;line-height:1.6}
+  #prep-receipt .warn{color:#8a3b12}
+  #prep-note{margin-top:12px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:#faf6ea;font-size:13px;max-width:78ch}
   .computehint{font-size:13px;color:var(--muted)}
   .uploadmini{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   .uploadmini .minicheck{color:var(--accent);font-weight:700;font-size:16px}
@@ -385,6 +393,10 @@
 
   <div class="panel" id="uploadpanel">
     <div id="uploadfull">
+    <div id="prephead" class="prephead hidden">
+      <h2>Förbered tentan</h2>
+      <p>Fritextsvar, rättarnamn, tider, extratid, betyg och alla id tas bort. Inga resultat visas här.</p>
+    </div>
     <div class="drops">
       <div class="drop" id="d-pdf">
         <label>1 · Tentan (PDF)</label>
@@ -401,7 +413,7 @@
       </div>
       <div class="drop" id="d-json">
         <label>2 · Resultat (JSON)</label>
-        <div class="hint">Be din samordnare ladda ned JSON-filerna från Inspera (under fliken <b>Statistik</b>). En fil per ort – flera går bra.</div>
+        <div class="hint">Släpp <b>tentapaketet</b> från din kurssamordnare här, eller JSON-filerna från Inspera (under fliken <b>Statistik</b>). En fil per ort – flera går bra.</div>
         <input type="file" id="json" accept="application/json,.json" multiple>
         <div class="got" id="got-json"></div>
       </div>
@@ -414,8 +426,15 @@
     </div>
     <div class="computebar">
       <button id="compute" class="btn-primary" disabled>Beräkna</button>
+      <button id="prep-save" class="btn-primary hidden" type="button" disabled>Spara tentapaket</button>
       <button id="demo" class="btn-ghost" type="button" title="Ladda en syntetisk exempeltenta (neutraliserad, inga riktiga data) för att prova verktyget">Visa exempel</button>
       <span class="computehint" id="computehint">Ladda upp minst en JSON-fil (PDF är valfri).</span>
+    </div>
+    <div id="prep-receipt" class="hidden"></div>
+    <div id="prep-note" class="hidden">Paketet är minimerat, inte anonymt. Varje rad är en students poängmönster och kan på en liten omtenta kännas igen av den som vet vilka som skrev. Behandla paketet som tentamaterial och dela det bara med examinatorn. Paketet innehåller också tentans frågor.</div>
+    <div class="prepline">
+      <button id="prep-open" class="linkbtn" type="button">Förbered tentan åt examinatorn</button>
+      <button id="prep-close" class="linkbtn hidden" type="button">Tillbaka till analysen</button>
     </div>
     </div>
     <div id="uploadmini" class="uploadmini hidden">
@@ -988,6 +1007,29 @@ function openPackage(pkg){
   }
   if(pkg.tagRows && !Array.isArray(pkg.tagRows)) throw bad();
   return { jsonObjs:pkg.data, pdfMcqs, tagRows:pkg.tagRows||null, examWarning:pkg.examWarning||null };
+}
+
+/* Avgör vad en körning ska bygga på. Exakt ett objekt som är ett paket → öppna det; PDF eller taggar
+   som examinatorn själv har laddat gäller före paketets (taggfiler kommer ofta sent, och en rättad
+   PDF-läsning ska kunna nå en gammal tenta). Paket + andra filer → fel, aldrig dubbelräkning. */
+function resolveInputs(objs, loaded){
+  const own = loaded || {};
+  if(!objs.some(isPackage))
+    return { jsonObjs:objs, pdfMcqs:own.pdfMcqs||null, tagRows:own.tagRows||null, fromPackage:false, examWarning:null };
+  if(objs.length!==1)
+    throw new Error("Ett tentapaket kan inte kombineras med andra resultatfiler. Släpp bara paketet.");
+  const P = openPackage(objs[0]);
+  return { jsonObjs:P.jsonObjs, pdfMcqs: own.pdfMcqs || P.pdfMcqs, tagRows: own.tagRows || P.tagRows,
+           fromPackage:true, examWarning: own.pdfMcqs ? null : P.examWarning };
+}
+/* Kvittot kurssamordnaren ser innan paketet sparas – aldrig några resultat. */
+function prepReceipt({jsonObjs, pdfMcqs, tagRows}){
+  if(jsonObjs.some(isPackage)) throw new Error("Det här är redan ett tentapaket. Släpp resultatfilerna från Inspera i stället.");
+  let n=0; for(const d of jsonObjs){ const l=(d && (d.ext_inspera_candidates || d.candidates)) || []; n+=l.length; }
+  if(!n) throw new Error("Hittar inga kandidater i resultatfilen. Är det rätt fil från Inspera?");
+  const titles = jsonObjs.map(o=>o && o.ext_inspera_assessmentRunTitle).filter(Boolean);
+  return { examName:titles[0]||null, candCount:n, mcqPdf: pdfMcqs ? pdfMcqs.length : null,
+           hasTags: !!(tagRows && tagRows.length), warning: examMismatch(pdfMcqs && pdfMcqs.examName, titles) || null };
 }
 
 function parseJSON(jsonObjs){
@@ -2705,6 +2747,7 @@ function loadDemo(){
     state.json = parseJSON([demoToInspera(DEMO_DATA.DEMO)]);
     state.pdfMcqs = DEMO_DATA.PDF;
     state.pdfIsDemo = true;   // demons kortdata får inte matchas mot riktiga JSON-filer (se tryRun)
+    state.fromPackage = false; state.pdfFromPackage = false; state.tagsFromPackage = false;
     state.tags = parseTagsRows(DEMO_DATA.TAGS);
     state.tagsFile = {name:"exempel-teman"};
     state.jsonFiles = [{name:"exempel-resultat.json"}];
@@ -2724,13 +2767,29 @@ async function tryRun(){
     // Demons pdf-data ska inte matchas mot en riktig JSON – släpp den och kör JSON-läge
     // (eller be om riktig PDF). Samma princip som taggstubben nedan.
     if(state.pdfIsDemo){ state.pdfMcqs=null; state.pdfIsDemo=false; $("#got-pdf").textContent=""; }
-    state.json = parseJSON(objs);
-    state.synthMcqs = null;   // JSON-lägets kortunderlag byggs om från nya datan vid behov
+    // En PDF som kom ur ett tidigare öppnat paket är inte examinatorns egen – släpp den före ny körning.
+    if(state.pdfFromPackage){ state.pdfMcqs=null; state.pdfFromPackage=false; }
     // typeof-vakten: demoläget lämnar en filstubb ({name}) i tagsFile som saknar arrayBuffer().
     // Riktig fil → läs; demostubb → släng den och demons taggar så att de inte appliceras på
     // riktiga data (kraschade tidigare: "state.tagsFile.arrayBuffer is not a function").
-    if(state.tagsFile && typeof state.tagsFile.arrayBuffer==="function"){ log("Läser taggar …"); state.tags = parseTags(await state.tagsFile.arrayBuffer()); }
+    let ownTagRows=null;
+    if(state.tagsFile && typeof state.tagsFile.arrayBuffer==="function"){ log("Läser taggar …"); ownTagRows = readTagRows(await state.tagsFile.arrayBuffer()); }
     else if(state.tagsFile){ state.tagsFile=null; state.tags=null; state.activeTags={}; $("#got-tags").textContent=""; }
+    const ownPdf = state.pdfMcqs;
+    const R = resolveInputs(objs, {pdfMcqs:ownPdf, tagRows:ownTagRows});   // tentapaket eller råfiler
+    state.json = parseJSON(R.jsonObjs);
+    state.synthMcqs = null;   // JSON-lägets kortunderlag byggs om från nya datan vid behov
+    state.fromPackage = R.fromPackage;
+    if(R.fromPackage){
+      state.pdfMcqs = R.pdfMcqs; state.pdfFromPackage = !!R.pdfMcqs && R.pdfMcqs!==ownPdf;
+      state.tags = R.tagRows ? parseTagsRows(R.tagRows) : null;
+      state.tagsFromPackage = !ownTagRows && !!R.tagRows;
+      if(R.examWarning){ const w=$("#examwarn"); if(w){ w.className="bad"; w.textContent="⚠ "+R.examWarning; } }
+    } else {
+      if(ownTagRows) state.tags = parseTagsRows(ownTagRows);
+      else if(state.tagsFromPackage){ state.tags=null; state.activeTags={}; }
+      state.tagsFromPackage = false;
+    }
     const pdfPart = state.pdfMcqs ? `${state.pdfMcqs.length} MCQ i PDF` : "ingen PDF (JSON-läge)";
     log(`Klart: ${pdfPart}, ${state.json.mcqSeqs.length} MCQ i JSON, ${state.json.candCount} kandidater.`);
     render();
@@ -2743,11 +2802,55 @@ function refreshCompute(){
   if(h) h.textContent = ready
     ? (state.pdfMcqs ? "Redo att beräkna." : "Redo. Utan PDF visas MCQ-korten i JSON-läge (utan frågetexter) – ladda tentans PDF för fullständig analys.")
     : "Ladda upp minst en JSON-fil (PDF är valfri).";
+  if(state.prep){ if(h) h.textContent = "PDF och taggfil är valfria."; refreshPrep(); }
+}
+/* ---------- Förbered tentan (kurssamordnarens steg) ---------- */
+function setPrep(on){
+  state.prep=!!on; state.prepDemo=false;
+  const tog=(sel,hide)=>{ const e=$(sel); if(e) e.classList.toggle("hidden", hide); };
+  tog("#prephead",!on); tog("#prep-save",!on); tog("#prep-receipt",!on); tog("#prep-note",!on); tog("#prep-close",!on);
+  tog("#compute",on); tog("#prep-open",on);
+  if(on){ $("#results").classList.add("hidden"); expandUpload(); log(""); }
+  refreshCompute();
+}
+async function prepInputs(){
+  if(state.prepDemo) return {jsonObjs:[demoToInspera(DEMO_DATA.DEMO)], pdfMcqs:DEMO_DATA.PDF, tagRows:DEMO_DATA.TAGS};
+  const jsonObjs=[];
+  for(const f of state.jsonFiles){ if(typeof f.text==="function") jsonObjs.push(JSON.parse(await f.text())); }
+  const pdfMcqs = (state.pdfMcqs && !state.pdfIsDemo && !state.pdfFromPackage) ? state.pdfMcqs : null;
+  const tagRows = (state.tagsFile && typeof state.tagsFile.arrayBuffer==="function") ? readTagRows(await state.tagsFile.arrayBuffer()) : null;
+  return {jsonObjs, pdfMcqs, tagRows};
+}
+async function refreshPrep(){
+  const box=$("#prep-receipt"), b=$("#prep-save"); if(!state.prep || !box || !b) return;
+  const ready = state.prepDemo || state.jsonFiles.some(f=>typeof f.text==="function");
+  b.disabled=!ready;
+  if(!ready){ box.innerHTML=""; return; }
+  try{
+    const k=prepReceipt(await prepInputs());
+    box.innerHTML = `<b>${esc(k.examName||"Tenta utan namn")}</b><br>`
+      + `${k.candCount} kandidater · `
+      + (k.mcqPdf!=null ? `${k.mcqPdf} flervalsfrågor lästa ur PDF:en` : "ingen PDF") + " · "
+      + (k.hasTags ? "taggfil med" : "ingen taggfil")
+      + (k.warning ? `<br><span class="warn">⚠ ${esc(k.warning)}</span>` : "");
+  }catch(e){ b.disabled=true; box.innerHTML=`<span class="warn">⚠ ${esc(e.message)}</span>`; }
+}
+async function savePackage(){
+  try{
+    const inp=await prepInputs(); prepReceipt(inp);
+    const blob=new Blob([JSON.stringify(buildPackage(inp))],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a"); a.href=url; a.download=`tentapaket_${stamp()}.frageluppen.json`;
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    log("Tentapaketet är sparat. Lämna filen till examinatorn.");
+  }catch(e){ log("Fel: "+e.message); console.error(e); }
 }
 function uploadSummary(){
-  const parts=[ state.jsonFiles.length+" JSON-fil"+(state.jsonFiles.length===1?"":"er"),
+  const parts=[ (state.fromPackage && state.json) ? `tentapaket (${state.json.candCount} kandidater)`
+                  : state.jsonFiles.length+" JSON-fil"+(state.jsonFiles.length===1?"":"er"),
                 state.pdfMcqs ? `PDF (${state.pdfMcqs.length} MCQ)` : "ingen PDF (JSON-läge)" ];
   if(state.tagsFile) parts.push("taggar: "+state.tagsFile.name);
+  else if(state.tagsFromPackage) parts.push("taggar ur paketet");
   return parts.join("   ·   ");
 }
 function collapseUpload(){
@@ -2765,12 +2868,12 @@ $("#pdf").addEventListener("change", async e=>{
   try{ state.pdfMcqs=await parsePDF(await f.arrayBuffer());
        $("#got-pdf").textContent=`✓ ${f.name} — ${state.pdfMcqs.length} MCQ`; }
   catch(err){ state.pdfMcqs=null; $("#got-pdf").textContent="✗ kunde inte läsa PDF"; log("PDF-fel: "+err.message); console.error(err); }
-  state.pdfIsDemo = false;
+  state.pdfIsDemo = false; state.pdfFromPackage = false;
   checkExamMatch();
   refreshCompute();
 });
 $("#json").addEventListener("change", e=>{
-  state.jsonFiles=[...e.target.files];
+  state.jsonFiles=[...e.target.files]; state.prepDemo=false;
   $("#got-json").textContent=state.jsonFiles.length?`✓ ${state.jsonFiles.length} fil(er)`:""; checkExamMatch(); refreshCompute();
 });
 $("#tags").addEventListener("change", e=>{
@@ -2778,7 +2881,10 @@ $("#tags").addEventListener("change", e=>{
   $("#got-tags").textContent=state.tagsFile?`✓ ${state.tagsFile.name}`:""; refreshCompute();
 });
 $("#compute").addEventListener("click", async ()=>{ await tryRun(); if(state.json) collapseUpload(); });
-$("#demo").addEventListener("click", loadDemo);
+$("#demo").addEventListener("click", ()=>{ if(state.prep){ state.prepDemo=true; refreshPrep(); } else loadDemo(); });
+$("#prep-open").addEventListener("click", ()=>setPrep(true));
+$("#prep-close").addEventListener("click", ()=>setPrep(false));
+$("#prep-save").addEventListener("click", savePackage);
 $("#reopen").addEventListener("click", expandUpload);
 refreshCompute();
 wireHelp();
