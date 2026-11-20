@@ -59,7 +59,14 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
   före rättning), Slutrapport MCQ (kriterium = hela tentan, efter rättning), Totalrapport
   (hela tentan inkl. fritext/flersvar). Diskriminering = punkt-biseriell / item–total.
 - **Två ingångar** högst upp i filpanelen: Kurssamordnare (landningsstället) och Examinator.
-  Adressen följer valet (`#samordnare`, `#examinator`).
+  Adressen följer valet (`#samordnare`, `#examinator`). De tre filrutorna för Insperas filer
+  finns bara hos kurssamordnaren. Examinatorn har en enda filruta för kurssamordnarens fil
+  (`extractEmbedded`, `loadExaminerFile`) – lägg inte tillbaka en råfilsväg där.
+- **Examinatorns flöde är två steg** (`state.step`, `setStep`): först valet, sedan antingen
+  `triage` (bara Preliminär MCQ i triageläge, PDF till rättarna) eller `report` (Slutrapport
+  MCQ och Totalrapport med export). Vyerna väljs aldrig fritt bland alla tre.
+- **Ingen godkäntstatistik i vyerna eller i temarapporten** (Kajsas beslut 20 nov 2026). Den
+  ska bli en egen export. `passMetric` finns kvar för det, men ritas inte.
 - **Examinatorns fil** (`buildExaminerFile`): kurssamordnaren sparar hela verktyget med
   tentapaketet inbäddat som ett JSON-block i `<head>` (`id="fl-data"`). Filen öppnar direkt i
   analysen. Den byggs ur `PRISTINE_HTML`, sidans källa fångad innan något lästs in – ändra

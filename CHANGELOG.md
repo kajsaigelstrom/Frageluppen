@@ -35,6 +35,15 @@ inte dokumenterad här.
   om per ort. Ett pakets PDF ger inte längre en falsk varning om fel filpar när nästa tenta
   öppnas. "Tillbaka till analysen" visar resultaten igen. Uppmaningar riktade till
   examinatorn syns inte i temarapporten.
+- **Examinatorns flöde i två steg.** Under fliken Examinator finns en enda filruta, där filen
+  från kurssamordnaren väljs (den går också att öppna med ett dubbelklick). Sedan väljer
+  examinatorn mellan **Hitta problemfrågor före betygssättning** (en egen vy med bara
+  flervalsfrågorna att se över, exkludering på kortet och PDF till rättarna) och **Se hela
+  rapporten** (vyerna efter rättning, med Temarapport och Excel; kräver färdig rättning).
+  De tre filrutorna för Insperas filer finns bara hos kurssamordnaren.
+- **Godkäntstatistiken visas inte längre i vyerna eller i temarapporten** (panelen "Nått
+  65 %-gränsen", raden i Totalrapporten och godkäntgränsen under Inställningar). Den är tänkt
+  som en egen export senare. Exkludering görs på korten, som förut.
 - **Kurssamordnaren är landningsstället, och lämnar en fil som examinatorn bara öppnar.**
   Högst upp i filpanelen väljs **Kurssamordnare** eller **Examinator**, och sidan öppnar hos
   kurssamordnaren. I stället för ett paket som examinatorn måste ladda upp sparar

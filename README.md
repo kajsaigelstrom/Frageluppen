@@ -35,13 +35,15 @@ minimerad, inte anonym, och ska behandlas som tentamaterial.
 
 ## För examinatorer
 
-Öppna filen från kurssamordnaren med ett dubbelklick. Den hamnar direkt i analysen, utan
-uppladdning. Före rättningen visar den Preliminär MCQ för triage och exkludering, efter
-rättningen även Slutrapport MCQ och Totalrapport. Temarapporten till temagrupperna skapas
-därifrån. Skicka aldrig själva filen vidare.
+Välj fliken **Examinator** och välj filen från kurssamordnaren (eller öppna filen med ett
+dubbelklick). Sedan finns två vägar.
 
-Har du råfilerna själv väljer du fliken **Examinator** på verktygets vanliga sida (eller en
-länk som slutar på `#examinator`).
+- **Hitta problemfrågor före betygssättning.** Flervalsfrågor som kan behöva rättas i facit
+  eller exkluderas. Går att göra innan essäfrågorna är rättade.
+- **Se hela rapporten.** Alla frågor efter rättningen, med export till temagrupperna
+  (Temarapport) och till Excel.
+
+Skicka aldrig själva filen från kurssamordnaren vidare.
 
 ## För temagrupper: temarapporten
 

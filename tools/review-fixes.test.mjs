@@ -25,7 +25,6 @@ test("godkäntgränsen i en temarapport kan inte återställas av läsaren", () 
   page.ev("setThreshold('easy', 80); resetThresholds(false);");
   assert.equal(page.ev("state.th.pass"), 55);
   assert.equal(page.ev("state.th.easy"), 90);
-  assert.match(page.el("#passmetric").innerHTML, /Nått 55 %-gränsen/);
 });
 test("fil som inte är JSON ger ett svenskt fel", () => {
   const { ev } = fresh();
@@ -91,12 +90,13 @@ test("uppmaningar till examinatorn syns inte för temarapportens läsare", () =>
   assert.match(ev("card(Object.assign({}, VIEW[0], {n: 12, advice: undefined}))"), /bedöm utifrån/);
   assert.match(ev("card(Object.assign({}, VIEW[0], {unmatched: 3, advice: undefined}))"), /kontrollera att rätt PDF/);
 });
-test("Tillbaka till analysen visar resultaten igen", () => {
+test("från kurssamordnarens ingång tillbaka till examinatorns: valet visas igen", () => {
   const { ev, el } = fresh();
   ev("setPrep(true)");
   assert.equal(el("#results").classList.contains("hidden"), true);
   ev("setPrep(false)");
-  assert.equal(el("#results").classList.contains("hidden"), false);
+  assert.equal(el("#stepchoice").classList.contains("hidden"), false);
+  assert.equal(ev("state.step"), "choose");
 });
 test("examinatorns fil sparas utan att länken dras in direkt", async () => {
   const { ev, downloads, urlEvents } = fresh();
@@ -134,11 +134,8 @@ test("flikarna följer läget", () => {
   assert.equal(el("#role-exam").classList.contains("on"), true);
   assert.equal(el("#role-prep").classList.contains("on"), false);
 });
-test("rutan för resultat talar till rätt person i varje ingång", () => {
-  const { ev, el } = fresh();
-  ev("setPrep(true)");
-  assert.ok(!el("#json-hint").innerHTML.includes("examinatorns fil"));
-  assert.ok(el("#json-hint").innerHTML.includes("Inspera"));
-  ev("setPrep(false)");
-  assert.ok(el("#json-hint").innerHTML.includes("examinatorns fil"));
+test("rutan för resultat finns bara hos kurssamordnaren och talar till hen", () => {
+  const html = fs.readFileSync(INDEX, "utf8").split("<script>")[0];
+  const hint = html.split('id="json-hint">')[1].split("</div>")[0];
+  assert.ok(hint.includes("Inspera") && !hint.includes("examinatorns fil") && !hint.includes("tentapaket"));
 });

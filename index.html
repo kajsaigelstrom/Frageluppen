@@ -226,8 +226,21 @@
   .linkbtn{font:inherit;font-size:13px;background:none;border:none;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer}
   .linkbtn:hover{color:var(--ink)}
   .expbtn:disabled{opacity:.45;cursor:not-allowed}
+  .expbtn.hidden{display:none}
   .embnote{margin-bottom:14px;padding:10px 14px;border:1px solid #c9b06a;border-radius:8px;background:#faf6ea;font-size:13px;line-height:1.55}
   .rolebar.hidden{display:none}
+  .exambox{max-width:560px}
+  .exambox.hidden,.drops.hidden,#stepchoice.hidden{display:none}
+  .steptitle{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:19px;margin-bottom:12px}
+  .stepgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+  .stepbtn{font:inherit;text-align:left;padding:16px 18px;border:1.5px solid var(--accent);border-radius:10px;background:#fff;cursor:pointer;display:flex;flex-direction:column;gap:6px}
+  .stepbtn b{font-size:15.5px;color:var(--accent)}
+  .stepbtn span{font-size:13px;color:var(--muted);line-height:1.5}
+  .stepbtn:hover:not(:disabled){background:#f3f8f5}
+  .stepbtn:disabled{opacity:.5;cursor:not-allowed;border-color:var(--line)}
+  .stepbtn:disabled b{color:var(--muted)}
+  .stepnote{font-size:13px;color:var(--muted);margin-top:10px}
+  .stepback{display:block;margin:0 0 10px}
   .rolebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
   .prephead h2{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:20px;margin:0 0 4px}
   .prephead p{margin:0 0 14px;font-size:13.5px;color:var(--muted);max-width:70ch}
@@ -427,7 +440,7 @@
     <div id="settings" class="hidden"></div>
     <div id="th-custom" class="hidden"></div>
     <p class="subtitle">Visar svarsfördelning per alternativ, andel rätt och diskriminering – hur väl varje fråga skiljer starka från svaga studenter.</p>
-    <p>Ladda upp tentans PDF och ett eller flera JSON-resultat från Inspera. Stöd för att bedöma frågekvalitet, förbereda betygskollegiet och ge frågekonstruktörer återkoppling om MCQ-konstruktionen. Allt körs lokalt i din webbläsare; inga data laddas upp.</p>
+    <p>Kurssamordnaren skapar en fil ur Insperas resultat. Examinatorn väljer filen, hittar problemfrågor före betygssättningen och skapar efter rättningen en rapport till temagrupperna. Allt körs lokalt i din webbläsare; inga data laddas upp.</p>
     <p class="devnote">Verktyget utvecklas fortfarande och kan innehålla fel – dubbelkolla viktiga slutsatser. Hittar du en bugg eller har förslag, hör av dig till <b>Kajsa Igelström</b>.</p>
   </header>
 
@@ -444,8 +457,8 @@
     <div class="rolebar" id="rolebar">
       <span class="modelabel">Jag är</span>
       <div class="modeseg" id="roleseg">
-        <button id="role-prep" class="modebtn" type="button" title="Förbered tentan åt examinatorn: spara en fil som examinatorn bara öppnar.">Kurssamordnare</button>
-        <button id="role-exam" class="modebtn on" type="button" title="Analysera tentan från egna filer, när du inte har fått en fil från kurssamordnaren.">Examinator</button>
+        <button id="role-prep" class="modebtn" type="button" title="Skapa filen till examinatorn ur Insperas filer.">Kurssamordnare</button>
+        <button id="role-exam" class="modebtn on" type="button" title="Välj filen från kurssamordnaren och analysera tentan.">Examinator</button>
       </div>
       <span class="modehint" id="rolehint"></span>
     </div>
@@ -454,7 +467,13 @@
       <h2>Förbered tentan</h2>
       <p>Släpp filerna från Inspera och spara en fil till examinatorn. Fritextsvar, rättarnamn, tider, extratid, betyg och alla id tas bort. Inga resultat visas här.</p>
     </div>
-    <div class="drops">
+    <div id="exambox" class="drop exambox hidden">
+      <label>Filen från kurssamordnaren</label>
+      <div class="hint">Välj HTML-filen som kurssamordnaren har skickat. Den heter <b>tenta-till-examinator_….html</b>.</div>
+      <input type="file" id="examfile" accept=".html,.htm,.json,text/html,application/json">
+      <div class="got" id="got-exam"></div>
+    </div>
+    <div class="drops" id="drops">
       <div class="drop" id="d-pdf">
         <label>1 · Tentan (PDF)</label>
         <ol class="steps">
@@ -470,7 +489,7 @@
       </div>
       <div class="drop" id="d-json">
         <label>2 · Resultat (JSON)</label>
-        <div class="hint" id="json-hint">Har du fått <b>examinatorns fil</b> från din kurssamordnare behöver du inte ladda upp något, öppna bara den. Annars släpper du JSON-filerna från Inspera här (under fliken <b>Statistik</b>). En fil per ort – flera går bra.</div>
+        <div class="hint" id="json-hint">Ladda ned JSON-filerna från Inspera (under fliken <b>Statistik</b>) och släpp dem här. En fil per ort – flera går bra.</div>
         <input type="file" id="json" accept="application/json,.json" multiple>
         <div class="got" id="got-json"></div>
       </div>
@@ -482,7 +501,6 @@
       </div>
     </div>
     <div class="computebar">
-      <button id="compute" class="btn-primary" disabled>Beräkna</button>
       <button id="prep-save" class="btn-primary hidden" type="button" disabled>Spara examinatorns fil</button>
       <button id="demo" class="btn-ghost" type="button" title="Ladda en syntetisk exempeltenta (neutraliserad, inga riktiga data) för att prova verktyget">Visa exempel</button>
       <span class="computehint" id="computehint">Ladda upp minst en JSON-fil (PDF är valfri).</span>
@@ -493,7 +511,7 @@
     <div id="uploadmini" class="uploadmini hidden">
       <span class="minicheck">✓</span>
       <span id="minisummary"></span>
-      <button id="reopen" class="btn-ghost">Ändra filer</button>
+      <button id="reopen" class="btn-ghost">Välj en annan fil</button>
     </div>
     <div id="log"></div>
     <div id="examwarn"></div>
@@ -501,7 +519,17 @@
     <div id="pdfnote"></div>
   </div>
 
+  <div id="stepchoice" class="panel stepchoice hidden">
+    <div class="steptitle">Vad vill du göra?</div>
+    <div class="stepgrid">
+      <button id="step-triage" class="stepbtn" type="button"><b>Hitta problemfrågor före betygssättning</b><span>Flervalsfrågor som kan behöva rättas i facit eller exkluderas. Går att göra innan essäfrågorna är rättade.</span></button>
+      <button id="step-report" class="stepbtn" type="button"><b>Se hela rapporten</b><span>Alla frågor efter rättningen, med export till temagrupperna och till Excel.</span></button>
+    </div>
+    <div id="step-report-note" class="stepnote"></div>
+  </div>
+
   <div id="results" class="hidden">
+    <button id="step-back" class="linkbtn stepback" type="button">← Tillbaka till valet</button>
     <div id="viewtabs"></div>
     <div class="modebar">
       <span class="modelabel">Visningsläge</span>
@@ -650,11 +678,11 @@ const VIEWS = [
     modes:[{id:"edu",label:"Alla frågor"},{id:"action",label:"Triage"}],
     hint:"Diskriminering (r<sub>pb</sub>) mot MCQ-delsumman – det enda kriterium som finns innan fritext är rättad. För att hitta trasiga frågor att rätta i facit eller exkludera före betygsättning." },
   { id:"final-mcq", label:"Slutrapport MCQ", phase:"Efter rättning", criterion:"whole",
-    layout:"mcq",   needsFullyGraded:true,  needsPdf:true,  built:true,  showFreetext:false, showPassMetric:true, showExemplary:true,
+    layout:"mcq",   needsFullyGraded:true,  needsPdf:true,  built:true,  showFreetext:false, showPassMetric:false, showExemplary:true,
     modes:[{id:"edu",label:"Utbildningsläge"},{id:"simple",label:"Förenklad vy"}],
     hint:"Underlag för återkoppling till frågekonstruktörerna: r<sub>pb</sub> mot hela tentans poäng. Utbildningsläget visar tolkningar och tips; förenklad vy visar bara korten med mätvärden." },
   { id:"total",     label:"Totalrapport",    phase:"Efter rättning", criterion:"whole",
-    layout:"total", needsFullyGraded:true,  needsPdf:false, built:true,  showFreetext:true,  showPassMetric:true, showExemplary:false,
+    layout:"total", needsFullyGraded:true,  needsPdf:false, built:true,  showFreetext:true,  showPassMetric:false, showExemplary:false,
     modes:[],
     hint:"Alla frågor i tentans ordning – även fler-svars och fritext – med diskriminering mot hela tentan." },
 ];
@@ -688,18 +716,61 @@ function polyInfo(scores, r, max){
   return {cls,value:`r ${fmt}`,label,
     tip:`Korrigerad item–total-korrelation mot ${critLabel()} (exkl. frågan) – hur väl poängen på frågan följer studentens prestation i stort. 0,20+ god, 0,30+ mycket god. n=${n}.`};
 }
+function stepViews(){
+  return VIEWS.filter(v=> state.step==="triage" ? v.id==="pre-mcq" : state.step==="report" ? v.id!=="pre-mcq" : true);
+}
 function renderViewTabs(){
   const host=$("#viewtabs"); if(!host) return;
-  const cur=activeView();
+  const cur=activeView(), list=stepViews();
   host.innerHTML =
-    `<div class="reptabs">` +
-    VIEWS.map(v=>`<button class="reptab ${v.id===state.view?'on':''}" data-view="${v.id}">`+
-      `<span class="phase">${v.phase}</span>${v.label}${v.built?'':' ·'}</button>`).join("") +
-    `</div><div class="rephint">${cur.hint}</div>`;
+    (list.length>1 ? `<div class="reptabs">` +
+      list.map(v=>`<button class="reptab ${v.id===state.view?'on':''}" data-view="${v.id}">`+
+        `<span class="phase">${v.phase}</span>${v.label}${v.built?'':' ·'}</button>`).join("") + `</div>`
+      : `<div class="steptitle">${state.step==="triage" ? "Problemfrågor före betygssättning" : esc(cur.label)}</div>`) +
+    `<div class="rephint">${cur.hint}</div>`;
   host.querySelectorAll(".reptab").forEach(b=>b.addEventListener("click",()=>{
     if(b.dataset.view===state.view) return;
     state.view=b.dataset.view; render();
   }));
+}
+/* ---------- Examinatorns flöde: välj filen → välj vad du vill göra ----------
+   Steg "choose" visar valet; "triage" = problemfrågor före betygssättning (bara flervalsfrågorna, mot
+   flervalsdelens poäng, med exkludering); "report" = hela rapporten efter rättning, med export. */
+function extractEmbedded(text){
+  const t=String(text||"");
+  const m=t.match(new RegExp("<scr"+"ipt type=\"application/json\" id=\"fl-data\">([\\s\\S]*?)</scr"+"ipt>"));
+  const cand = m ? m[1] : t;
+  try{ if(isPackage(JSON.parse(cand))) return cand; }catch(_){}
+  throw new Error("Det här är inte en fil från kurssamordnaren. Välj filen som heter tenta-till-examinator_….html.");
+}
+async function loadExaminerFile(text, name){
+  try{
+    const json=extractEmbedded(text);
+    state.json=null; state.step=null;
+    state.jsonFiles=[{name:name||"kurssamordnarens fil", text: async()=>json}];
+    state.pdfMcqs=null; state.pdfIsDemo=false; state.pdfFromPackage=false; state.tagsFile=null; state.excluded=new Map();
+    await tryRun();
+    if(state.json){ collapseUpload(); setStep("choose"); }
+  }catch(e){ setStep(null); log("Fel: "+e.message); }
+}
+function setStep(step){
+  const sc=$("#stepchoice"), res=$("#results");
+  if(!state.json) step=null;
+  if(step==="report" && !state.json.fullyGraded) step="choose";
+  state.step=step||null;
+  if(step!=="triage" && step!=="report"){
+    if(res) res.classList.add("hidden");
+    if(sc) sc.classList.toggle("hidden", step!=="choose");
+    if(step==="choose"){
+      const b=$("#step-report"), n=$("#step-report-note"), ok=!!state.json.fullyGraded;
+      if(b) b.disabled=!ok;
+      if(n) n.textContent = ok ? "" : `Hela rapporten kräver färdig rättning. Cirka ${+(state.json.ungradedPts||0).toFixed(1)} p är inte rättade ännu.`;
+    }
+    return;
+  }
+  if(sc) sc.classList.add("hidden");
+  if(step==="triage"){ state.view="pre-mcq"; state.mode="action"; } else { state.view="final-mcq"; state.mode="edu"; }
+  render();
 }
 /* Minsta underlag för automatiska omdömen om svårighet/distraktorer. Under detta
    väger ett enda svar för mycket (1 svar = 100/n procentenheter) för att flagga något. */
@@ -729,31 +800,30 @@ och <b>ineffektiv</b> (0 %, ingen valde) – knappt lockande, överväg omskrivn
 <b>vanligare än rätt svar</b> – fler valde en distraktor än det rätta alternativet, undersök
 om det är en vanlig missuppfattning eller ett fel i frågan.</p>
 </div></details>
-<details class="helpsec"><summary>De tre vyerna</summary><div class="body">
-<p><b>Preliminär MCQ</b> – före rättning, diskriminering mot MCQ-delen. För att snabbt hitta
-trasiga frågor.</p>
-<p><b>Slutrapport MCQ</b> – efter rättning, diskriminering mot hela tentans poäng.</p>
-<p><b>Totalrapport</b> – hela tentan inklusive fritext och flersvar. Översikt inför
-betygskollegiet. Filtrera på tema och exportera vid behov.</p>
+<details class="helpsec"><summary>Examinatorns två vägar</summary><div class="body">
+<p>När filen från kurssamordnaren är vald finns två vägar.</p>
+<p><b>Hitta problemfrågor före betygssättning</b> – flervalsfrågor som kan behöva rättas i facit
+eller exkluderas, med diskriminering mot flervalsdelens poäng. Går att göra innan essäfrågorna
+är rättade. En fråga exkluderas med knappen på kortet, och allt räknas då om. Listan kan sparas
+som PDF till rättarna.</p>
+<p><b>Se hela rapporten</b> – alla frågor efter rättningen: Slutrapport MCQ med diskriminering
+mot hela tentans poäng, och Totalrapport med även essäfrågor och flersvar. Härifrån skapas
+<b>Temarapporten</b> till temagrupperna och exporten till Excel. Kräver färdig rättning.</p>
+<p>Godkäntstatistik visas inte i vyerna.</p>
 </div></details>
-<details class="helpsec"><summary>Skapa och dela rapporten</summary><div class="body">
-<p class="lead">För dig som skapar rapporten (examinator):</p>
-<p><b>1.</b> Hämta från Inspera: tentans <b>PDF</b> (med korrekta svar) och <b>resultatet som
-JSON</b>. Valfritt: en <b>Excel</b> med kolumnerna Nr, Fråga och Tema för tema-filtrering.</p>
-<p><b>2.</b> Ladda upp filerna. Allt körs lokalt i webbläsaren – inga data laddas upp.</p>
-<p><b>3.</b> Exportera till Excel eller PDF för eget bruk. <b>PDF (examinatorns)</b> innehåller
-åtgärdsförslagen och är inte tänkt att skickas till lärare.</p>
-<p><b>4.</b> Skapa en <b>Temarapport</b> att dela med temagrupperna när tentan är färdigrättad. Den
-innehåller Slutrapport MCQ och Totalrapport, men ingen triage och inga åtgärdsförslag. Där
-svaren följer ett mönster står i stället en eller två frågor att ställa sig. Mottagaren kan
-bocka för frågor och spara en egen sida med bara dem, att ge vidare till den som skrev frågorna.
-Rapporten innehåller bara sammanräknade resultat – aldrig enskilda kandidatsvar.</p>
+<details class="helpsec"><summary>Temarapporten</summary><div class="body">
+<p>Temarapporten innehåller flervalsfrågorna, essäfrågorna och en totalrapport, men ingen triage
+och inga åtgärdsförslag. Överst står det som gäller flera frågor på samma sätt, och korten har en
+ruta bara när något gäller just den frågan. Mottagaren kan bocka för frågor och spara en egen
+sida med bara dem, att ge vidare till den som skrev frågorna. Rapporten innehåller bara
+sammanräknade resultat – aldrig enskilda kandidatsvar.</p>
+<p><b>PDF (examinatorns)</b> innehåller åtgärdsförslagen och är inte tänkt att skickas till lärare.</p>
 </div></details>
 <details class="helpsec"><summary>Inställningar</summary><div class="body">
-<p>Under <b>Inställningar</b> högst upp kan gränserna för märkningarna Lätt och Svår, för god
-diskriminering och för godkänt ändras. Gränserna för märkningar ändrar bara etiketter och vilka
-kort som får en kommentar, aldrig mätvärdena. Godkäntgränsen ändrar godkäntandelen. Avviker en
-gräns från standard står det överst på sidan, och temarapporten bär med sig dina gränser.</p>
+<p>Under <b>Inställningar</b> högst upp kan gränserna för märkningarna Lätt och Svår och för god
+diskriminering ändras. De ändrar bara etiketter och vilka kort som får en kommentar, aldrig
+mätvärdena. Avviker en gräns från standard står det överst på sidan, och temarapporten bär med
+sig dina gränser.</p>
 </div></details>
 <details class="helpsec"><summary>Kurssamordnare och examinator</summary><div class="body">
 <p>Verktyget har två ingångar, <b>Kurssamordnare</b> och <b>Examinator</b>, som väljs högst upp i
@@ -763,9 +833,8 @@ En länk som slutar på <code>#examinator</code> öppnar examinatorns ingång di
 finns, och sparar <b>en fil till examinatorn</b>. Det görs två gånger per tenta, direkt efter
 tentan och efter rättningen. Fritextsvar, rättarnamn, tider, extratid, betyg och alla id tas
 bort, och kandidatnumren ersätts av löpnummer. Inga resultat visas för kurssamordnaren.</p>
-<p><b>Examinatorn</b> öppnar filen med ett dubbelklick och hamnar direkt i analysen, utan att
-ladda upp något. Där görs triage och exkludering, och därifrån skapas temarapporten. En egen
-PDF eller taggfil kan läggas till under "Ändra filer" och gäller då före filens.</p>
+<p><b>Examinatorn</b> väljer filen under fliken Examinator, eller öppnar den med ett dubbelklick,
+och väljer sedan vad hen vill göra.</p>
 <p>Filen är minimerad, inte anonym: varje rad är en students poängmönster. Behandla den som
 tentamaterial och skicka den inte vidare.</p>
 </div></details>`;
@@ -2227,7 +2296,10 @@ function render(){
   { const eh=$("#exp-html");                      // temarapporten kräver färdig rättning
     if(eh){ const ok=!!(state.json && state.json.fullyGraded); eh.disabled=!ok;
       eh.title = ok ? "Rapport till temagrupperna: frågor i stället för åtgärder, bara sammanräknade resultat."
-                    : "Temarapporten kräver färdig rättning."; } }
+                    : "Temarapporten kräver färdig rättning."; }
+    // I vyn för problemfrågor finns bara listan till rättarna (PDF). Export till temagrupper och Excel hör till hela rapporten.
+    const tri = state.step==="triage", hx=$("#exp-xlsx"), hp=$("#exp-pdf");
+    if(eh) eh.classList.toggle("hidden", tri); if(hx) hx.classList.toggle("hidden", tri); if(hp) hp.classList.remove("hidden"); }
   const results=$("#results"); results.classList.remove("hidden");
   results.classList.remove("stubmode","totalmode");
   $("#totalreport").classList.add("hidden");
@@ -2424,7 +2496,7 @@ function renderTotal(){
     `<span class="stat"><b>${J.qMeta.length}</b><span>frågor (${J.mcqSeqs.length} MCQ)</span></span>`+
     (nExcl?`<span class="stat"><b>${nExcl}</b><span>exkluderade</span></span>`:"")+
     `<span class="stat"><b>${(+maxRed.toFixed(1))}</b><span>maxpoäng${nExcl?` (av ${(+J.maxTotal.toFixed(1))})`:""}</span></span>`+
-    (pm?`<span class="stat"><b>${pm.pass} / ${n}</b><span>nått ${state.th.pass} %-gränsen (${Math.round(pm.pass/n*100)} %)</span></span>`:"")+
+
     `</div>`;
   const TYPE={single:["MCQ","single"], multi:["Flerval","multi"], text:["Fritext","text"]};
   // Sök används inte i totalrapporten (rutan är dold där) – filtrering sker enbart på tema/taggar.
@@ -2964,7 +3036,7 @@ function viewerInit(){
   $("#search").addEventListener("input", applyFilters);
   $("#sort").addEventListener("change", applyFilters);
   { const cb=$("#clearfilter"); if(cb) cb.addEventListener("click", clearFilters); }
-  if(typeof EMBED==="undefined" || EMBED.showPassMetric!==false) renderPassMetric();
+  { const pmEl=$("#passmetric"); if(pmEl) pmEl.innerHTML=""; }
   if(typeof EMBED==="undefined" || EMBED.showFreetext!==false){ renderFreeText(); }
   else { const ft=$("#freetext"); if(ft) ft.innerHTML=""; }
   refreshLists(); buildTagbar(); drawCards();
@@ -3002,7 +3074,6 @@ function xExportTotal(){
     +`<span class="stat"><b>${h.nq}</b><span>frågor (${h.nmcq} MCQ)</span></span>`
     +(h.nExcl?`<span class="stat"><b>${h.nExcl}</b><span>exkluderade</span></span>`:"")
     +`<span class="stat"><b>${h.maxRed}</b><span>maxpoäng${h.nExcl?` (av ${h.maxTotal})`:""}</span></span>`
-    +(h.pass!=null?`<span class="stat"><b>${h.pass} / ${h.n}</b><span>nått ${state.th.pass} %-gränsen (${h.passPct} %)</span></span>`:"")
     +'</div>';
   const rows=totalVisibleRows();
   const body=rows.map(r0=>{
@@ -3316,7 +3387,7 @@ function temaEmbed(){
     const pm=J.fullyGraded?passMetric(state.excluded):null;
     const head={n, nq:J.qMeta.length, nmcq:J.mcqSeqs.length, nExcl,
       maxRed:+reducedMax(J).toFixed(1), maxTotal:+J.maxTotal.toFixed(1),
-      pass:pm?pm.pass:null, passPct:(pm&&n)?Math.round(pm.pass/n*100):null};
+      pass:null, passPct:null};   // godkäntstatistiken visas inte i rapporterna (egen export senare)
     return {head, rows};
   };
   // bygg en payload per tillgänglig vy (samma grindar som appen)
@@ -3357,7 +3428,7 @@ function temaEmbed(){
   }
 
   const tags = state.tags ? {tagCols: state.tags.tagCols.map(c=>({i:c.i, name:c.name}))} : null;
-  const snap = (J.qMeta && J.cohortScores) ? Object.assign(passMetric(state.excluded), {ungradedPts: J.ungradedPts||0}) : null;
+  const snap = null;   // godkäntstatistiken följer inte med i temarapporten
   return { kind:"tema", subset:null, credit:creditText(), generated:new Date().toLocaleDateString('sv-SE'),
                   views, viewIdx:0, candCount: J.candCount, smallN: !!state.smallN, tags,
                   passSnapshot: snap, freeDist: (freeTextDist()||[]),   // räknas alltid om här: state.freeDist är tom utanför Totalrapporten
@@ -3721,8 +3792,8 @@ function loadDemo(){
     state.jsonFiles = [{name:"exempel-resultat.json"}];
     state.activeTags = {};
     checkExamMatch();     // rensar ev. kvarstående tillfälleskontroll-varning från riktiga filer
-    render();
     collapseUpload();
+    setStep("choose");
   }catch(e){ if(typeof log==="function") log("Demo-fel: "+e.message); console.error(e); }
 }
 
@@ -3760,16 +3831,11 @@ async function tryRun(){
     }
     const pdfPart = state.pdfMcqs ? `${state.pdfMcqs.length} MCQ i PDF` : "ingen PDF (JSON-läge)";
     log(`Klart: ${pdfPart}, ${state.json.mcqSeqs.length} MCQ i JSON, ${state.json.candCount} kandidater.`);
-    render();
-  }catch(e){ log("Fel: "+e.message); console.error(e); }
+  }catch(e){ state.json=null; log("Fel: "+e.message); console.error(e); }
 }
 function refreshCompute(){
-  const ready = state.jsonFiles.length>0;
-  const b=$("#compute"); if(b) b.disabled=!ready;
   const h=$("#computehint");
-  if(h) h.textContent = ready
-    ? (state.pdfMcqs ? "Redo att beräkna." : "Redo. Utan PDF visas MCQ-korten i JSON-läge (utan frågetexter) – ladda tentans PDF för fullständig analys.")
-    : "Ladda upp minst en JSON-fil (PDF är valfri).";
+  if(h) h.textContent = "";
   if(state.prep){ if(h) h.textContent = "PDF och taggfil är valfria."; refreshPrep(); }
 }
 /* ---------- Förbered tentan (kurssamordnarens steg) ---------- */
@@ -3777,18 +3843,16 @@ function setPrep(on){
   state.prep=!!on; state.prepDemo=false;
   const tog=(sel,hide)=>{ const e=$(sel); if(e) e.classList.toggle("hidden", hide); };
   tog("#prephead",!on); tog("#prep-save",!on); tog("#prep-receipt",!on); tog("#prep-note",!on);
-  tog("#compute",on);
+  tog("#drops",!on); tog("#exambox",on);
   { const a=$("#role-exam"), b=$("#role-prep"), h=$("#rolehint");
     if(a) a.classList.toggle("on", !on); if(b) b.classList.toggle("on", !!on);
-    if(h) h.textContent = on ? "Förbered tentan åt examinatorn: spara en fil som examinatorn bara öppnar."
-                             : "Analysera tentan från egna filer, när du inte har fått en fil från kurssamordnaren.";
-    const jh=$("#json-hint");
-    if(jh) jh.innerHTML = on ? "Ladda ned JSON-filerna från Inspera (under fliken <b>Statistik</b>) och släpp dem här. En fil per ort – flera går bra."
-                             : "Har du fått <b>examinatorns fil</b> från din kurssamordnare behöver du inte ladda upp något, öppna bara den. Annars släpper du JSON-filerna från Inspera här (under fliken <b>Statistik</b>). En fil per ort – flera går bra."; }
+    if(h) h.textContent = on ? "Skapa filen till examinatorn."
+                             : "Välj filen som kurssamordnaren har skickat.";
+  }
   // adressen följer ingången, så att sidan kan sparas som bokmärke eller skickas som länk i rätt läge
   try{ if(typeof history!=="undefined" && history.replaceState) history.replaceState(null, "", on ? "#samordnare" : "#examinator"); }catch(_){}
-  if(on){ $("#results").classList.add("hidden"); expandUpload(); log(""); }
-  else if(state.json){ $("#results").classList.remove("hidden"); }
+  if(on){ $("#results").classList.add("hidden"); { const sc=$("#stepchoice"); if(sc) sc.classList.add("hidden"); } expandUpload(); log(""); }
+  else if(state.json){ setStep(state.step||"choose"); }
   refreshCompute();
 }
 /* Två ingångar: adressen index.html#samordnare öppnar kurssamordnarens läge, #examinator examinatorns. */
@@ -3826,11 +3890,12 @@ async function saveExaminerFile(){
   }catch(e){ log("Fel: "+e.message); console.error(e); }
 }
 function uploadSummary(){
-  const parts=[ (state.fromPackage && state.json) ? `${state.embedded?"kurssamordnarens fil":"tentapaket"} (${state.json.candCount} kandidater)`
+  if(state.pdfIsDemo && state.json) return `exempeltenta med påhittade data (${state.json.candCount} kandidater)`;
+  const parts=[ (state.fromPackage && state.json) ? `kurssamordnarens fil (${state.json.candCount} kandidater)`
                   : state.jsonFiles.length+" JSON-fil"+(state.jsonFiles.length===1?"":"er"),
                 state.pdfMcqs ? `PDF (${state.pdfMcqs.length} MCQ)` : "ingen PDF (JSON-läge)" ];
   if(state.tagsFile) parts.push("taggar: "+state.tagsFile.name);
-  else if(state.tagsFromPackage) parts.push(state.embedded ? "taggar ur filen" : "taggar ur paketet");
+  else if(state.tagsFromPackage) parts.push("taggar ur filen");
   return parts.join("   ·   ");
 }
 function collapseUpload(){
@@ -3860,7 +3925,15 @@ $("#tags").addEventListener("change", e=>{
   state.tagsFile=e.target.files[0]; state.activeTags={};
   $("#got-tags").textContent=state.tagsFile?`✓ ${state.tagsFile.name}`:""; refreshCompute();
 });
-$("#compute").addEventListener("click", async ()=>{ await tryRun(); if(state.json) collapseUpload(); });
+$("#examfile").addEventListener("change", async e=>{
+  const f=e.target.files && e.target.files[0]; if(!f) return;
+  $("#got-exam").textContent="läser …";
+  await loadExaminerFile(await f.text(), f.name);
+  $("#got-exam").textContent = state.json ? `✓ ${f.name}` : "";
+});
+$("#step-triage").addEventListener("click", ()=>setStep("triage"));
+$("#step-report").addEventListener("click", ()=>setStep("report"));
+$("#step-back").addEventListener("click", ()=>setStep("choose"));
 $("#demo").addEventListener("click", ()=>{ if(state.prep){ state.prepDemo=true; refreshPrep(); } else loadDemo(); });
 $("#role-prep").addEventListener("click", ()=>{ if(!state.prep) setPrep(true); });
 $("#role-exam").addEventListener("click", ()=>{ if(state.prep) setPrep(false); });
@@ -3875,7 +3948,7 @@ $("#reopen").addEventListener("click", expandUpload);
     { const rb=$("#rolebar"); if(rb) rb.classList.add("hidden"); }
     state.embeddedReady = tryRun().then(()=>{
       if(!state.json) return;
-      collapseUpload();
+      collapseUpload(); setStep("choose");
       const n=$("#embnote"); if(!n) return;
       let pk={}; try{ pk=JSON.parse(emb.text)||{}; }catch(_){}
       n.classList.remove("hidden");
@@ -3893,7 +3966,7 @@ $("#reopen").addEventListener("click", expandUpload);
 }
 refreshCompute();
 wireHelp();
-wireSettings(true, ()=>{ if(state.json) render(); });
+wireSettings(false, ()=>{ if(state.json && (state.step==="triage" || state.step==="report")) render(); });   // godkäntgränsen visas inte (ingen godkäntstatistik i vyerna)
 { const c=$("#credit"); if(c) c.innerHTML=creditText(); }
 ["search","sort"].forEach(id=>$("#"+id).addEventListener("input", ()=>{ if(state.json) applyFilters(); }));
 $("#clearfilter").addEventListener("click", clearFilters);
