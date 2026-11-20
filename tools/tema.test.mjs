@@ -112,3 +112,14 @@ test("exkluderad fråga visas med orsak i temarapporten", () => {
   assert.ok(page.el("#cards").innerHTML.includes("Exkluderad ur tentan"));
   assert.ok(page.el("#cards").innerHTML.includes("Tekniskt fel"));
 });
+test("fritextfrågornas poängfördelning följer med i temarapporten", () => {
+  const { ev } = fresh();
+  ev("state.freeDist = []");                                    // så står den när examinatorn exporterar från kortvyn
+  const nText = ev("state.json.qMeta.filter(q => !q.isMCQ && q.max > 0).length");
+  assert.ok(nText > 0);
+  assert.equal(ev("temaEmbed().freeDist.length"), nText);
+  const page = runHtml(ev("buildTemaReport(temaEmbed())"));
+  page.ev("state.viewIdx = 1; xExportTabs(); xExportRender();");
+  assert.ok(page.el("#totalreport").innerHTML.includes("Fritextfrågor – poängfördelning"));
+  assert.ok(!ev("JSON.stringify(temaEmbed().freeDist)").includes("cohort"));
+});

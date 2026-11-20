@@ -56,6 +56,8 @@ inte dokumenterad här.
   med 39 flervalsfrågor: 11 kort med ruta (5 med en fråga, 6 med en formförklaring).
 - **Förebilder.** Listan över starkt diskriminerande frågor i temarapporten ersätts av frågor
   som var lagom svåra (50–85 % rätt), skilde väl och inte har någon fråga på kortet.
+- **Buggfix:** fritextfrågornas poängfördelning följde aldrig med i den delade rapporten när den
+  skapades från kortvyn (listan var tom vid exporten). Nu räknas den alltid om.
 - **Licens:** koden MIT som förut, texterna CC BY 4.0 (står i README).
 - **`tools/sync-lathund.mjs`** hämtar regelkoden och rådtexterna oförändrade ur MCQ-lathunden.
   Lathunden är källan; avsnitten i `index.html` ändras aldrig för hand.

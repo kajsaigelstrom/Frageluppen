@@ -3274,7 +3274,7 @@ function temaEmbed(){
   const snap = (J.qMeta && J.cohortScores) ? Object.assign(passMetric(state.excluded), {ungradedPts: J.ungradedPts||0}) : null;
   return { kind:"tema", subset:null, credit:creditText(), generated:new Date().toLocaleDateString('sv-SE'),
                   views, viewIdx:0, candCount: J.candCount, smallN: !!state.smallN, tags,
-                  passSnapshot: snap, freeDist: (state.freeDist||freeTextDist()||[]),
+                  passSnapshot: snap, freeDist: (freeTextDist()||[]),   // räknas alltid om här: state.freeDist är tom utanför Totalrapporten
                   excluded: [...state.excluded.entries()], mode: "ask", th: Object.assign({},state.th) };
 }
 /* Urval: en kopia av rapportens data med bara de valda frågorna. Helhetssiffror (godkäntandel, maxpoäng)
