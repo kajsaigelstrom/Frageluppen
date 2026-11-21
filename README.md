@@ -16,7 +16,7 @@ Hela verktyget är **en enda fil**, `index.html`. Du behöver inte installera n�
 
 > Vill du hellre ha allt på en gång: klicka på den gröna **Code**-knappen högst upp på repot → **Download ZIP**, packa upp, och öppna `index.html`.
 >
-> Kurssamordnaren behöver internetuppkoppling för att verktyget ska kunna läsa PDF- och Excel-filer (biblioteken hämtas från nätet). Examinatorn kan öppna filen från kurssamordnaren utan nät.
+> Steg 1 behöver internetuppkoppling för att verktyget ska kunna läsa PDF- och Excel-filer (biblioteken hämtas från nätet). Det gör också exporten Tentamensstatistik i steg 3.
 
 ---
 
@@ -32,7 +32,7 @@ själva. I Linköping gör kurssamordnaren steg 1 och examinatorn steg 2 och 3.
    eller **Spara kombinerad datafil** om någon annan ska göra steg 2 och 3.
 3. Gör samma sak en gång till när tentan är rättad, med nya filer från Inspera.
 
-Datafilen innehåller verktyget och bara den data det behöver. Studenternas skrivna svar,
+Datafilen innehåller bara den data verktyget behöver. Studenternas skrivna svar,
 rättarnamn, tider, extratid och alla id tas bort, och kandidatnumren ersätts av löpnummer.
 Insperas slutbetyg och totalpoäng följer med, så att rättningen kan kontrolleras. Filen är
 minimerad, inte anonym, och ska behandlas som tentamaterial. Skicka den aldrig vidare till
@@ -70,7 +70,7 @@ tentans frågor fungerade och innehåller bara sammanräknade resultat.
 
 ## Så här ser det ut
 
-Sammanfattningen överst visar hur många frågor som behöver åtgärdas:
+Skärmbilderna nedan är från en äldre version av verktyget och visar inte dagens tre steg:
 
 ![Frågeluppen – MCQ-vy med sammanfattning](docs/shot-cards.png)
 
@@ -89,7 +89,7 @@ Sammanfattningen överst visar hur många frågor som behöver åtgärdas:
 - Två vägar för examinatorn: **problemfrågor före betygssättning** (flervalsfrågorna, före rättningen av essäfrågorna) och **hela rapporten** (alla frågetyper på en sida efter rättning, med Översiktstabell inför betygskollegiet).
 - Filtrering på tema, exkludering av trasiga frågor, och export till **Excel** och som **översiktstabell** att skriva ut.
 - En fristående **Temarapport** att dela med temagrupperna: utan triage och åtgärdsförslag, med frågor att ställa sig där svaren följer ett mönster, och med möjlighet att bocka för frågor och spara en egen sida att ge vidare.
-- **Justerbara gränser** för märkningarna Lätt och Svår, god diskriminering och godkänt, i en hopfälld inställningspanel.
+- **Justerbara gränser** för märkningarna Lätt och Svår och för god diskriminering, i en hopfälld inställningspanel, och G-gränsen i procent direkt på rapportsidan.
 - En inbyggd **"? Hjälp"** förklarar hur måtten tolkas.
 
 Allt körs lokalt i webbläsaren – **inga data laddas upp någonstans**.
@@ -101,7 +101,7 @@ Allt körs lokalt i webbläsaren – **inga data laddas upp någonstans**.
 Frågeluppen är utvecklad av mig, **Kajsa Igelström**, för analys av läkarprogrammets MCQ-tentor. Mitt bidrag är den pedagogiska och psykometriska utformningen:
 
 - **Vilka mått som är relevanta och hur de ska tolkas** – svårighet, item–total-diskriminering och distraktoreffektivitet – och hur de presenteras så att en examinator kan agera på dem.
-- **Arbetsflödet** kring preliminär rapport, slutrapport och totalrapport, kopplat till rättning och betygskollegium, och återkopplingen till frågekonstruktörer.
+- **Arbetsflödet** i tre steg (förbered filer, hitta problemfrågor före betygssättningen, skapa rapporter efter rättningen), och återkopplingen till frågekonstruktörer.
 - **Kraven, besluten och granskningen** av vad som är korrekt (t.ex. hur diskriminering beräknas mot rätt kriterium, hur teman kopplas till frågor, vad som får delas vidare).
 
 Kodimplementeringen är framtagen med AI-assisterad utveckling (Claude), utifrån min specifikation och löpande granskning. Utvecklingen har skett iterativt – se [`CHANGELOG.md`](CHANGELOG.md).
@@ -110,7 +110,7 @@ Kodimplementeringen är framtagen med AI-assisterad utveckling (Claude), utifrå
 
 ## Integritet
 
-Verktyget bearbetar riktiga studentresultat lokalt i webbläsaren; ingenting laddas upp. Exporten och exempeldatan innehåller **endast aggregat** (antal per alternativ, n, diskriminering, teman) – aldrig enskilda kandidatsvar, identifierare eller rådata. Exempeltentan är en simulerad kohort som återger en riktig tentas statistik utan några riktiga svar eller frågetexter.
+Verktyget bearbetar riktiga studentresultat lokalt i webbläsaren; ingenting laddas upp. Temarapporten, Problemfrågor och Översiktstabellen innehåller **endast aggregat** (antal per alternativ, n, diskriminering, teman) – aldrig enskilda kandidatsvar, identifierare eller rådata. Exempeltentan är en simulerad kohort som återger en riktig tentas statistik utan några riktiga svar eller frågetexter.
 
 ---
 

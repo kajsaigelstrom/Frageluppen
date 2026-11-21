@@ -60,7 +60,6 @@
   .gctl input{width:3.2em;font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);text-align:right}
   #g-pts{color:var(--ink)}
   .viewhead .steptitle{margin:0}
-  .viewhead .stepback{margin:0}
   #modehint{display:block;margin:0 0 12px;max-width:80ch}
   #results.premode #controlband{background:none;border:0;padding:0;-webkit-backdrop-filter:none;backdrop-filter:none}
   footer .devnote{margin-top:8px}
@@ -80,7 +79,7 @@
   .modalclose{position:absolute;top:12px;right:14px;border:none;background:none;font-size:24px;line-height:1;
     color:var(--muted);cursor:pointer;padding:2px 6px;border-radius:6px}
   .modalclose:hover{background:var(--accent-soft);color:var(--accent)}
-  .helpsec{border:1px solid var(--line);border-radius:9px;padding:2px 14px;margin:10px 0;background:var(--bg)}
+  .helpsec{border:1px solid var(--line);border-radius:9px;padding:2px 14px;margin:10px 0;background:var(--card)}
   .helpsec summary{cursor:pointer;font-weight:600;font-size:14px;padding:11px 0;list-style:none}
   .helpsec summary::-webkit-details-marker{display:none}
   .helpsec summary::before{content:"▸";color:var(--accent);margin-right:9px;font-size:12px}
@@ -114,11 +113,8 @@
   .summary .stat b{font-family:"IBM Plex Mono",monospace;font-size:24px;font-weight:600}
   .summary .stat span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 
-  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0 4px}
   .controls input,.controls select{font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line);
     border-radius:7px;background:#fff;color:var(--ink)}
-  .controls input[type=text]{min-width:220px;flex:1}
-  .controls .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-left:4px}
   .expbtn{font:inherit;font-size:13px;font-weight:600;padding:7px 13px;border:1px solid var(--accent);
     background:#fff;color:var(--accent);border-radius:7px;cursor:pointer;transition:.12s}
   .expbtn:hover{background:var(--accent);color:#fff}
@@ -204,14 +200,13 @@
   .q .qanote{font-size:12px;color:var(--warn);margin-top:8px;font-family:"IBM Plex Mono",monospace}
   .hidden{display:none}
   /* mode toggle */
-  .modebar{display:flex;align-items:center;gap:12px;margin:2px 0 16px;flex-wrap:wrap}
-  .modelabel{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
   .modeseg{display:inline-flex;border:1.5px solid var(--accent);border-radius:9px;overflow:hidden;background:#fff}
   .modebtn{font:inherit;font-size:14px;font-weight:600;padding:9px 20px;border:none;
     background:#fff;color:var(--accent);cursor:pointer;transition:.12s;border-right:1.5px solid var(--accent)}
   .modeseg .modebtn:last-child{border-right:none}
   .modebtn:hover:not(.on){background:var(--accent-soft)}
   .modebtn.on{background:var(--accent);color:#fff}
+  .modebtn:disabled{color:var(--faint);cursor:not-allowed;background:#fff}
   .modehint{font-size:13px;color:var(--muted);flex:1 1 240px;min-width:200px}
   /* filväljare: Beräkna-knapp + hopfällt läge */
   .computebar{display:flex;align-items:center;gap:14px;margin-top:16px;flex-wrap:wrap}
@@ -230,6 +225,7 @@
   #selbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
   .selsave{border-color:var(--accent)!important;color:var(--accent)!important;font-weight:600}
   .subsettag{display:inline-block;margin:6px 0 2px;padding:3px 10px;border-radius:999px;background:var(--accent);color:#fff;font-size:12.5px;font-weight:600}
+  @media print{ *{-webkit-print-color-adjust:exact;print-color-adjust:exact} }
   @media print{ .selwrap,.selbox,#selbar,#dlctrls,#settings-open,#settings,#helpOpen,.exports{display:none!important} }
   .levelnote{margin:12px 0 0;padding:9px 13px;border-left:3px solid var(--accent);background:var(--card);font-size:13px;max-width:78ch}
   .askbox{margin-top:12px;padding:11px 14px;border:1px solid var(--line);border-radius:8px;background:#fbfaf6}
@@ -269,15 +265,7 @@
   .exambox{max-width:560px}
   .exambox.hidden,.drops.hidden,#stepchoice.hidden{display:none}
   .steptitle{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:19px;margin-bottom:12px}
-  .stepgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
-  .stepbtn{font:inherit;text-align:left;padding:16px 18px;border:1.5px solid var(--accent);border-radius:10px;background:#fff;cursor:pointer;display:flex;flex-direction:column;gap:6px}
-  .stepbtn b{font-size:15.5px;color:var(--accent)}
-  .stepbtn span{font-size:13px;color:var(--muted);line-height:1.5}
-  .stepbtn:hover:not(:disabled){background:#f3f8f5}
-  .stepbtn:disabled{opacity:.5;cursor:not-allowed;border-color:var(--line)}
-  .stepbtn:disabled b{color:var(--muted)}
   .stepnote{font-size:13px;color:var(--muted);margin-top:10px}
-  .stepback{display:block;margin:0 0 10px}
   .rolebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
   .prephead h2{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:20px;margin:0 0 4px}
   .prephead p{margin:0 0 14px;font-size:13.5px;color:var(--muted);max-width:70ch}
@@ -304,9 +292,6 @@
   .viewstub p{font-size:13.5px;line-height:1.6;max-width:540px;margin:0 auto}
   #results.stubmode > *:not(#viewtabs):not(#viewstub){display:none}
   /* legacy: filterbaren finns kvar i den exporterade HTML:en tills exporten byggs om */
-  #filterbar{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;margin:14px 0 4px}
-  #filterbar #search{flex:1 1 260px;min-width:200px}
-  #filterbar .tagbar{flex:1 1 100%;margin:0}
   /* ---------- samlat, klistrat kontrollband: sök · taggar · sortera · export ---------- */
   #controlband{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:14px 0 6px;
     padding:9px 12px;background:rgba(244,241,234,.94);border:1px solid var(--line);border-radius:9px;
@@ -324,49 +309,21 @@
     body{background:#fff;margin:10mm}
     .q,tr,.ftcard{break-inside:avoid}
   }
-  .cb-sep{width:1px;height:22px;background:var(--line);margin:0 1px}
   /* ---------- summering: lyft det handlingsdrivande, tona ned det rent beskrivande ---------- */
-  .summary .stat.s-muted b{font-size:18px;color:var(--faint)}
-  .summary .stat.s-muted span{color:var(--faint)}
-  .summary .stat.s-act-on b,.summary .stat.s-act-on span{color:var(--warn)}
-  .summary .stat.s-act-off b,.summary .stat.s-act-off span{color:var(--accent)}
-  .trcount{font-size:13px;color:var(--muted);margin:2px 0 10px}
   /* totalrapport */
-  .trhead{display:flex;flex-wrap:wrap;gap:24px;align-items:baseline;margin:6px 0 16px}
-  .trhead .stat b{font-size:22px;font-weight:700;color:var(--ink)}
-  .trhead .stat span{font-size:12px;color:var(--muted);margin-left:6px}
   table.totaltable{width:100%;border-collapse:collapse;font-size:13px}
   table.totaltable th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);
     font-weight:600;padding:7px 10px;border-bottom:2px solid var(--line)}
   table.totaltable th.num,table.totaltable td.num{text-align:right;font-family:"IBM Plex Mono",monospace}
   table.totaltable td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
   table.totaltable tr.trexcl td{background:#f0ede5;opacity:.7}
-  table.totaltable tr.trexcl td.trex{opacity:1}
-  table.totaltable .trex{white-space:nowrap}
-  table.totaltable td.trex .card-reason{font:inherit;font-size:12px;padding:3px 6px;border:1px solid var(--line);border-radius:6px;background:#fff}
   @media print{ table.totaltable .trex{display:none} }
-  table.totaltable tr.trexcl .tcode{text-decoration:line-through}
   .trexcltag{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
     color:#7a5a14;background:#f0e6cc;border-radius:4px;padding:1px 5px;margin-left:4px;vertical-align:middle}
   table.totaltable tr:hover td{background:#faf9f5}
-  .ttype{font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:6px;background:#f0eee6;color:var(--muted);white-space:nowrap}
-  .ttype.single{background:#e7eef5;color:#345}
-  .ttype.multi{background:#f1ebe0;color:#7a5520}
-  .ttype.text{background:#efeae5;color:#857}
-  .trbadge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;font-family:"IBM Plex Mono",monospace;white-space:nowrap}
-  .tcode{font-weight:600;color:var(--ink)}
-  .tdiff{font-family:"IBM Plex Mono",monospace;color:var(--ink)}
   /* action list */
-  .actionhead{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-bottom:7px}
-  .actionempty{font-size:13px;color:var(--accent);background:#e9f1ec;border:1px solid #cfe3d7;border-radius:8px;padding:10px 14px}
   .actionrow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;
     border:1px solid var(--line);background:var(--card);border-radius:8px;padding:9px 13px;margin-bottom:6px;cursor:pointer;transition:.12s}
-  .actionrow:hover{border-color:var(--ink)}
-  .actionrow .acode{font-family:"IBM Plex Mono",monospace;font-weight:600;min-width:54px}
-  .actionrow .aaction{font-weight:600;flex:1}
-  .actionrow .apc{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted)}
-  .actionrow.adv-red{border-left:4px solid var(--warn)}
-  .actionrow.adv-orange{border-left:4px solid var(--trap)}
   /* advice blocks in cards */
   .advbox{margin-top:13px;border-top:1px solid var(--line);padding-top:11px;display:flex;flex-direction:column;gap:9px}
   .adv{border-radius:8px;padding:9px 12px;background:#faf8f2;border:1px solid var(--line)}
@@ -396,7 +353,6 @@
   .advtw li{font-size:12.5px;color:var(--ink);line-height:1.5;margin:3px 0}
   .advbucket{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin:4px 0 1px}
   .advnote{font-size:12.5px;color:var(--muted);background:#eef2f4;border:1px solid #d5dee3;border-radius:8px;padding:9px 12px;line-height:1.5}
-  .actionnote{font-size:13px;color:var(--muted);background:#eef2f4;border:1px solid #d5dee3;border-radius:8px;padding:10px 14px;line-height:1.5}
   .nnote{margin:0 0 4px}
   .panel.metric{margin:4px 0 10px;padding:14px 16px}
   .metrictop{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
@@ -424,27 +380,16 @@
   .excrow.exoff .exmax{text-decoration:none}
   .excrow .exname{font-size:11px;color:var(--accent);font-family:"IBM Plex Mono",monospace}
   .code .qtitle{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:500;color:var(--accent);background:#eef4ef;border:1px solid #d4e4d8;border-radius:5px;padding:1px 6px;margin-left:8px}
-  .ftsection{margin-top:18px}
-  .fthead{font-family:Fraunces,Georgia,serif;font-size:18px;font-weight:600;margin:0 0 10px}
   .ftcard .fttag{font-size:11px;color:var(--muted);background:#f0eee7;border:1px solid #ddd8cb;border-radius:5px;padding:1px 7px;margin-left:8px}
-  .ftchart{display:flex;flex-direction:column;gap:4px;margin:4px 0 6px}
   .ftrow{display:flex;align-items:center;gap:10px}
   .ftpts{font-family:"IBM Plex Mono",monospace;font-size:12px;min-width:48px;text-align:right;color:var(--muted)}
   .ftbarwrap{flex:1;background:#f0eee7;border-radius:5px;height:16px;overflow:hidden}
   .ftbar{height:100%;background:var(--accent);border-radius:5px}
   .ftcnt{font-family:"IBM Plex Mono",monospace;font-size:12px;min-width:74px}
   .ftcnt small{color:var(--muted)}
-  .ftfoot{font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding-top:7px}
-  .goodbox{margin:6px 0 4px}
-  .goodhead{font-size:12px;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-bottom:7px}
-  .goodnote{font-size:12px;color:var(--muted);margin:-2px 0 9px;line-height:1.5}
   .goodrow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:inherit;
     border:1px solid #cfe3d7;border-left:4px solid var(--accent);cursor:pointer;transition:.12s;
     background:#f3f8f5;border-radius:8px;padding:8px 13px;margin-bottom:6px;font-size:13px}
-  .goodrow:hover{border-color:var(--accent);background:#e9f1ec}
-  .goodrow .acode{font-family:"IBM Plex Mono",monospace;font-weight:600;min-width:54px}
-  .goodrow .greason{flex:1}
-  .goodrow .apc{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);margin-left:auto}
   .advexpand{margin-top:2px}
   .advexpand>summary{font-size:12.5px;color:var(--accent);cursor:pointer;font-weight:600;list-style:none;padding:4px 0}
   .advexpand>summary::before{content:"▸ ";font-size:11px}
@@ -497,7 +442,7 @@
   <div class="panel" id="uploadpanel">
     <div id="uploadfull">
     <div id="prephead" class="prephead hidden">
-      <h2>Förbered tentan</h2>
+      <h2>Förbered filer</h2>
       <p>Släpp filerna från Inspera. De kombineras till en datafil, som du sparar eller går vidare med. Studenternas skrivna svar, rättarnamn, tider, extratid och alla id tas bort, och kandidatnumren ersätts av löpnummer. Insperas slutbetyg och totalpoäng följer med, så att rättningen kan kontrolleras i steg 3. Inga resultat visas här.</p>
     </div>
     <div id="exambox" class="drop exambox hidden">
@@ -769,8 +714,11 @@ async function loadExaminerFile(text, name){
     state.json=null; state.step=null;
     state.jsonFiles=[{name:name||"datafilen", text: async()=>json}];
     state.pdfMcqs=null; state.pdfFromPackage=false; state.tagsFile=null; state.excluded=new Map(); state.comments=new Map(); state.commentOpen=null;
+    state.facets={}; state.activeTags={}; state.patternKey=null; state.patternSeqs=null; state.vm=null;
+    { const sb=$("#search"); if(sb) sb.value=""; }
     await tryRun();
     if(state.json){ collapseUpload(); setStep("choose"); }
+    else setStep(null);                                      // filen gick inte att läsa: inga gamla resultat kvar
   }catch(e){ setStep(null); log("Fel: "+e.message); }
 }
 function setStep(step){
@@ -826,7 +774,7 @@ const MIN_N_DIST = 20;
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum.
    Låt filnamnet följa samma nummer (mcq_analys_v3_12_0.html). */
 const VERSION = "3.26.0";
-const UPDATED = "2026-11-20";
+const UPDATED = "2026-11-21";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
    modal (rena <details>-sektioner, ingen extern kod). Tolkningsdelen först eftersom den är
@@ -942,7 +890,7 @@ function commentHtml(seq){
   // Problemfrågor är en färdig sida: där står kommentaren som text. Annars går den att skriva, i verktyget och i temarapporten.
   if(state.exporting) return t ? `<div class="cmtshow"><div class="cmthead">Kommentar</div><div class="cmttext">${esc(t)}</div></div>` : "";
   if(!t && state.commentOpen!==seq) return `<div class="cmtrow"><button type="button" class="card-comment linkbtn" data-qnum="${esc(seq)}">Lägg till kommentar</button></div>`;
-  const where = isTemaPage() ? "följer med när du sparar en sida eller skriver ut" : "följer med i Problemfrågor och i Temarapporten";
+  const where = isTemaPage() ? "följer med när du sparar en sida eller skriver ut" : (isPre() ? "följer med i exporten Problemfrågor" : "följer med i Temarapporten");
   // .cmtprint är det som skrivs ut: en textruta klipper texten i utskrift.
   return `<div class="cmtedit"><label>Kommentar (${where})</label>`
     + `<textarea class="card-cmt" data-qnum="${esc(seq)}" rows="2">${esc(t)}</textarea><div class="cmtprint">${esc(t)}</div></div>`;
@@ -984,7 +932,7 @@ function renderWeightNote(){
 function isExcluded(seq){ return !!(state.excluded && state.excluded.has(String(seq))); }
 function exclReason(seq){ return (state.excluded && state.excluded.get(String(seq))) || ""; }
 function reducedMax(J){ let s=0; J.qMeta.forEach(m=>{ if(!isExcluded(m.num)) s+=m.max; }); return s; }
-function reducedTotal(J,row){ let s=0; J.qMeta.forEach((m,i)=>{ if(!isExcluded(m.num)) s+=row[i]; }); return s; }
+
 function creditText(){ return `Skapad av <b>Kajsa Igelström</b> · v${VERSION} · senast uppdaterad ${UPDATED}`; }
 
 /* ---------- text helpers ---------- */
@@ -995,16 +943,6 @@ function jaccard(a,b){
   const A=new Set(words(a)), B=new Set(words(b)); if(!A.size||!B.size) return 0;
   let inter=0; A.forEach(w=>{ if(B.has(w)) inter++; });
   return inter/(A.size+B.size-inter);
-}
-function bestMatch(value, opts){
-  let bi=-1, bs=-1;
-  for(let i=0;i<opts.length;i++){
-    const k1=key(value), k2=key(opts[i]);
-    let s = jaccard(value,opts[i]);
-    if(k1 && (k1===k2 || k1.startsWith(k2.slice(0,24)) || k2.startsWith(k1.slice(0,24)))) s=Math.max(s,0.9);
-    if(s>bs){ bs=s; bi=i; }
-  }
-  return {idx:bi, score:bs};
 }
 /* Normaliserad Levenshtein-likhet (0..1) på hela strängen. Fångar korta särskiljare
    (D1/D2, K+/Cl-, V2/V5) som ord-Jaccard tappar eftersom den ignorerar korta tokens. */
@@ -1264,20 +1202,20 @@ function computeDiscrimination(model, {criterion, excluded}){
       for(const qn of model.mcqSeqs) out[qn]=pearson(model.agg[qn].pairs, true);   // identiskt med idag
     } else {
       // bygg om MCQ-delsumman (0/1) ur cohortScores, exkl. exkluderade MCQ
-      const inc=model.mcqSeqs.filter(qn=>!ex.has(qn));
+      const inc=model.mcqSeqs.filter(qn=>!ex.has(String(qn)));
       const sub=model.cohortScores.map(r=>inc.reduce((s,qn)=>s+r[idx[qn]],0));
       for(const qn of model.mcqSeqs){
         const i=idx[qn];
         const pairs=model.cohortScores.map((r,k)=>[r[i], sub[k]]);
-        out[qn]=pearson(pairs, !ex.has(qn));   // exkluderad fråga ingår ej i delsumman → ej självkorrigering
+        out[qn]=pearson(pairs, !ex.has(String(qn)));   // exkluderad fråga ingår ej i delsumman → ej självkorrigering
       }
     }
   } else if(criterion==='whole'){
-    const exIdx=new Set(); model.qMeta.forEach((m,i)=>{ if(ex.has(m.num)) exIdx.add(i); });
+    const exIdx=new Set(); model.qMeta.forEach((m,i)=>{ if(ex.has(String(m.num))) exIdx.add(i); });
     const tot=model.cohortScores.map(r=>r.reduce((s,v,i)=>exIdx.has(i)?s:s+v,0));
     model.qMeta.forEach((m,i)=>{
       const pairs=model.cohortScores.map((r,k)=>[r[i], tot[k]]);
-      out[m.num]=pearson(pairs, !ex.has(m.num));   // exkluderad fråga ingår ej i totalen → ej självkorrigering
+      out[m.num]=pearson(pairs, !ex.has(String(m.num)));   // exkluderad fråga ingår ej i totalen → ej självkorrigering
     });
   }
   return out;
@@ -1293,10 +1231,10 @@ function computeOptDisc(model, {criterion, excluded}){
   const idx={}; model.qMeta.forEach((m,i)=>idx[m.num]=i);
   if(criterion==='mcq'){
     if(!ex.size){ for(const qn of model.mcqSeqs) out[qn]=model.agg[qn].optRpb; return out; }
-    const inc=model.mcqSeqs.filter(qn=>!ex.has(qn));
+    const inc=model.mcqSeqs.filter(qn=>!ex.has(String(qn)));
     const base=model.cohortScores.map(r=>inc.reduce((s,qn)=>s+r[idx[qn]],0));
     for(const qn of model.mcqSeqs){
-      const i=idx[qn], exq=ex.has(qn), optData=[];
+      const i=idx[qn], exq=ex.has(String(qn)), optData=[];
       model.mcqSlot.forEach((slots,k)=>{ const slot=slots[qn]; if(slot===undefined) return;
         optData.push([slot, exq?base[k]:(base[k]-model.cohortScores[k][i])]); });
       const m=new Map();
@@ -1305,10 +1243,10 @@ function computeOptDisc(model, {criterion, excluded}){
     }
     return out;
   }
-  const exIdx=new Set(); model.qMeta.forEach((m,i)=>{ if(ex.has(m.num)) exIdx.add(i); });
+  const exIdx=new Set(); model.qMeta.forEach((m,i)=>{ if(ex.has(String(m.num))) exIdx.add(i); });
   const tot=model.cohortScores.map(r=>r.reduce((s,v,i)=>exIdx.has(i)?s:s+v,0));
   for(const qn of model.mcqSeqs){
-    const i=idx[qn], exq=ex.has(qn), optData=[];
+    const i=idx[qn], exq=ex.has(String(qn)), optData=[];
     model.mcqSlot.forEach((slots,k)=>{
       const slot=slots[qn]; if(slot===undefined) return;
       optData.push([slot, exq?tot[k]:(tot[k]-model.cohortScores[k][i])]);   // (vald slot, korrigerad heltenta-total)
@@ -1398,7 +1336,7 @@ function isPackage(obj){ return !!obj && typeof obj==="object" && !Array.isArray
 function openPackage(pkg){
   if(!isPackage(pkg)) throw new Error("Det här är inte en datafil från steg 1.");
   if(Number(pkg.formatVersion)>PKG_VERSION)
-    throw new Error("Paketet är gjort i en nyare version av Frågeluppen. Uppdatera verktyget och försök igen.");
+    throw new Error("Datafilen är gjord i en nyare version av Frågeluppen. Öppna verktyget på nytt och försök igen.");
   const bad = () => new Error("Datafilen går inte att läsa. Gör en ny i steg 1.");
   if(!Array.isArray(pkg.data) || !pkg.data.length) throw bad();
   if(pkg.data.some(d=>!isPlainObj(d) || !Array.isArray(d.ext_inspera_candidates)
@@ -1595,7 +1533,6 @@ function readTagRows(buf){
   const ws = wb.Sheets[wb.SheetNames[0]];
   return XLSX.utils.sheet_to_json(ws,{header:1,raw:false});
 }
-function parseTags(buf){ return parseTagsRows(readTagRows(buf)); }
 /* per-column values for a question, aligned with state.tags.tagCols (empty strings if none).
    Matcha PÅ POSITIONELLT NUMMER (Nr) först: det är den enda nyckel som delas av PDF:ens
    marginalnummer, JSON:s questionNumber och Excel-kolumnen Nr. Kodkolumnen (Namn/Fråga) kan
@@ -1756,6 +1693,9 @@ function rpbInfo(v){
   const sig=n?2/Math.sqrt(n):2;              // ~2 standard errors above zero
   const r=v.rpb;
   const fmt=(r===null||r===undefined)?"–":((r>=0?"+":"")+r.toFixed(2));
+  if(n>=30 && (r===null||r===undefined))
+    return {state:"na",cls:"rpb-na",value:"r_pb –",label:"ej mätbar",badge:"",
+      tip:`Diskriminering går inte att mäta: alla svarade lika på frågan (${ncorr===0?"ingen svarade rätt":"alla svarade rätt"}), så det finns inget att korrelera mot. (n=${n}.)`};
   if(r===null||r===undefined||n<30)
     return {state:"na",cls:"rpb-na",value:"r_pb –",label:"för få svar",badge:"",
       tip:`För få svar (n=${n}) för att mäta diskriminering – punkt-biseriell korrelation behöver ungefär n ≥ 30. Bedöm frågan utifrån andel rätt, svarsfördelningen och innehållet i stället.`};
@@ -1890,6 +1830,11 @@ function advice(v){
 
   // ===== Inför betygsättning (nu) – kräver fullt diskrimineringsunderlag (rpbOk ⇒ distOk) =====
   let facitDone=false;
+  if(distOk && v.ncorr===0){                                   // ingen fick rätt: det tydligaste tecknet på fel i facit
+    out.l1.push({cls:"adv-red", action:"Dubbelkolla facit", psy:"none-correct",
+      why:`Ingen svarade rätt. Det tyder på att facit är felregistrerat, eller att frågan inte går att besvara som den är ställd. Kontrollera facit före betygssättningen.`});
+    facitDone=true;
+  }
   if(rpbOk && r < -sig){
     out.l1.push({cls:"adv-red", action:"Dubbelkolla facit", psy:"rpb-neg",
       why:`Studenter med hög totalpoäng svarade tydligt oftare fel än de med låg totalpoäng. Det är det starkaste tecknet på felregistrerat facit eller en vilseledande fråga. Överväg att rätta facit eller exkludera frågan innan du sätter betyg.`});
@@ -2369,7 +2314,7 @@ const ASK_TEXT = {
   distraktor: "Var alternativet ett rimligt svar för en student som inte kan området?",
   latt: "Nästan alla svarade rätt. Är det väntat för det här målet, eller prövar frågan något enklare än ni avsåg?"
 };
-const ASK_PSY = { "rpb-neg":"facit", "dist-pos":"forsvar", "hard":"tydlig", "misconception":"undervisning",
+const ASK_PSY = { "none-correct":"facit", "rpb-neg":"facit", "dist-pos":"forsvar", "hard":"tydlig", "misconception":"undervisning",
                   "target-vs-norm":"ledtrad", "distractor-eff":"distraktor" };
 function askQuestions(v){
   if(isExcluded(v.seq) || !(v.n>=MIN_N_DIST)) return [];
@@ -2454,9 +2399,7 @@ function render(){
   renderViewTabs();
   const spec=activeView();
   { const eh=$("#exp-html");                      // temarapporten kräver färdig rättning
-    if(eh){ const ok=!!(state.json && state.json.fullyGraded); eh.disabled=!ok;
-      eh.title = ok ? "Rapport till temagrupperna: frågor i stället för åtgärder, bara sammanräknade resultat."
-                    : "Temarapporten kräver färdig rättning."; }
+    if(eh){ eh.disabled=!(state.json && state.json.fullyGraded); }
     // Vyn för problemfrågor har inga exporter. Temarapport, översiktstabell och Excel hör till hela rapporten.
     const tri = state.step==="triage", hx=$("#exp-xlsx"), ho=$("#exp-overview");
     { const hpq=$("#exp-problems"); if(hpq) hpq.classList.toggle("hidden", !tri); }
@@ -2554,7 +2497,7 @@ function refreshLists(){ }     // listorna ovanför korten är borttagna; kvar s
 function passMetric(exc){
   const J=state.json; if(!J || !J.qMeta || !J.cohortScores) return null;
   const incl=[]; let maxP=0;
-  J.qMeta.forEach((m,i)=>{ if(!exc.has(m.num)){ incl.push(i); maxP+=m.max; } });
+  J.qMeta.forEach((m,i)=>{ if(!exc.has(String(m.num))){ incl.push(i); maxP+=m.max; } });
   const thr=Math.floor(state.th.pass/100*maxP + 1e-9);          // gränsen nedåt
   let pass=0; const N=J.cohortScores.length;
   for(const row of J.cohortScores){
@@ -2656,14 +2599,14 @@ function overviewPayload(){
       tagVals:lookupTagVals(m.title,m.num)};
   });
   const nExcl=J.qMeta.filter(m=>isExcluded(m.num)).length;
-  return {head:{n, nq:J.qMeta.length, nmcq:J.mcqSeqs.length, nExcl, maxRed:+reducedMax(J).toFixed(1), maxTotal:+J.maxTotal.toFixed(1)}, rows};
+  return {head:{exam:state.examName||"", n, nq:J.qMeta.length, nExcl, maxRed:+reducedMax(J).toFixed(1), maxTotal:+J.maxTotal.toFixed(1)}, rows};
 }
 /* De valda filtren i klartext, till exporternas rubrik. */
-function filterText(){
+function filterText(forTema){
   const parts=[], s=$("#search");
   if(s && s.value && s.value.trim()) parts.push(`sök "${s.value.trim()}"`);
   Object.keys(state.activeTags||{}).forEach(c=>parts.push(`${c}: ${[...state.activeTags[c]].join(", ")}`));
-  FACETS.forEach(g=>{ const sel=(state.facets||{})[g.key]; if(sel && sel.size) parts.push(`${g.label}: ${[...sel].map(v=>facetLabel(g.key,v)).join(", ")}`); });
+  FACETS.forEach(g=>{ const sel=(state.facets||{})[g.key]; if(sel && sel.size) parts.push(`${g.label}: ${[...sel].map(v=>(forTema && g.key==="titta" && v==="fraga") ? "Fråga på kortet" : facetLabel(g.key,v)).join(", ")}`); });
   return parts.join(" · ");
 }
 /* Fristående sida utan skript: tabellen att skriva ut, spara som PDF eller skicka vidare. Bara sammanräknade tal. */
@@ -2678,8 +2621,8 @@ function overviewHtml(payload, rows, filt, credit){
       +`<td>${esc(r.typeLabel)}</td><td class="num">${r.max}</td><td>${diff}</td>`
       +`<td>${esc(r.info.value)} <span class="mut">${esc(r.info.label||"")}</span></td></tr>`;
   }).join("");
-  const sub=[`${h.n} studenter`, rows.length===h.nq ? `${h.nq} frågor` : `${rows.length} av ${h.nq} frågor`]
-    .concat(h.maxRed!==undefined ? [`maxpoäng ${h.maxRed}${h.nExcl?` av ${h.maxTotal} (${h.nExcl} exkluderade)`:""}`] : [])
+  const sub=(h.exam?[h.exam]:[]).concat([`${h.n} studenter`, rows.length===h.nq ? `${h.nq} frågor` : `${rows.length} av ${h.nq} frågor`])
+    .concat(h.maxRed!==undefined ? [`maxpoäng ${h.maxRed}${h.nExcl?` av ${h.maxTotal} (${h.nExcl} ${h.nExcl===1?"exkluderad":"exkluderade"})`:""}`] : [])
     .concat([new Date().toLocaleDateString('sv-SE')]).join(" · ");
   return `<!DOCTYPE html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Översiktstabell</title><style>
    *{box-sizing:border-box} body{font-family:Georgia,'Times New Roman',serif;color:#1c1b18;margin:28px;font-size:13px;line-height:1.45}
@@ -2943,7 +2886,7 @@ function card(v){
   const exReason = exclReason(v.seq);
   const exclBanner = excluded ? `<div class="exclbanner">
       <span class="exclmark">Exkluderad ur tentan</span>${exReason?`<span class="exclreasontag">${esc(exReason)}</span>`:""}
-      ${isApp?`<select class="card-reason" data-qnum="${esc(String(v.seq))}"><option value=""${exReason?'':' selected'}>Orsak…</option>${EXCL_REASONS.map(r=>`<option ${r===exReason?'selected':''}>${esc(r)}</option>`).join("")}</select><button type="button" class="card-reinclude" data-qnum="${esc(String(v.seq))}">Återinkludera</button>`:""}
+      ${(isApp && exReason!==INSPERA_REASON)?`<select class="card-reason" data-qnum="${esc(String(v.seq))}"><option value=""${exReason?'':' selected'}>Orsak…</option>${EXCL_REASONS.map(r=>`<option ${r===exReason?'selected':''}>${esc(r)}</option>`).join("")}</select>`:""}${isApp?`<button type="button" class="card-reinclude" data-qnum="${esc(String(v.seq))}">Återinkludera</button>`:""}
       ${(isApp && exReason!==INSPERA_REASON)?`<div class="exclnote">${esc(LOCAL_EXCL_NOTE)}</div>`:""}
     </div>` : "";
   const exclCtrl = (isApp && !excluded && !simple && !askMode)
@@ -3180,15 +3123,15 @@ function statsSheets(d){
     ["G-gräns (poäng)", {v:d.gThr, f:"ROUNDDOWN(B3/100*B2,0)"}, "Avrundat nedåt. Studentens poäng avrundas uppåt."],
     ["Medelpoäng", n?r2(d.students.reduce((s,x)=>s+x.total,0)/n):""],["Bästa resultat", n?Math.max(...d.students.map(x=>x.total)):""],
     ["Antal tentander", n],["Antal anmälda", "", "Fylls i för hand."],
-    ["Antal G", {v:nG, f:`COUNTIF(${bet},"G")`}, pc(nG,n), "% av tentanderna"],["Antal U", {v:n-nG, f:`COUNTIF(${bet},"U")`}, pc(n-nG,n), "% av tentanderna"],
+    ["Antal G", {v:nG, f:`COUNTIF(${bet},"G")`}, {v:pc(nG,n)||0, f:"ROUND(B9/B7*100,2)"}, "% av tentanderna"],["Antal U", {v:n-nG, f:`COUNTIF(${bet},"U")`}, {v:pc(n-nG,n)||0, f:"ROUND(B10/B7*100,2)"}, "% av tentanderna"],
     ...(insp ? [["Antal G enligt Inspera", d.students.filter(x=>x.inspGrade && x.inspGrade.toUpperCase()!=="U").length, "", "Slutbetyget som står i Inspera, för jämförelse."],
                  ["Antal U enligt Inspera", d.students.filter(x=>x.inspGrade && x.inspGrade.toUpperCase()==="U").length]] : []),
     ["Registrerade innevarande termin: antal G och U", "", "Fylls i för hand. Uppgiften finns inte i Inspera."],
     ["Registrerade tidigare terminer: antal G och U", "", "Fylls i för hand. Uppgiften finns inte i Inspera."],[""]];
-  d.orter.forEach(o=>{ const xs=d.students.filter(x=>x.ort===o), g=xs.filter(x=>x.g).length;
+  d.orter.forEach(o=>{ const xs=d.students.filter(x=>x.ort===o), g=xs.filter(x=>x.g).length, r0=sum.length+1;   // r0 = ortens rad
     sum.push([o],["Antal tentander", xs.length],
-      ["Antal G", {v:g, f:`COUNTIFS(${bet},"G",${ortR},"${o.replace(/"/g,'""')}")`}, pc(g,xs.length), "%"],
-      ["Antal U", {v:xs.length-g, f:`COUNTIFS(${bet},"U",${ortR},"${o.replace(/"/g,'""')}")`}, pc(xs.length-g,xs.length), "%"],[""]); });
+      ["Antal G", {v:g, f:`COUNTIFS(${bet},"G",${ortR},"${o.replace(/"/g,'""')}")`}, {v:pc(g,xs.length)||0, f:`ROUND(B${r0+2}/B${r0+1}*100,2)`}, "%"],
+      ["Antal U", {v:xs.length-g, f:`COUNTIFS(${bet},"U",${ortR},"${o.replace(/"/g,'""')}")`}, {v:pc(xs.length-g,xs.length)||0, f:`ROUND(B${r0+3}/B${r0+1}*100,2)`}, "%"],[""]); });
   if(d.excluded.length) sum.push(["Exkluderade frågor (räknas inte)", d.excluded.map(x=>`${x.num}${x.title?` (${x.title})`:""}${x.reason?`: ${x.reason}`:""}`).join("; ")]);
   const fall=[["Fall/Tema/Ämne",...d.themes.map(t=>t.name)],["Uppgift",...d.themes.map(t=>numRanges(t.nums))],["Maxpoäng",...d.themes.map(t=>r2(t.max))],
     ["Medelvärde",...d.themes.map(t=>r2(t.mean))],["Medel som procent av maxpoäng",...d.themes.map(t=>t.max?r2(t.mean/t.max*100):"")]];
@@ -3270,7 +3213,7 @@ function xExportRender(){
   const scored=view.filter(v=>!isExcluded(v.seq));
   const nExcl=(view.length-scored.length) + sc.filter(e=>e.excluded).length;
   { const fl=$("#fileline");
-    if(fl) fl.textContent = fileLineText("", EMBED.candCount,
+    if(fl) fl.textContent = fileLineText(EMBED.exam||"", EMBED.candCount,
       {single:view.length, text:sc.filter(e=>e.typ==="text").length, multi:sc.filter(e=>e.typ==="multi").length}, nExcl, ""); }
   $("#nnote").innerHTML = state.smallN ? '<div class="advnote">Litet underlag: '+EMBED.candCount+' studenter. Tolka enskilda procenttal försiktigt.</div>' : "";
   const modes=(spec.modes&&spec.modes.length)?spec.modes:[{id:"edu",label:"Alla frågor"}];
@@ -3284,7 +3227,8 @@ function xExportRender(){
    Skriver ut den aktiva vyn som den visas (efter filter). */
 function xExportPrint(){
   const ph=$("#printhead");
-  if(ph) ph.textContent=`Temarapport${filtersActive()?` · ${filterText()}`:""} · ${new Date().toLocaleDateString('sv-SE')}`;
+  const urval=(EMBED.subset && EMBED.subset.label) ? `urval: ${EMBED.subset.label}` : "";
+  if(ph) ph.textContent=["Temarapport", EMBED.exam||"", urval, filtersActive()?filterText(true):"", new Date().toLocaleDateString('sv-SE')].filter(Boolean).join(" · ");
   window.print();
 }
 function xExportInit(){
@@ -3319,7 +3263,7 @@ function xExportInit(){
     const pr=ta.parentNode && ta.parentNode.querySelector && ta.parentNode.querySelector(".cmtprint"); if(pr) pr.textContent=t.trim(); });
   // En öppnad utfällning står kvar öppen när korten ritas om, och följer därmed med i utskriften.
   document.addEventListener("toggle", e=>{ const d=e.target; if(!d || !d.dataset || !d.dataset.k) return; if(d.open) state.open.add(d.dataset.k); else state.open.delete(d.dataset.k); }, true);
-  if(EMBED.autoPrint) setTimeout(()=>{ try{ window.print(); }catch(_){} }, 500);
+  if(EMBED.autoPrint) setTimeout(()=>{ try{ xExportPrint(); }catch(_){} }, 500);
   { const a=$("#sel-all"), c=$("#sel-clear"), sv=$("#sel-save");
     if(a) a.addEventListener("click", selAllVisible); if(c) c.addEventListener("click", selClear); if(sv) sv.addEventListener("click", saveSubset); }
   renderSelBar();
@@ -3461,7 +3405,7 @@ function temaEmbed(){
 
   const tags = state.tags ? {tagCols: state.tags.tagCols.map(c=>({i:c.i, name:c.name}))} : null;
   const snap = null;   // godkäntstatistiken följer inte med i temarapporten
-  return { kind:"tema", subset:null, credit:creditText(), generated:new Date().toLocaleDateString('sv-SE'),
+  return { kind:"tema", subset:null, exam:state.examName||"", credit:creditText(), generated:new Date().toLocaleDateString('sv-SE'),
                   views, viewIdx:0, candCount: J.candCount, smallN: !!state.smallN, tags,
                   passSnapshot: snap,
                   excluded: [...state.excluded.entries()], comments: [...state.comments.entries()].filter(c=>c[1]), mode: "ask", th: Object.assign({},state.th) };
@@ -3561,7 +3505,7 @@ function scoreCard(e){
   const ask = (qs.length && !simple) ? `<div class="askbox"><div class="askhead">Att fråga sig</div>${qs.map(q=>`<div class="askq">${esc(q.text)}</div>`).join("")}</div>` : "";
   const reason=e.reason||"";
   const excl = e.excluded ? `<div class="exclbanner"><span class="exclmark">Exkluderad ur tentan</span>${reason?`<span class="exclreasontag">${esc(reason)}</span>`:""}`
-      + (isApp ? `<select class="card-reason" data-qnum="${seq}"><option value=""${reason?'':' selected'}>Orsak…</option>${EXCL_REASONS.map(r=>`<option ${r===reason?'selected':''}>${esc(r)}</option>`).join("")}</select><button type="button" class="card-reinclude" data-qnum="${seq}">Återinkludera</button>` : "")
+      + ((isApp && reason!==INSPERA_REASON) ? `<select class="card-reason" data-qnum="${seq}"><option value=""${reason?'':' selected'}>Orsak…</option>${EXCL_REASONS.map(r=>`<option ${r===reason?'selected':''}>${esc(r)}</option>`).join("")}</select>` : "") + (isApp ? `<button type="button" class="card-reinclude" data-qnum="${seq}">Återinkludera</button>` : "")
       + ((isApp && reason!==INSPERA_REASON) ? `<div class="exclnote">${esc(LOCAL_EXCL_NOTE)}</div>` : "")
       + `</div>` : "";
   const exclCtrl = (isApp && !e.excluded && !simple) ? `<div class="exclctrl"><button type="button" class="card-exclude" data-qnum="${seq}">Exkludera frågan</button></div>` : "";
@@ -3687,7 +3631,7 @@ function buildTemaReport(EMBED){
       <div id="cards"></div>
     <footer style="margin-top:36px;color:var(--muted);font-size:12px;text-align:center;line-height:1.6">
       <div>${EMBED.credit||""}</div>
-      <div style="margin-top:4px">Rapport genererad ${esc(EMBED.generated||"")}. Innehåller endast aggregerade resultat.</div>
+      <div style="margin-top:4px">Rapport genererad ${esc(EMBED.generated||"")}. Innehåller bara sammanräknade resultat.</div>
     </footer>
     </div></div>`;
   return `<!DOCTYPE html><html lang="sv"><head><meta charset="utf-8">`
@@ -3708,7 +3652,7 @@ function downloadText(name, text, type){
 function temaEmbedFiltered(){
   const embed=temaEmbed(); if(!embed) return null;
   if(!filtersActive()) return embed;
-  return subsetEmbed(embed, pageItems().map(it=>it.seq), state.th, filterText());
+  return subsetEmbed(embed, pageItems().map(it=>it.seq), state.th, filterText(true));
 }
 function exportInteractive(){
   const embed=temaEmbedFiltered();
@@ -3772,7 +3716,9 @@ function setPrep(on){
   tog("#prephead",!on); tog("#prep-save",!on); tog("#prep-next",!on); tog("#prep-receipt",!on); tog("#prep-note",!on);
   tog("#drops",!on); tog("#exambox",on);
   tog("#settings-open",!!on); if(on){ tog("#settings",true); }      // gränserna gäller analysen, som inte syns i steg 1
-  if(on){ $("#results").classList.add("hidden"); expandUpload(); log(""); }
+  tog("#warnings",!!on);                                       // varningarna gäller analysen, inte filerna i steg 1
+  if(on){ $("#results").classList.add("hidden"); expandUpload(); log("");
+    const b=$("#step-report"), n=$("#step-report-note"); if(b) b.disabled=false; if(n) n.textContent=""; }
   else if(state.json){ collapseUpload(); setStep(state.want||"triage"); }
   renderStepBar();
   refreshCompute();
@@ -3892,7 +3838,7 @@ $("#reopen").addEventListener("click", expandUpload);
   } else {
     // Vanliga sidan: kurssamordnaren är landningsstället (hen är den enda som kan hämta filerna ur Inspera).
     const hash = () => (typeof location!=="undefined" && location.hash) || "";
-    const go=r=>{ if(r==="triage" || r==="report"){ state.want=r; if(state.prep || !$("#rolehint").textContent) setPrep(false); else goStep(r); } else setPrep(true); };
+    const go=r=>{ if(r==="triage" || r==="report") goStep(r); else setPrep(true); };
     go(roleFromHash(hash()));
     if(typeof window.addEventListener==="function") window.addEventListener("hashchange", ()=>{ const r=roleFromHash(hash()); if(r) go(r); });
   }

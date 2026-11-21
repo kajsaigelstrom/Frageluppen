@@ -18,6 +18,15 @@ inte dokumenterad här.
   följer resten av tentan, frågan "Stämmer facit och poängregeln?" (för essäfrågor gäller
   bedömningsmallen). Mönsterraderna säger "MCQ-frågor" och "essäfrågor" så att de inte blandas
   ihop. Excel och CSV ur temarapporten har en rad per synlig fråga med kolumnen Typ.
+- **Efter oberoende genomgång av kod, användarupplevelse och pedagogik (21 nov):** exkludering
+  slår igenom i diskrimineringen även när Inspera kodar frågenumren som tal. En fråga som ingen
+  fick rätt på pekas ut ("Dubbelkolla facit") och kallas inte längre "för få svar". En trasig
+  fil lämnar inga gamla resultat kvar, och filter följer inte med till nästa fil. Steg 1 visar
+  inga varningar från förra analysen och låser inte steg 3. Temarapporten och Översiktstabellen
+  säger vilken tenta de gäller, urvalsetiketten i temarapporten har aldrig appens åtgärdsord, och
+  utskriften behåller färgerna och får rubrik även via Temarapport (PDF). I Tentamensstatistiken
+  räknas procenten vid antal G och U om när G-gränsen ändras. En fråga som är exkluderad i Inspera
+  har ingen orsakslista. Död kod och 57 oanvända stilregler är borttagna.
 - **Tre steg i stället för rollvalet.** Raden överst har 1 Förbered filer, 2 Hitta problemfrågor
   och 3 Skapa rapporter, och ersätter både "Jag är Kurssamordnare/Examinator" och mellansteget
   "Vad vill du göra?". Med en fil öppen byter man steg med ett klick. Steg 3 kräver färdig
