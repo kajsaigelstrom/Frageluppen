@@ -103,8 +103,7 @@ test("examinatorns fil sparas utan att länken dras in direkt", async () => {
   ev("state.prep = true; prepSynthetic();");
   await ev("saveExaminerFile()");
   assert.equal(downloads.length, 1);
-  assert.match(downloads[0].parts[0], /^<!DOCTYPE html>/);
-  assert.ok(downloads[0].parts[0].includes('id="fl-data"'));
+  assert.match(downloads[0].parts[0], /"format":"frageluppen-tentapaket"/);
   assert.deepEqual(urlEvents, ["create"]);
 });
 

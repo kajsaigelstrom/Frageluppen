@@ -486,7 +486,7 @@
 
   <div class="stepbar" id="rolebar">
     <div class="modeseg" id="roleseg">
-      <button id="role-prep" class="modebtn" type="button" title="Skapa analysfilen ur Insperas filer."><span class="stepno">1</span> Förbered filer</button>
+      <button id="role-prep" class="modebtn" type="button" title="Släpp Insperas filer. Gå sedan vidare till steg 2 och 3, eller spara analysfilen åt någon annan."><span class="stepno">1</span> Förbered filer</button>
       <button id="step-triage" class="modebtn" type="button" title="Flervalsfrågor som kan behöva rättas i facit eller exkluderas. Går att göra innan essäfrågorna är rättade."><span class="stepno">2</span> Hitta problemfrågor</button>
       <button id="step-report" class="modebtn" type="button" title="Alla frågor efter rättningen. Härifrån skapas rapporterna till temagrupperna och tentamensstatistiken."><span class="stepno">3</span> Skapa rapporter</button>
     </div>
@@ -501,7 +501,7 @@
     </div>
     <div id="exambox" class="drop exambox hidden">
       <label>Analysfilen</label>
-      <div class="hint">Välj analysfilen som skapades i steg 1. Den heter <b>analysfil_….html</b>.</div>
+      <div class="hint">Välj analysfilen som sparades i steg 1. Den heter <b>analysfil_….json</b>.</div>
       <input type="file" id="examfile" accept=".html,.htm,.json,text/html,application/json">
       <div class="got" id="got-exam"></div>
     </div>
@@ -537,7 +537,7 @@
       <span class="computehint" id="computehint"></span>
     </div>
     <div id="prep-receipt" class="hidden"></div>
-    <div id="prep-note" class="hidden">Du sparar <b>en analysfil som öppnas med ett dubbelklick</b>. Gör det två gånger per tenta: direkt efter tentan, så att problemfrågor kan hittas före betygssättningen, och en gång till när allt är rättat, då med nya filer från Inspera. Filen är minimerad, inte anonym. Varje rad är en students poängmönster och kan på en liten omtenta kännas igen av den som vet vilka som skrev. Behandla filen som tentamaterial och dela den bara med den som ska göra steg 2 och 3. Den innehåller också tentans frågor.</div>
+    <div id="prep-note" class="hidden">Du kan <b>gå direkt vidare</b> till steg 2 eller 3 i raden överst, med filerna du har valt här. Ska någon annan göra de stegen sparar du <b>analysfilen</b>, som hen väljer i steg 2 och 3. Gör det två gånger per tenta: direkt efter tentan, så att problemfrågor kan hittas före betygssättningen, och en gång till när allt är rättat, då med nya filer från Inspera. Filen är minimerad, inte anonym. Varje rad är en students poängmönster och kan på en liten omtenta kännas igen av den som vet vilka som skrev. Behandla filen som tentamaterial och dela den bara med den som ska göra steg 2 och 3. Den innehåller också tentans frågor.</div>
     </div>
     <div id="log"></div>
   </div>
@@ -758,7 +758,7 @@ function extractEmbedded(text){
   const m=t.match(new RegExp("<scr"+"ipt type=\"application/json\" id=\"fl-data\">([\\s\\S]*?)</scr"+"ipt>"));
   const cand = m ? m[1] : t;
   try{ if(isPackage(JSON.parse(cand))) return cand; }catch(_){}
-  throw new Error("Det här är inte en analysfil. Välj filen som heter analysfil_….html.");
+  throw new Error("Det här är inte en analysfil. Välj filen som heter analysfil_….json.");
 }
 async function loadExaminerFile(text, name){
   try{
@@ -792,15 +792,29 @@ function renderStepBar(){
   const cur = state.prep ? "prep" : (state.step || state.want || "triage");
   [["#role-prep","prep"],["#step-triage","triage"],["#step-report","report"]].forEach(([sel,k])=>{ const b=$(sel); if(b) b.classList.toggle("on", cur===k); });
   const h=$("#rolehint");
-  if(h) h.textContent = state.prep ? "Skapa analysfilen ur Insperas filer." : (state.json ? "" : "Välj analysfilen från steg 1.");
+  if(h) h.textContent = state.prep ? "Släpp Insperas filer. Gå sedan vidare, eller spara analysfilen åt någon annan." : (state.json ? "" : "Välj analysfilen från steg 1.");
   try{ if(typeof history!=="undefined" && history.replaceState) history.replaceState(null, "", cur==="prep" ? "#forbered" : cur==="report" ? "#rapporter" : "#problemfragor"); }catch(_){}
 }
 /* Gå till steg 2 eller 3. Finns en fil öppen visas steget direkt, annars ber sidan om analysfilen. */
-function goStep(which){
+async function goStep(which){
   state.want=which;
+  // Från steg 1 med filer valda: analysen görs direkt ur dem, utan att analysfilen sparas och väljs igen.
+  // Datan går samma väg som en sparad analysfil (buildPackage), så det finns fortfarande bara en väg in.
+  const hasFiles=(state.prepFiles || state.jsonFiles || []).some(f=>typeof f.text==="function");   // utan filer: fråga efter analysfilen direkt
+  if(state.prep && hasFiles && (state.prepDirty || !state.json)){
+    let text=null;
+    try{ const inp=await prepInputs(); if(inp.jsonObjs.length){ prepReceipt(inp); text=JSON.stringify(buildPackage(inp)); keepPrepInputs(inp); } }catch(_){ text=null; }
+    if(text){ setPrep(false); await loadExaminerFile(text, "analysfilen"); state.prepDirty=false; renderStepBar(); return; }
+  }
   if(state.prep) setPrep(false);
   else if(state.json) setStep(which);
   renderStepBar();
+}
+/* Det som valdes i steg 1 sparas undan, så att det finns kvar när analysen har lästs in och man går tillbaka. */
+function keepPrepInputs(inp){
+  if(!state.prepFiles) state.prepFiles=state.jsonFiles;
+  state.prepPdf = inp.pdfMcqs || null;
+  if(state.tagsFile) state.prepTags=state.tagsFile;
 }
 /* Minsta underlag för automatiska omdömen om svårighet/distraktorer. Under detta
    väger ett enda svar för mycket (1 svar = 100/n procentenheter) för att flagga något. */
@@ -891,13 +905,13 @@ sig dina gränser.</p>
 <details class="helpsec"><summary>De tre stegen</summary><div class="body">
 <p>Verktyget används i tre steg, som väljs i raden överst. Sidan öppnar på steg 1.</p>
 <p><b>1 Förbered filer.</b> Släpp resultatfilerna från Inspera, tentans PDF och taggfilen om den
-finns, och spara <b>analysfilen</b>. Det görs två gånger per tenta: direkt efter tentan, och en
+finns. Spara <b>analysfilen</b> om någon annan ska göra steg 2 och 3. Det görs två gånger per tenta: direkt efter tentan, och en
 gång till när allt är rättat, då med nya filer från Inspera. Studenternas skrivna svar, rättarnamn,
 tider, extratid och alla id tas bort, och kandidatnumren ersätts av löpnummer. Insperas slutbetyg
 och totalpoäng följer med, så att rättningen kan kontrolleras i steg 3. Inga resultat visas i
 steg 1. Utan tentans PDF saknas frågetexterna, och utan taggfil filtret på tema.</p>
 <p><b>2 Hitta problemfrågor</b> och <b>3 Skapa rapporter</b> börjar med att analysfilen väljs.
-Den går också att öppna med ett dubbelklick, och visar då steg 2 och 3 direkt.</p>
+Den som har gjort steg 1 kan i stället gå direkt vidare i raden överst, utan att spara filen.</p>
 <p>Vem som gör vilket steg bestämmer ni själva. I Linköping gör kurssamordnaren steg 1, eftersom
 det är hen som hämtar filerna ur Inspera, och examinatorn steg 2 och 3.</p>
 <p>Analysfilen är minimerad, inte anonym: varje rad är en students poängmönster. Behandla den som
@@ -3766,14 +3780,15 @@ function roleFromHash(hash){
 }
 async function prepInputs(){
   const jsonObjs=[];
-  for(const f of state.jsonFiles){ if(typeof f.text==="function") jsonObjs.push(parseJsonFile(await f.text(), f.name)); }
-  const pdfMcqs = (state.pdfMcqs && !state.pdfFromPackage) ? state.pdfMcqs : null;
-  const tagRows = (state.tagsFile && typeof state.tagsFile.arrayBuffer==="function") ? readTagRows(await state.tagsFile.arrayBuffer()) : null;
+  for(const f of (state.prepFiles || state.jsonFiles)){ if(typeof f.text==="function") jsonObjs.push(parseJsonFile(await f.text(), f.name)); }
+  const pdfMcqs = (state.prepPdf!==undefined) ? state.prepPdf : ((state.pdfMcqs && !state.pdfFromPackage) ? state.pdfMcqs : null);
+  const tf = state.prepTags || state.tagsFile;
+  const tagRows = (tf && typeof tf.arrayBuffer==="function") ? readTagRows(await tf.arrayBuffer()) : null;
   return {jsonObjs, pdfMcqs, tagRows};
 }
 async function refreshPrep(){
   const box=$("#prep-receipt"), b=$("#prep-save"); if(!state.prep || !box || !b) return;
-  const ready = state.jsonFiles.some(f=>typeof f.text==="function");
+  const ready = (state.prepFiles || state.jsonFiles).some(f=>typeof f.text==="function");
   b.disabled=!ready;
   if(!ready){ box.innerHTML=""; return; }
   try{
@@ -3788,8 +3803,8 @@ async function refreshPrep(){
 async function saveExaminerFile(){
   try{
     const inp=await prepInputs(); prepReceipt(inp);
-    downloadText(`analysfil_${stamp()}.html`, buildExaminerFile(buildPackage(inp)), "text/html;charset=utf-8");
-    log("Analysfilen är sparad. Den öppnas med ett dubbelklick, eller väljs i steg 2 och 3.");
+    downloadText(`analysfil_${stamp()}.json`, JSON.stringify(buildPackage(inp)), "application/json;charset=utf-8");
+    log("Analysfilen är sparad. Den väljs i steg 2 och 3.");
   }catch(e){ log("Fel: "+e.message); console.error(e); }
 }
 /* Raden överst när en fil är vald: tentan, antal studenter och frågor (för att se att filen lästs rätt), och i
@@ -3829,16 +3844,16 @@ $("#pdf").addEventListener("change", async e=>{
   try{ state.pdfMcqs=await parsePDF(await f.arrayBuffer());
        $("#got-pdf").textContent=`✓ ${f.name} — ${state.pdfMcqs.length} flervalsfrågor lästa`; }
   catch(err){ state.pdfMcqs=null; $("#got-pdf").textContent="✗ kunde inte läsa PDF"; log("PDF-fel: "+err.message); console.error(err); }
-  state.pdfFromPackage = false;
+  state.pdfFromPackage = false; state.prepPdf = state.pdfMcqs; state.prepDirty = true;
   checkExamMatch();
   refreshCompute();
 });
 $("#json").addEventListener("change", e=>{
-  state.jsonFiles=[...e.target.files];
+  state.jsonFiles=[...e.target.files]; state.prepFiles=state.jsonFiles; state.prepDirty=true;
   $("#got-json").textContent=state.jsonFiles.length?`✓ ${state.jsonFiles.length} fil(er)`:""; checkExamMatch(); refreshCompute();
 });
 $("#tags").addEventListener("change", e=>{
-  state.tagsFile=e.target.files[0]; state.activeTags={};
+  state.tagsFile=e.target.files[0]; state.prepTags=state.tagsFile; state.prepDirty=true; state.activeTags={};
   $("#got-tags").textContent=state.tagsFile?`✓ ${state.tagsFile.name}`:""; refreshCompute();
 });
 $("#examfile").addEventListener("change", async e=>{
@@ -3847,8 +3862,8 @@ $("#examfile").addEventListener("change", async e=>{
   await loadExaminerFile(await f.text(), f.name);
   $("#got-exam").textContent = state.json ? `✓ ${f.name}` : "";
 });
-$("#step-triage").addEventListener("click", ()=>goStep("triage"));
-$("#step-report").addEventListener("click", ()=>goStep("report"));
+$("#step-triage").addEventListener("click", ()=>{ goStep("triage"); });
+$("#step-report").addEventListener("click", ()=>{ goStep("report"); });
 $("#role-prep").addEventListener("click", ()=>{ if(!state.prep) setPrep(true); });
 $("#prep-save").addEventListener("click", saveExaminerFile);
 $("#reopen").addEventListener("click", expandUpload);

@@ -62,7 +62,7 @@ test("steg 3 kräver färdig rättning, och säger det", async () => {
   assert.equal(a.el("#step-report").disabled, false);
   assert.equal(a.el("#step-report-note").textContent, "");
 });
-test("en analysfil som öppnas med dubbelklick visar steg 2 och 3, inte steg 1", async () => {
+test("en äldre analysfil i HTML-format går fortfarande att öppna, och visar steg 2 och 3", async () => {
   const a = fresh();
   const page = runHtml(a.ev("FILE"));
   await page.ev("state.embeddedReady");
@@ -89,10 +89,68 @@ test("filen heter analysfil, och texterna säger inte vem som gör vad", () => {
   return Promise.resolve((a.el("#prep-save").listeners.click || [])[0]({})).then(() => {
     assert.throws(() => a.ev("extractEmbedded('<html></html>')"), /inte en analysfil/);
     assert.throws(() => a.ev("prepReceipt({jsonObjs:[JSON.parse(extractEmbedded(FILE))], pdfMcqs:null, tagRows:null})"), /redan en analysfil/);
-    assert.match(SRC, /downloadText\(`analysfil_\$\{stamp\(\)\}\.html`/);
+    assert.match(SRC, /downloadText\(`analysfil_\$\{stamp\(\)\}\.json`/);
     const help = a.ev("HELP_HTML");
     assert.match(help, /De tre stegen/);
     assert.match(help, /I Linköping/);                                 // rollerna nämns bara som exempel
     for (const s of ["#rolehint", "#computehint", "#log"]) assert.ok(!/[Kk]urssamordnar|[Ee]xaminator/.test(a.el(s).textContent), s);
   });
+});
+
+// ---- vidare från steg 1 utan att spara och välja filen igen (Kajsa 21 nov 2026) ----
+test("från steg 1 går man direkt till steg 2 med filerna som redan är valda", async () => {
+  const a = fresh();
+  a.ev("prepSynthetic()");
+  await a.ev("goStep('triage')");
+  assert.equal(a.ev("state.prep"), false);
+  assert.equal(a.ev("state.step"), "triage");
+  assert.equal(a.ev("state.fromPackage"), true);                     // samma minimerade data som i en sparad analysfil
+  assert.equal(a.el("#results").classList.contains("hidden"), false);
+  assert.equal(a.downloads.length, 0);                               // ingenting sparades
+  await a.ev("goStep('report')");
+  assert.equal(a.ev("state.step"), "report");
+});
+test("filerna i steg 1 ligger kvar när man går tillbaka, och analysfilen går att spara efteråt", async () => {
+  const a = fresh();
+  a.ev("prepSynthetic()");
+  await a.ev("goStep('triage')");
+  click(a, "#role-prep");
+  await a.ev("refreshPrep()");
+  assert.equal(a.el("#prep-save").disabled, false);
+  assert.ok(!/redan en analysfil/.test(a.el("#prep-receipt").innerHTML));
+  a.set("PREPBOX", {}); await a.ev("prepInputs().then(x => { PREPBOX.first = isPackage(x.jsonObjs[0]); PREPBOX.n = x.jsonObjs.length; })");
+  assert.deepEqual(a.evj("PREPBOX"), { first: false, n: 1 }, "råfilerna finns kvar");
+});
+test("väljs nya filer i steg 1 räknas analysen om nästa gång man går vidare", async () => {
+  const a = fresh();
+  a.ev("prepSynthetic()");
+  await a.ev("goStep('triage')");
+  const n0 = a.ev("state.json.candCount");
+  click(a, "#role-prep");
+  a.ev(`(function(){ const d = demoToInspera(DEMO_DATA.DEMO); d.ext_inspera_candidates = d.ext_inspera_candidates.slice(0, 40);
+          const text = JSON.stringify(d);
+          document.querySelector("#json").listeners.change.forEach(f => f({ target: { files: [{ name: "ny.json", text: async () => text }] } })); })()`);
+  await a.ev("goStep('triage')");
+  assert.equal(a.ev("state.json.candCount"), 40);
+  assert.notEqual(n0, 40);
+});
+test("utan filer i steg 1 ber steg 2 om analysfilen, som förut", async () => {
+  const a = fresh();
+  await a.ev("goStep('triage')");
+  assert.equal(a.ev("state.json || null"), null);
+  assert.equal(a.el("#exambox").classList.contains("hidden"), false);
+});
+test("analysfilen är en ren datafil som väljs i verktyget: en enda väg in", async () => {
+  const a = fresh();
+  a.ev("prepSynthetic()");
+  await (a.el("#prep-save").listeners.click || [])[0]({});
+  const saved = a.downloads[a.downloads.length - 1].parts.join("");
+  assert.ok(!/^<!DOCTYPE/i.test(saved));
+  assert.equal(a.ev(`isPackage(JSON.parse(${JSON.stringify(saved)}))`), true);
+  click(a, "#step-triage");
+  await a.ev(`loadExaminerFile(${JSON.stringify(saved)}, 'analysfil.json')`);
+  assert.equal(a.ev("state.step"), "triage");
+  assert.ok(!/dubbelklick/i.test(STATIC + a.ev("HELP_HTML") + a.el("#log").textContent));
+  assert.match(STATIC, /id="exambox"[\s\S]*?analysfil_….json/);
+  assert.match(STATIC, /id="prep-note"[^>]*>[\s\S]*?gå direkt vidare/);
 });

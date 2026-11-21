@@ -11,14 +11,14 @@ test("varje knapp i sidan har en klickkoppling", () => {
   const unwired = ids.filter(id => !((el("#" + id).listeners.click || []).length));
   assert.deepEqual(unwired, []);
 });
-test("klick på Spara examinatorns fil ger en fil", async () => {
+test("klick på Spara analysfilen ger en fil", async () => {
   const { ev, el, downloads } = loadApp();
   ev("prepSynthetic()");
   const handlers = el("#prep-save").listeners.click || [];
   assert.equal(handlers.length, 1);
   await handlers[0]({});
   assert.equal(downloads.length, 1);
-  assert.match(downloads[0].parts[0], /^<!DOCTYPE html>/);
+  assert.match(downloads[0].parts[0], /"format":"frageluppen-tentapaket"/);
 });
 test("klick på Ändra filer öppnar filpanelen igen", () => {
   const { ev, el } = loadApp();

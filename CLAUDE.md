@@ -72,6 +72,11 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
   analysfilen (`analysfil_<stämpel>.html`, `extractEmbedded`, `loadExaminerFile`) och är enda vägen:
   de tre filrutorna för Insperas filer finns bara i steg 1 – lägg inte tillbaka en råfilsväg.
   Inget mellansteg: `setStep("choose")` visar det steg som är valt (`state.want`).
+  Från steg 1 går `goStep` direkt vidare med de valda filerna, genom samma `buildPackage` som en
+  sparad analysfil (Kajsas beslut 21 nov 2026: terminer där samma person gör alla steg). Råfilerna
+  ligger kvar i `state.prepFiles`/`prepPdf`/`prepTags`, och `state.prepDirty` säger att analysen ska
+  räknas om. Analysfilen sparas som ren JSON; `buildExaminerFile` och den inbäddade läsningen
+  finns kvar bara för äldre HTML-filer.
 - **Ingen godkäntstatistik i vyerna eller i temarapporten** (Kajsas beslut 20 nov 2026). Den
   ska bli en egen export. `passMetric` finns kvar för det, men ritas inte.
 - **Examinatorns fil** (`buildExaminerFile`): kurssamordnaren sparar hela verktyget med

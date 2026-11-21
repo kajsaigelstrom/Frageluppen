@@ -24,7 +24,11 @@ inte dokumenterad här.
   rättning och säger det. Filen från steg 1 heter nu **analysfilen** (`analysfil_….html`), och
   texterna säger inte längre vem som gör vad; hjälpen nämner Linköpings uppdelning som exempel.
   Adressen följer steget (`#forbered`, `#problemfragor`, `#rapporter`), och de äldre adresserna
-  fungerar. Äldre filer (`tenta-till-examinator_….html`) går fortfarande att öppna.
+  fungerar. **Från steg 1 går man direkt vidare** till steg 2 och 3 med filerna som är valda,
+  utan att spara och välja analysfilen igen; filerna ligger kvar om man går tillbaka. Analysfilen
+  sparas bara när någon annan ska göra steg 2 och 3, och är nu en ren datafil
+  (`analysfil_….json`) som väljs i verktyget, så att det finns en enda väg in. Äldre analysfiler i
+  HTML-format går fortfarande att öppna och välja.
 - **Temarapporten är renodlad.** Den följer examinatorns filter: med till exempel ett tema valt
   innehåller rapporten bara de frågorna och säger vilket filter det var. Den skapas som interaktiv
   sida (**Temarapport**) eller för utskrift (**Temarapport (PDF)**). Kommentarer kan skrivas även i
