@@ -41,6 +41,7 @@
   .exclnote{flex:1 1 100%;font-size:12px;color:var(--muted);margin-top:4px}
   .viewhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:6px 0 4px}
   .viewhead #viewtabs{flex:1 1 auto}
+  .viewhead .exports{display:flex;gap:6px;flex-wrap:wrap}
   .viewhead .steptitle{margin:0}
   .viewhead .stepback{margin:0}
   #modehint{display:block;margin:0 0 12px;max-width:80ch}
@@ -375,7 +376,6 @@
   .advtw .twfound.twnone{color:var(--muted);font-style:italic;background:#f4f6f7;border-color:#e2e8ea}
   .advtw ul{margin:0;padding-left:18px}
   .advtw li{font-size:12.5px;color:var(--ink);line-height:1.5;margin:3px 0}
-  .advok{font-size:13px;color:var(--accent)}
   .advbucket{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin:4px 0 1px}
   .advnote{font-size:12.5px;color:var(--muted);background:#eef2f4;border:1px solid #d5dee3;border-radius:8px;padding:9px 12px;line-height:1.5}
   .actionnote{font-size:13px;color:var(--muted);background:#eef2f4;border:1px solid #d5dee3;border-radius:8px;padding:10px 14px;line-height:1.5}
@@ -544,6 +544,12 @@
       <button id="step-back" class="linkbtn stepback" type="button" title="Tillbaka till valet">← Tillbaka</button>
       <div id="viewtabs"></div>
       <div class="modeseg" id="modeseg"></div>
+      <div class="exports" id="exports">
+        <button class="expbtn" id="exp-html" title="Rapport till temagrupperna: frågor i stället för åtgärder, bara sammanräknade resultat.">Temarapport</button>
+        <button class="expbtn" id="exp-overview" title="Tabell med en rad per fråga, alla frågetyper, att skriva ut eller skicka vidare. Följer filtret.">Översiktstabell</button>
+        <button class="expbtn" id="exp-xlsx" title="Arbetsbok med alla frågor och poäng per student. Examinatorns eget underlag.">Excel</button>
+        <button class="expbtn" id="exp-pdf" title="Flervalsfrågorna som visas, med åtgärdsförslag. Examinatorns eget arbetsunderlag, inte återkoppling till lärare. Till temagrupperna går Temarapporten.">PDF (examinatorns)</button>
+      </div>
     </div>
     <div class="modehint" id="modehint"></div>
     <div id="viewstub" class="viewstub hidden"></div>
@@ -564,12 +570,6 @@
           <option value="code">Frågekod (A1…E8)</option>
           <option value="tag">Tema, sedan kod</option>
         </select>
-        <span class="cb-sep"></span>
-        <span class="lbl">Exportera</span>
-        <button class="expbtn" id="exp-xlsx">Excel</button>
-        <button class="expbtn" id="exp-pdf" title="Flervalsfrågorna som visas, med åtgärdsförslag. Examinatorns eget arbetsunderlag, inte återkoppling till lärare. Till temagrupperna går Temarapporten.">PDF (examinatorns)</button>
-        <button class="expbtn" id="exp-html" title="Rapport till temagrupperna: frågor i stället för åtgärder, bara sammanräknade resultat.">Temarapport</button>
-        <button class="expbtn" id="exp-overview" title="Tabell med en rad per fråga, alla frågetyper, att skriva ut eller skicka vidare. Följer filtret.">Översiktstabell</button>
       </div>
       <div class="tagbar" id="tagbar"></div>
     </div>
@@ -671,9 +671,9 @@ function modeHint(m){
   return m==="ask" ? "Hur varje fråga fungerade. Där svaren följer ett mönster står en eller två frågor att ställa sig."
     : m==="ask-explain" ? "Som Rapport, och dessutom en förklaring av måttet bakom varje fråga."
     : m==="action" ? "Frågor som statistiken pekar ut: tecken på fel i facit, eller mycket svåra frågor som inte skiljer mellan studenter." + pre
-    : m==="simple" ? "Bara korten med mätvärden. Tolkningar och tips är dolda. Diskrimineringen räknas mot poängen på hela tentan."
+    : m==="simple" ? "Bara korten med mätvärden. Tolkningar och råd är dolda. Diskrimineringen räknas mot poängen på hela tentan."
     : isPre() ? "Alla flervalsfrågor med mätvärden, för överblick över svårighet och diskriminering." + pre
-    : "Alla frågor efter rättningen, med tolkningar och tips. Diskrimineringen räknas mot poängen på hela tentan."; }
+    : "Alla frågor efter rättningen, med tolkningar och råd där statistiken ger anledning. Diskrimineringen räknas mot poängen på hela tentan."; }
 
 /* ---------- vy-registry (toppnivå: väljer analys, kriterium och omfång) ----------
    Varje vy är ren konfiguration; render() läser aktiv vy och kör computeDiscrimination med
@@ -688,8 +688,8 @@ const VIEWS = [
   // i tabellform är en egen export (exportOverview).
   { id:"final",     label:"Hela rapporten",  phase:"Efter rättning", criterion:"whole",
     layout:"all",   needsFullyGraded:true,  needsPdf:true,  built:true,  showFreetext:false, showPassMetric:false, showExemplary:true,
-    modes:[{id:"edu",label:"Utbildningsläge"},{id:"simple",label:"Förenklad vy"}],
-    hint:"Alla frågor efter rättningen: flervalsfrågor (MCQ), essäfrågor och flersvarsfrågor, med diskriminering mot hela tentans poäng. Välj frågetyp i filtret. Utbildningsläget visar tolkningar och tips; förenklad vy visar bara korten med mätvärden." },
+    modes:[{id:"edu",label:"Med råd"},{id:"simple",label:"Bara mätvärden"}],
+    hint:"" },
 ];
 function activeView(){ return VIEWS.find(v=>v.id===state.view) || VIEWS[0]; }
 function critLabel(){
@@ -2390,10 +2390,6 @@ function render(){
   const has1=v=>v.advice.l1.length, has2=v=>v.advice.l2.length;
   const showExe = activeView().showExemplary;
   const nAction = scored.filter(has1).length;                              // att se över
-  const nTips   = scored.filter(v=>!has1(v)&&has2(v)).length;              // bara tips
-  const nExe    = showExe ? scored.filter(isExemplary).length : 0;        // förebilder (bara Vy 2)
-  // Utan exemplarisk-uppmärkning (Vy 1) räknas förebilderna som "inga automatiska flaggor".
-  const nClean  = scored.filter(v=>!has1(v)&&!has2(v)&&(!showExe || !isExemplary(v))).length;
   const nEss = state.scored.filter(e=>e.typ==="text").length, nMul = state.scored.filter(e=>e.typ==="multi").length;
   const nExclAll = nExcl + state.scored.filter(e=>e.excluded).length;
   results.classList.toggle("premode", isPre());
@@ -2449,7 +2445,8 @@ function availableModeIds(){
 function refreshLists(){
   const showExe = (typeof activeView==="function") ? activeView().showExemplary
                 : (typeof EMBED!=="undefined" && EMBED ? EMBED.showExemplary : true);
-  if(showExe && state.mode!=="simple") buildGoodList(); else { const g=$("#goodlist"); if(g) g.innerHTML=""; }
+  // Förebildslistan finns bara i temarapporten. I appen väljs starkt diskriminerande frågor i filtret.
+  if(showExe && isTemaPage()) buildGoodList(); else { const g=$("#goodlist"); if(g) g.innerHTML=""; }
 }
 /* ---------- G-gränsmetrik: andel studenter som nått 65 % av hela tentans poäng ----------
    65 %-gränsen avrundas NEDÅT till heltal poäng; varje students poäng avrundas UPPÅT.
@@ -2615,12 +2612,6 @@ function isExemplary(v){
   return v.rpb!=null && v.n>=30 && minority>=10 && v.rpb>=0.30
       && !(v.advice && (v.advice.l1.length || v.advice.l2.length));
 }
-/* kort motivering till på vilket sätt frågan är exemplarisk */
-function exemplaryReason(v){
-  return v.pcorr<state.th.hard
-    ? `Svår, men de starka klarar den (r<sub>pb</sub> +${v.rpb.toFixed(2)})`
-    : `Skiljer tydligt starka från svaga (r<sub>pb</sub> +${v.rpb.toFixed(2)})`;
-}
 function jumpToCard(seq){
   seq=String(seq);
   let el=document.getElementById("card-"+seq);
@@ -2640,15 +2631,12 @@ function jumpToCard(seq){
 }
 function buildGoodList(){
   const el=$("#goodlist"); if(!el) return;
-  const tema = state.mode==="ask" || state.mode==="ask-explain";
-  const items=currentView({allModes:true, ignorePattern:true}).filter(v=>(tema ? isForebild(v) : isExemplary(v)) && !isExcluded(v.seq)).sort((a,b)=>b.rpb-a.rpb);   // följer filterraden
+  const items=currentView({allModes:true, ignorePattern:true}).filter(v=>isForebild(v) && !isExcluded(v.seq)).sort((a,b)=>b.rpb-a.rpb);   // följer filterraden
   if(!items.length){ el.innerHTML=""; return; }
-  el.innerHTML = `<div class="goodbox"><div class="goodhead">${items.length} fråga(or) ${tema ? "som fungerar som förebild" : "som skiljer starka från svaga väl"}</div>`
-    + (tema
-        ? `<div class="goodnote">Medelsvåra (50–85 % rätt), skilde tydligt mellan studenter med höga och låga totalpoäng, och utan fynd i formkontrollen ur MCQ-lathunden.</div>`
-        : `<div class="goodnote">Diskriminerar väl i den här kohorten – det är evidens, inte bevis. Bekräfta att det beror på att frågan testar rätt sak, inte på en form-ledtråd, innan du återanvänder den.</div>`)
+  el.innerHTML = `<div class="goodbox"><div class="goodhead">${items.length} fråga(or) som fungerar som förebild</div>`
+    + `<div class="goodnote">Medelsvåra (50–85 % rätt), skilde tydligt mellan studenter med höga och låga totalpoäng, och utan fynd i formkontrollen ur MCQ-lathunden.</div>`
     + items.map(v=>`<button class="goodrow" data-seq="${esc(String(v.seq))}"><span class="acode">${esc(v.code)}</span>
-        <span class="greason">${tema ? `r<sub>pb</sub> +${v.rpb.toFixed(2)}` : exemplaryReason(v)}</span>
+        <span class="greason">r<sub>pb</sub> +${v.rpb.toFixed(2)}</span>
         <span class="apc">${v.pcorr.toFixed(0)} % rätt</span></button>`).join("")
     + `</div>`;
   el.querySelectorAll(".goodrow").forEach(b=>b.addEventListener("click",()=>jumpToCard(b.dataset.seq)));
@@ -2665,7 +2653,7 @@ const FACETS = [
   {key:"typ",   label:"Frågetyp",       values:[["single","MCQ"],["text","Essä"],["multi","Flersvar"]]},
   {key:"svar",  label:"Svårighet",      values:[["latt","Lätt"],["medel","Medel"],["svar","Svår"]]},
   {key:"disk",  label:"Diskriminering", values:[["neg","Negativ"],["lag","Låg"],["acc","Acceptabel"],["god","God"],["mgod","Mycket god"],["na","Ej mätbar"]]},
-  {key:"titta", label:"Att titta på",   values:[["fraga",""],["forebild","Förebild"],["excl","Exkluderad"]]}
+  {key:"titta", label:"Att titta på",   values:[["fraga",""],["stark","Stark diskriminering"],["forebild","Förebild"],["excl","Exkluderad"]]}
 ];
 function isTemaPage(){ return typeof EMBED!=="undefined" && !!EMBED && EMBED.kind==="tema"; }
 function facetLabel(key, val){
@@ -2693,6 +2681,7 @@ function mkFacets(o){
   const pct=o.pct||0;
   const titta=[];
   if(o.fraga) titta.push("fraga");
+  if(o.stark) titta.push("stark");
   if(o.forebild) titta.push("forebild");
   if(o.excluded) titta.push("excl");
   return { typ:o.typ, svar: pct>=state.th.easy ? "latt" : pct<state.th.hard ? "svar" : "medel",
@@ -2702,6 +2691,7 @@ function facetsOfMcq(v){
   const tema=isTemaPage(), ex=isExcluded(v.seq);
   return mkFacets({typ:"single", pct:v.pcorr, info:rpbInfo(v), r:v.rpb, excluded:ex,
     fraga: !ex && (tema ? cardQuestions(v).length>0 : !!((v.advice||advice(v)).l1.length)),
+    stark: !tema && !ex && isExemplary(v),            // appen: r minst 0,30 och inga råd. Ersätter listan ovanför korten.
     forebild: tema && isForebild(v)});
 }
 function facetsOfScored(e){
@@ -2866,7 +2856,7 @@ function unmapReason(v){
        title:"Inget av de valda svaren matchade det här PDF-alternativet. Se noten under alternativen – kontrollera att rätt PDF är inläst."};
 }
 function card(v){
-  const simple = state.mode==="simple";   // Förenklad vy: bara kort + mätvärden, inga tips/tolkningar
+  const simple = state.mode==="simple";   // Bara mätvärden: inga råd eller tolkningar
   const askMode = state.mode==="ask" || state.mode==="ask-explain";   // temarapporten: frågor, aldrig åtgärder
   const excluded = isExcluded(v.seq);
   const isApp = (typeof EMBED==="undefined");   // bakad export: inga ändringskontroller, bara markering
@@ -2951,20 +2941,17 @@ function card(v){
     </div>`;
   const noteTxt = (askMode && adv.note) ? adv.note.replace(" – bedöm utifrån fördelningen ovan och frågans innehåll.", ".") : adv.note;
   const noteHtml = noteTxt ? `<div class="advnote">${esc(noteTxt)}</div>` : "";
-  const okMsg = v.pcorr>=state.th.easy
-    ? `✓ Nästan alla svarade rätt – inga formproblem hittade. En fråga som nästan alla klarar skiljer av naturliga skäl lite mellan starka och svaga; vid måltestning är det oftast som det ska (bekräftad must-know).`
-    : `✓ Inga anmärkningar – frågan ser ut att fungera.`;
   const bucket = (title, items, edu) => items.length
     ? `<div class="advbucket">${title}</div>${items.map(a=>renderAdv(a,edu)).join("")}` : "";
   let advHtml="";
   if(simple){
-    advHtml = "";   // Förenklad vy: inga tips eller tolkningar
+    advHtml = "";   // Bara mätvärden: inga råd eller tolkningar
   } else if(isPre()){
     // Före betygssättning: bara det som ska ses över nu, med förklaringen. Råden till nästa gång hör till hela rapporten.
     advHtml = adv.l1.length ? `<div class="advbox">${noteHtml}${bucket("Att se över", adv.l1, true)}</div>` : noteHtml;
   } else if(state.mode==="edu"){
     const body = bucket("Att se över", adv.l1, true) + bucket("Till nästa gång", adv.l2, true);
-    advHtml = `<div class="advbox">${noteHtml}${ body || (adv.note?"":`<div class="advok">${okMsg}</div>`)}</div>`;
+    advHtml = (body || noteHtml) ? `<div class="advbox">${noteHtml}${body}</div>` : "";   // kort utan råd har ingen ruta
   } else if(state.mode==="action" && adv.l1.length){
     // triage: action label(s) under the "now" bucket, full explanation expandable
     advHtml = `<div class="advbox">${bucket("Att se över", adv.l1, false)}
@@ -3522,7 +3509,7 @@ function activePatternRows(){
 function temaFns(){
   return [esc,norm,key,stat,codeSortKey,cmpArr,rpbSortVal,distColor,critLabel,isPre,modeHint,availableModeIds,refreshLists,
              isTemaPage,facetLabel,facetTitle,discBucket,mkFacets,facetsOfMcq,facetsOfScored,facetPass,anyFacet,toggleFacet,toggleTag,filterBase,filterGroups,tagPass,filtersActive,updateClearBtn,applyFilters,clearFilters,rpbInfo,isExcluded,exclReason,
-             cueWords,cueHas,cueScan,advice,askQuestions,isExemplary,exemplaryReason,unmapReason,card,
+             cueWords,cueHas,cueScan,advice,askQuestions,isExemplary,unmapReason,card,
              currentView,pageItems,drawCards,jumpToCard,passMetric,renderPassMetric,buildGoodList,buildTagbar,
              setThreshold,thresholdsCustom,resetThresholds,thFmt,thresholdsText,settingsHtml,renderThCustom,wireSettings,thInfo,neutralInfo,
              temaFns,temaConsts,buildTemaReport,downloadText,stamp,

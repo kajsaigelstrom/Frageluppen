@@ -18,6 +18,11 @@ inte dokumenterad här.
   följer resten av tentan, frågan "Stämmer facit och poängregeln?" (för essäfrågor gäller
   bedömningsmallen). Mönsterraderna säger "MCQ-frågor" och "essäfrågor" så att de inte blandas
   ihop. Excel och CSV ur temarapporten har en rad per synlig fråga med kolumnen Typ.
+- **Hela rapporten är renodlad.** Lägena heter **Med råd** och **Bara mätvärden**. Listan över
+  starkt diskriminerande frågor ovanför korten är borta; de väljs i stället med **Stark
+  diskriminering** under Att titta på i filtret. Kort utan råd har ingen ruta, och det gröna
+  "Inga anmärkningar" är borttaget. Exporterna står samlade på rubrikraden: Temarapport,
+  Översiktstabell, Excel och PDF (examinatorns).
 - **Exkluderingar följer med från Inspera.** En fråga som är viktad till 0 % i Inspera känns igen
   i exporten och räknas som exkluderad när filen öppnas, med orsaken "Viktad till 0 % i Inspera".
   En rad överst säger vilka frågor det gäller. Har inte alla studenter vikten 0 på frågan visas
