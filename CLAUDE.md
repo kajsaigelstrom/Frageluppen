@@ -69,13 +69,13 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
   filpanelen och syns alltid. Adressen följer steget (`#forbered`, `#problemfragor`, `#rapporter`;
   de äldre `#samordnare` och `#examinator` fungerar). Texterna säger aldrig vem som gör vad, utom
   i hjälpen där Linköpings uppdelning nämns som exempel. Filen mellan steg 1 och de andra heter
-  analysfilen (`analysfil_<stämpel>.html`, `extractEmbedded`, `loadExaminerFile`) och är enda vägen:
+  datafilen (`datafil_<stämpel>.html`, `extractEmbedded`, `loadExaminerFile`) och är enda vägen:
   de tre filrutorna för Insperas filer finns bara i steg 1 – lägg inte tillbaka en råfilsväg.
   Inget mellansteg: `setStep("choose")` visar det steg som är valt (`state.want`).
   Från steg 1 går `goStep` direkt vidare med de valda filerna, genom samma `buildPackage` som en
-  sparad analysfil (Kajsas beslut 21 nov 2026: terminer där samma person gör alla steg). Råfilerna
+  sparad datafil (Kajsas beslut 21 nov 2026: terminer där samma person gör alla steg). Råfilerna
   ligger kvar i `state.prepFiles`/`prepPdf`/`prepTags`, och `state.prepDirty` säger att analysen ska
-  räknas om. Analysfilen sparas som ren JSON; `buildExaminerFile` och den inbäddade läsningen
+  räknas om. Datafilen sparas som ren JSON; `buildExaminerFile` och den inbäddade läsningen
   finns kvar bara för äldre HTML-filer.
 - **Ingen godkäntstatistik i vyerna eller i temarapporten** (Kajsas beslut 20 nov 2026). Den
   ska bli en egen export. `passMetric` finns kvar för det, men ritas inte.

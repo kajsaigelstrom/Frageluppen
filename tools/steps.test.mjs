@@ -16,7 +16,7 @@ test("stegraden har tre steg, och rollvalet och mellansteget är borta", () => {
   assert.match(bar, /id="step-report"[^>]*>[\s\S]*?3[\s\S]*?Skapa rapporter/);
   for (const gone of ['id="role-exam"', 'id="stepchoice"', 'id="step-back"', ">Jag är<", "Vad vill du göra?"]) assert.ok(!STATIC.includes(gone), gone);
 });
-test("sidan öppnar på steg 1, och steg 2 och 3 ber om analysfilen", () => {
+test("sidan öppnar på steg 1, och steg 2 och 3 ber om datafilen", () => {
   const a = fresh();
   assert.equal(a.ev("state.prep"), true); assert.equal(on(a, "#role-prep"), true);
   click(a, "#step-triage");
@@ -62,7 +62,7 @@ test("steg 3 kräver färdig rättning, och säger det", async () => {
   assert.equal(a.el("#step-report").disabled, false);
   assert.equal(a.el("#step-report-note").textContent, "");
 });
-test("en äldre analysfil i HTML-format går fortfarande att öppna, och visar steg 2 och 3", async () => {
+test("en äldre datafil i HTML-format går fortfarande att öppna, och visar steg 2 och 3", async () => {
   const a = fresh();
   const page = runHtml(a.ev("FILE"));
   await page.ev("state.embeddedReady");
@@ -79,17 +79,17 @@ test("adressen följer steget, och de gamla adresserna fungerar", () => {
   assert.equal(ev("roleFromHash('#examinator')"), "triage");
   assert.equal(ev("roleFromHash('#annat')"), null);
 });
-test("filen heter analysfil, och texterna säger inte vem som gör vad", () => {
-  assert.match(STATIC, /id="prep-save"[^>]*>Spara analysfilen</);
-  assert.match(STATIC, /id="exambox"[\s\S]*?<label>Analysfilen<\/label>/);
+test("filen heter datafil, och texterna säger inte vem som gör vad", () => {
+  assert.match(STATIC, /id="prep-save"[^>]*>Spara kombinerad datafil</);
+  assert.match(STATIC, /id="exambox"[\s\S]*?<label>Kombinerad datafil<\/label>/);
   const visible = STATIC.replace(/<style[\s\S]*?<\/style>/, "");
   assert.ok(!/[Kk]urssamordnar|[Ee]xaminator/.test(visible), "sidans fasta text nämner ingen roll");
   const a = fresh();
   click(a, "#role-prep"); a.ev("prepSynthetic()");
   return Promise.resolve((a.el("#prep-save").listeners.click || [])[0]({})).then(() => {
-    assert.throws(() => a.ev("extractEmbedded('<html></html>')"), /inte en analysfil/);
-    assert.throws(() => a.ev("prepReceipt({jsonObjs:[JSON.parse(extractEmbedded(FILE))], pdfMcqs:null, tagRows:null})"), /redan en analysfil/);
-    assert.match(SRC, /downloadText\(`analysfil_\$\{stamp\(\)\}\.json`/);
+    assert.throws(() => a.ev("extractEmbedded('<html></html>')"), /inte en datafil/);
+    assert.throws(() => a.ev("prepReceipt({jsonObjs:[JSON.parse(extractEmbedded(FILE))], pdfMcqs:null, tagRows:null})"), /redan en datafil/);
+    assert.match(SRC, /downloadText\(`datafil_\$\{stamp\(\)\}\.json`/);
     const help = a.ev("HELP_HTML");
     assert.match(help, /De tre stegen/);
     assert.match(help, /I Linköping/);                                 // rollerna nämns bara som exempel
@@ -104,20 +104,20 @@ test("från steg 1 går man direkt till steg 2 med filerna som redan är valda",
   await a.ev("goStep('triage')");
   assert.equal(a.ev("state.prep"), false);
   assert.equal(a.ev("state.step"), "triage");
-  assert.equal(a.ev("state.fromPackage"), true);                     // samma minimerade data som i en sparad analysfil
+  assert.equal(a.ev("state.fromPackage"), true);                     // samma minimerade data som i en sparad datafil
   assert.equal(a.el("#results").classList.contains("hidden"), false);
   assert.equal(a.downloads.length, 0);                               // ingenting sparades
   await a.ev("goStep('report')");
   assert.equal(a.ev("state.step"), "report");
 });
-test("filerna i steg 1 ligger kvar när man går tillbaka, och analysfilen går att spara efteråt", async () => {
+test("filerna i steg 1 ligger kvar när man går tillbaka, och datafilen går att spara efteråt", async () => {
   const a = fresh();
   a.ev("prepSynthetic()");
   await a.ev("goStep('triage')");
   click(a, "#role-prep");
   await a.ev("refreshPrep()");
   assert.equal(a.el("#prep-save").disabled, false);
-  assert.ok(!/redan en analysfil/.test(a.el("#prep-receipt").innerHTML));
+  assert.ok(!/redan en datafil/.test(a.el("#prep-receipt").innerHTML));
   a.set("PREPBOX", {}); await a.ev("prepInputs().then(x => { PREPBOX.first = isPackage(x.jsonObjs[0]); PREPBOX.n = x.jsonObjs.length; })");
   assert.deepEqual(a.evj("PREPBOX"), { first: false, n: 1 }, "råfilerna finns kvar");
 });
@@ -134,13 +134,13 @@ test("väljs nya filer i steg 1 räknas analysen om nästa gång man går vidare
   assert.equal(a.ev("state.json.candCount"), 40);
   assert.notEqual(n0, 40);
 });
-test("utan filer i steg 1 ber steg 2 om analysfilen, som förut", async () => {
+test("utan filer i steg 1 ber steg 2 om datafilen, som förut", async () => {
   const a = fresh();
   await a.ev("goStep('triage')");
   assert.equal(a.ev("state.json || null"), null);
   assert.equal(a.el("#exambox").classList.contains("hidden"), false);
 });
-test("analysfilen är en ren datafil som väljs i verktyget: en enda väg in", async () => {
+test("datafilen är en ren datafil som väljs i verktyget: en enda väg in", async () => {
   const a = fresh();
   a.ev("prepSynthetic()");
   await (a.el("#prep-save").listeners.click || [])[0]({});
@@ -148,15 +148,16 @@ test("analysfilen är en ren datafil som väljs i verktyget: en enda väg in", a
   assert.ok(!/^<!DOCTYPE/i.test(saved));
   assert.equal(a.ev(`isPackage(JSON.parse(${JSON.stringify(saved)}))`), true);
   click(a, "#step-triage");
-  await a.ev(`loadExaminerFile(${JSON.stringify(saved)}, 'analysfil.json')`);
+  await a.ev(`loadExaminerFile(${JSON.stringify(saved)}, 'datafil.json')`);
   assert.equal(a.ev("state.step"), "triage");
   assert.ok(!/dubbelklick/i.test(STATIC + a.ev("HELP_HTML") + a.el("#log").textContent));
-  assert.match(STATIC, /id="exambox"[\s\S]*?analysfil_….json/);
+  assert.match(STATIC, /id="exambox"[\s\S]*?datafil_….json/);
   assert.match(STATIC, /id="prep-note"[^>]*>[\s\S]*?Gå vidare till steg 2/);
 });
 
-test("steg 1 har knappen Gå vidare till steg 2 bredvid spara-knappen", async () => {
-  assert.match(STATIC, /id="prep-next"[^>]*>Gå vidare till steg 2<\/button>\s*<button id="prep-save"/);
+test("steg 1 har Spara framhävd och Gå vidare till steg 2 precis intill", async () => {
+  assert.match(STATIC, /id="prep-save" class="btn-primary[^>]*>Spara kombinerad datafil<\/button>\s*<button id="prep-next" class="btn-ghost[^>]*>Gå vidare till steg 2</);
+  assert.match(STATIC, /id="prep-note"[^>]*>[\s\S]*?inte analyserad än/);
   const a = fresh();
   await a.ev("refreshPrep()");
   assert.equal(a.el("#prep-next").disabled, true);                   // inga filer valda än
@@ -168,4 +169,28 @@ test("steg 1 har knappen Gå vidare till steg 2 bredvid spara-knappen", async ()
   assert.equal(a.downloads.length, 0);
   assert.equal(a.el("#prep-next").classList.contains("hidden"), true);   // knappen hör till steg 1
   assert.match(STATIC, /id="prep-note"[^>]*>[\s\S]*?Gå vidare till steg 2[\s\S]*?ligger kvar/);
+});
+
+test("filrutorna i steg 1 är inte numrerade som stegen, och resultatfilen står först", () => {
+  const drops = STATIC.slice(STATIC.indexOf('id="drops"'), STATIC.indexOf('class="computebar"'));
+  assert.ok(!/<label>\s*[123] ·/.test(drops), "inga egna nummer bredvid stegens 1, 2, 3");
+  assert.ok(drops.indexOf('id="d-json"') < drops.indexOf('id="d-pdf"') && drops.indexOf('id="d-pdf"') < drops.indexOf('id="d-tags"'));
+  assert.match(drops, /Resultat från Inspera \(JSON\)[\s\S]*?behövs/);
+  assert.match(drops, /Tentan \(PDF\)[\s\S]*?valfri/);
+  assert.match(drops, /essäfrågornas text/);
+});
+test("kvittot vid varje filruta säger vad som lästes: studenter och orter, frågor, och vilka filter taggfilen ger", async () => {
+  const a = fresh();
+  a.ev(`globalThis.B1 = makeDirty(); B1.ext_inspera_assessmentRunTitle = "T5 2026 Jönköping 1";
+        globalThis.B2 = makeDirty(); B2.ext_inspera_assessmentRunTitle = "T5 2026 Norrköping 2";`);
+  const k = a.evj("prepReceipt({jsonObjs:[B1, B2], pdfMcqs:DEMO_DATA.PDF, tagRows:DEMO_DATA.TAGS})");
+  assert.deepEqual(k.orter, ["Jönköping", "Norrköping"]);
+  assert.ok(k.tagCols.length > 0);
+  a.ev(`state.prepFiles = [B1, B2].map((d, i) => ({ name: "f" + i + ".json", text: async () => JSON.stringify(d) })); state.prepPdf = DEMO_DATA.PDF.slice();`);
+  await a.ev("refreshPrep()");
+  assert.match(a.el("#got-json").textContent, new RegExp(`2 filer[\\s\\S]*${k.candCount} studenter[\\s\\S]*Jönköping, Norrköping`));
+  assert.match(a.el("#got-pdf").textContent, /flervalsfrågor/);
+});
+test("Gå vidare ligger direkt intill Spara, inte utknuffad till höger", () => {
+  assert.match(SRC, /\.computebar \.btn-next\{[^}]*margin-left:0/);
 });

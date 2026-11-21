@@ -29,16 +29,16 @@ själva. I Linköping gör kurssamordnaren steg 1 och examinatorn steg 2 och 3.
 
 1. Släpp resultatfilerna (JSON) från Inspera, tentans PDF och taggfilen om den finns.
 2. Kontrollera kvittot (tentans namn och antal studenter). Klicka sedan **Gå vidare till steg 2**,
-   eller **Spara analysfilen** om någon annan ska göra steg 2 och 3.
+   eller **Spara kombinerad datafil** om någon annan ska göra steg 2 och 3.
 3. Gör samma sak en gång till när tentan är rättad, med nya filer från Inspera.
 
-Analysfilen innehåller verktyget och bara den data det behöver. Studenternas skrivna svar,
+Datafilen innehåller verktyget och bara den data det behöver. Studenternas skrivna svar,
 rättarnamn, tider, extratid och alla id tas bort, och kandidatnumren ersätts av löpnummer.
 Insperas slutbetyg och totalpoäng följer med, så att rättningen kan kontrolleras. Filen är
 minimerad, inte anonym, och ska behandlas som tentamaterial. Skicka den aldrig vidare till
 temagrupperna.
 
-**2 Hitta problemfrågor.** Välj analysfilen, om du inte kom hit direkt från steg 1. Här står de
+**2 Hitta problemfrågor.** Välj datafilen, om du inte kom hit direkt från steg 1. Här står de
 flervalsfrågor som statistiken pekar ut före betygssättningen. Går att göra innan essäfrågorna
 är rättade. **Problemfrågor** sparar en sida till betygskollegiet.
 

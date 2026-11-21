@@ -21,13 +21,13 @@ inte dokumenterad här.
 - **Tre steg i stället för rollvalet.** Raden överst har 1 Förbered filer, 2 Hitta problemfrågor
   och 3 Skapa rapporter, och ersätter både "Jag är Kurssamordnare/Examinator" och mellansteget
   "Vad vill du göra?". Med en fil öppen byter man steg med ett klick. Steg 3 kräver färdig
-  rättning och säger det. Filen från steg 1 heter nu **analysfilen** (`analysfil_….html`), och
+  rättning och säger det. Filen från steg 1 heter nu **datafilen** (`datafil_….html`), och
   texterna säger inte längre vem som gör vad; hjälpen nämner Linköpings uppdelning som exempel.
   Adressen följer steget (`#forbered`, `#problemfragor`, `#rapporter`), och de äldre adresserna
   fungerar. **Från steg 1 går man direkt vidare** till steg 2 och 3 med filerna som är valda,
-  utan att spara och välja analysfilen igen; filerna ligger kvar om man går tillbaka. Analysfilen
+  utan att spara och välja datafilen igen; filerna ligger kvar om man går tillbaka. Datafilen
   sparas bara när någon annan ska göra steg 2 och 3, och är nu en ren datafil
-  (`analysfil_….json`) som väljs i verktyget, så att det finns en enda väg in. Äldre analysfiler i
+  (`datafil_….json`) som väljs i verktyget, så att det finns en enda väg in. Äldre datafiler i
   HTML-format går fortfarande att öppna och välja.
 - **Temarapporten är renodlad.** Den följer examinatorns filter: med till exempel ett tema valt
   innehåller rapporten bara de frågorna och säger vilket filter det var. Den skapas som interaktiv

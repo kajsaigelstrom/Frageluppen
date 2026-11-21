@@ -11,7 +11,7 @@ test("varje knapp i sidan har en klickkoppling", () => {
   const unwired = ids.filter(id => !((el("#" + id).listeners.click || []).length));
   assert.deepEqual(unwired, []);
 });
-test("klick på Spara analysfilen ger en fil", async () => {
+test("klick på Spara datafilen ger en fil", async () => {
   const { ev, el, downloads } = loadApp();
   ev("prepSynthetic()");
   const handlers = el("#prep-save").listeners.click || [];

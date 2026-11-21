@@ -29,19 +29,19 @@ test("steg 1 har inga inställningar, och säger vad PDF och taggfil ger", () =>
   const { ev, el } = loadApp();
   ev("setPrep(true)");
   assert.equal(el("#settings-open").classList.contains("hidden"), true);
-  assert.match(el("#computehint").textContent, /frågetexter/);
-  assert.match(el("#computehint").textContent, /tema/);
+  assert.match(STATIC, /id="d-pdf"[\s\S]*?Ger frågetexterna/);            // vad varje fil ger står vid filrutan
+  assert.match(STATIC, /id="d-tags"[\s\S]*?per tema/);
   ev("setPrep(false)");
   assert.equal(el("#settings-open").classList.contains("hidden"), false);
   assert.match(STATIC, /id="prep-note"[^>]*>[^<]*<b>[^<]*<\/b>[\s\S]*?två gånger[\s\S]*?nya filer från Inspera/);
   assert.throws(() => ev("prepReceipt({jsonObjs:[buildPackage({jsonObjs:[demoToInspera(DEMO_DATA.DEMO)], pdfMcqs:null, tagRows:null})], pdfMcqs:null, tagRows:null})"),
-    /redan en analysfil/);
+    /redan en datafil/);
 });
 test("i steg 2 och 3 uppmanas ingen att ladda upp en PDF", () => {
   const { ev, el } = loadApp();
   ev("setPrep(false); loadSynthetic(); state.pdfMcqs = null; setStep('report');");
   const note = el("#pdfnote").innerHTML;
-  assert.match(note, /ny analysfil[\s\S]*steg 1/);
+  assert.match(note, /ny datafil[\s\S]*steg 1/);
   assert.ok(!/Ladda upp/.test(note));
 });
 test("vyn före betygssättning talar om flervalsdelen, och säger varför", () => {

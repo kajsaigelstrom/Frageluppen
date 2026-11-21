@@ -8,12 +8,12 @@ const fresh = () => { const a = loadApp(); setupDirty(a.ev);
         globalThis.FILE = buildExaminerFile(pkg);`); return a; };
 const STATIC = fs.readFileSync(INDEX, "utf8").split("<script>")[0];
 
-test("filens innehåll går att läsa ut ur analysfilen", () => {
+test("filens innehåll går att läsa ut ur datafilen", () => {
   const { ev, evj } = fresh();
   assert.deepEqual(JSON.parse(ev("extractEmbedded(FILE)")), evj("pkg"));
   assert.deepEqual(JSON.parse(ev("extractEmbedded(JSON.stringify(pkg))")), evj("pkg"));       // ett tentapaket från 3.25.0 går också
   for (const bad of ["", "<html><body>hej</body></html>", "%PDF-1.4", '{"ext_inspera_candidates":[]}'])
-    assert.throws(() => ev(`extractEmbedded(${JSON.stringify(bad)})`), /inte en analysfil/, bad);
+    assert.throws(() => ev(`extractEmbedded(${JSON.stringify(bad)})`), /inte en datafil/, bad);
 });
 test("steg 2 och 3 har en enda filruta, och steg 1 har de tre", () => {
   assert.match(STATIC, /<input[^>]*id="examfile"[^>]*accept="[^"]*\.html/);
@@ -29,7 +29,7 @@ test("steg 2 och 3 har en enda filruta, och steg 1 har de tre", () => {
 test("när filen är vald visas steg 2 direkt, med samma siffror som råfilerna ger", async () => {
   const { ev, el } = fresh();
   ev("setPrep(false)");
-  await ev("loadExaminerFile(FILE, 'analysfil.html')");
+  await ev("loadExaminerFile(FILE, 'datafil.html')");
   assert.equal(ev("state.step"), "triage");
   assert.equal(fingerprint(ev, "state.json"), fingerprint(ev, "parseJSON([dirty])"));
   assert.equal(el("#results").classList.contains("hidden"), false);
@@ -38,7 +38,7 @@ test("fel fil ger ett begripligt fel och inga resultat", async () => {
   const { ev, el } = fresh();
   ev("setPrep(false)");
   await ev("loadExaminerFile('<html><body>något annat</body></html>', 'annan.html')");
-  assert.match(el("#log").textContent, /inte en analysfil/);
+  assert.match(el("#log").textContent, /inte en datafil/);
   assert.equal(ev("state.step"), null);
 });
 test("problemfrågor före betygssättning: en egen vy med bara flervalsfrågorna att se över", async () => {

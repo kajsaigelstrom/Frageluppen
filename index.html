@@ -284,7 +284,8 @@
   #prep-receipt{margin-top:14px;font-size:13.5px;line-height:1.6}
   #prep-receipt .warn{color:#8a3b12}
   #prep-note{margin-top:12px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:#faf6ea;font-size:13px;max-width:78ch}
-  .computehint{font-size:13px;color:var(--muted)}
+  .computehint{font-size:13px;color:var(--muted);flex:1 1 100%}
+  .computebar .btn-next{font-size:15px;padding:10px 22px;margin-left:0}
   .btn-ghost{font:inherit;font-size:13px;font-weight:600;padding:7px 16px;border:1px solid var(--line);
     background:#fff;color:var(--accent);border-radius:8px;cursor:pointer;transition:.12s;margin-left:auto}
   .btn-ghost:hover{border-color:var(--accent);background:var(--accent-soft)}
@@ -473,7 +474,7 @@
     <div id="settings" class="hidden"></div>
     <div id="th-custom" class="hidden"></div>
     <p class="subtitle">Visar hur tentans frågor fungerade: svarsfördelning, andel rätt och diskriminering, alltså hur väl varje fråga skiljer studenter med höga totalpoäng från studenter med låga.</p>
-    <p class="intro">Verktyget används i tre steg. Först skapas en analysfil ur Insperas resultat. Med den hittar man problemfrågor före betygssättningen, och efter rättningen skapar man rapporter till temagrupperna. Allt körs lokalt i din webbläsare; inga data laddas upp.</p>
+    <p class="intro">Verktyget används i tre steg. Först kombineras Insperas filer till en datafil. Med den hittar man problemfrågor före betygssättningen, och efter rättningen skapar man rapporter till temagrupperna. Allt körs lokalt i din webbläsare; inga data laddas upp.</p>
   </header>
 
   <div id="helpModal" class="modal hidden">
@@ -486,7 +487,7 @@
 
   <div class="stepbar" id="rolebar">
     <div class="modeseg" id="roleseg">
-      <button id="role-prep" class="modebtn" type="button" title="Släpp Insperas filer. Gå sedan vidare till steg 2 och 3, eller spara analysfilen åt någon annan."><span class="stepno">1</span> Förbered filer</button>
+      <button id="role-prep" class="modebtn" type="button" title="Släpp Insperas filer och kombinera dem till en datafil."><span class="stepno">1</span> Förbered filer</button>
       <button id="step-triage" class="modebtn" type="button" title="Flervalsfrågor som kan behöva rättas i facit eller exkluderas. Går att göra innan essäfrågorna är rättade."><span class="stepno">2</span> Hitta problemfrågor</button>
       <button id="step-report" class="modebtn" type="button" title="Alla frågor efter rättningen. Härifrån skapas rapporterna till temagrupperna och tentamensstatistiken."><span class="stepno">3</span> Skapa rapporter</button>
     </div>
@@ -497,48 +498,49 @@
     <div id="uploadfull">
     <div id="prephead" class="prephead hidden">
       <h2>Förbered tentan</h2>
-      <p>Släpp filerna från Inspera och spara en analysfil. Studenternas skrivna svar, rättarnamn, tider, extratid och alla id tas bort, och kandidatnumren ersätts av löpnummer. Insperas slutbetyg och totalpoäng följer med, så att rättningen kan kontrolleras i steg 3. Inga resultat visas här.</p>
+      <p>Släpp filerna från Inspera. De kombineras till en datafil, som du sparar eller går vidare med. Studenternas skrivna svar, rättarnamn, tider, extratid och alla id tas bort, och kandidatnumren ersätts av löpnummer. Insperas slutbetyg och totalpoäng följer med, så att rättningen kan kontrolleras i steg 3. Inga resultat visas här.</p>
     </div>
     <div id="exambox" class="drop exambox hidden">
-      <label>Analysfilen</label>
-      <div class="hint">Välj analysfilen som sparades i steg 1. Den heter <b>analysfil_….json</b>.</div>
+      <label>Kombinerad datafil</label>
+      <div class="hint">Välj den kombinerade datafilen som sparades i steg 1. Den heter <b>datafil_….json</b>.</div>
       <input type="file" id="examfile" accept=".html,.htm,.json,text/html,application/json">
       <div class="got" id="got-exam"></div>
     </div>
     <div class="drops" id="drops">
+      <div class="drop" id="d-json">
+        <label>Resultat från Inspera (JSON) – behövs</label>
+        <div class="hint" id="json-hint">Ladda ned JSON-filerna från Inspera (under fliken <b>Statistik</b>) och släpp dem här. En fil per studieort, och flera går bra. Före rättningen räcker de för att hitta problemfrågor bland flervalsfrågorna. Efter rättningen behövs nya filer.</div>
+        <input type="file" id="json" accept="application/json,.json" multiple>
+        <div class="got" id="got-json"></div>
+      </div>
       <div class="drop" id="d-pdf">
-        <label>1 · Tentan (PDF)</label>
+        <label>Tentan (PDF) – valfri</label>
+        <div class="hint">Ger frågetexterna, alla svarsalternativ och essäfrågornas text. Utan den visas bara siffrorna.</div>
         <ol class="steps">
           <li>I Inspera: klicka <b>Alternativ → Uppgiftsgrupp → Ladda ner och skriv ut</b>.</li>
           <li>Under <b>Alternativ</b>: bocka <b>endast</b> i "Inkludera korrekta svar".</li>
           <li>Klicka <b>Ladda ned uppgiftsgrupp</b>.</li>
           <li>När länken <b>Ladda ned</b> visas, klicka på den.</li>
           <li>Packa upp det nedladdade arkivet (zip) och leta upp PDF:en i det.</li>
-          <li>Ladda upp den PDF:en här.</li>
+          <li>Släpp den PDF:en här.</li>
         </ol>
         <input type="file" id="pdf" accept="application/pdf">
         <div class="got" id="got-pdf"></div>
       </div>
-      <div class="drop" id="d-json">
-        <label>2 · Resultat (JSON)</label>
-        <div class="hint" id="json-hint">Ladda ned JSON-filerna från Inspera (under fliken <b>Statistik</b>) och släpp dem här. En fil per ort – flera går bra.</div>
-        <input type="file" id="json" accept="application/json,.json" multiple>
-        <div class="got" id="got-json"></div>
-      </div>
       <div class="drop" id="d-tags">
-        <label>3 · Taggar (Excel) – valfritt</label>
-        <div class="hint">En rad per fråga. Kolumnen <b>Nummer</b> eller <b>Namn</b> (frågans kod) pekar ut frågan, och varje övrig kolumn, till exempel <b>Tema</b>, blir ett filter i rapporten.</div>
+        <label>Taggar (Excel) – valfri</label>
+        <div class="hint">Ger filter i rapporterna, till exempel per tema, och resultat per tema i tentamensstatistiken. En rad per fråga: kolumnen <b>Nummer</b> eller <b>Namn</b> pekar ut frågan, och varje övrig kolumn, till exempel <b>Tema</b>, blir ett filter.</div>
         <input type="file" id="tags" accept=".xlsx,.xls">
         <div class="got" id="got-tags"></div>
       </div>
     </div>
     <div class="computebar">
-      <button id="prep-next" class="btn-primary hidden" type="button" disabled title="Gör analysen med filerna du har valt här. De ligger kvar om du går tillbaka.">Gå vidare till steg 2</button>
-      <button id="prep-save" class="btn-ghost hidden" type="button" disabled title="Sparar en fil som någon annan väljer i steg 2 och 3.">Spara analysfilen</button>
+      <button id="prep-save" class="btn-primary hidden" type="button" disabled title="Sparar den kombinerade datafilen, som väljs i steg 2 och 3. Den är inte analyserad än.">Spara kombinerad datafil</button>
+      <button id="prep-next" class="btn-ghost btn-next hidden" type="button" disabled title="Fortsätt själv med filerna du har valt här. De ligger kvar om du går tillbaka.">Gå vidare till steg 2</button>
       <span class="computehint" id="computehint"></span>
     </div>
     <div id="prep-receipt" class="hidden"></div>
-    <div id="prep-note" class="hidden">Med <b>Gå vidare till steg 2</b> fortsätter du själv, direkt. Filerna du har valt här ligger kvar om du går tillbaka. Ska någon annan göra steg 2 och 3 sparar du <b>analysfilen</b>, som hen väljer där. Gör det två gånger per tenta: direkt efter tentan, så att problemfrågor kan hittas före betygssättningen, och en gång till när allt är rättat, då med nya filer från Inspera. Filen är minimerad, inte anonym. Varje rad är en students poängmönster och kan på en liten omtenta kännas igen av den som vet vilka som skrev. Behandla filen som tentamaterial och dela den bara med den som ska göra steg 2 och 3. Den innehåller också tentans frågor.</div>
+    <div id="prep-note" class="hidden">Filerna från Inspera kombineras till <b>en datafil</b>. Den är inte analyserad än; analysen görs i steg 2 och 3. <b>Spara kombinerad datafil</b> ger en fil som väljs i steg 2 och 3, av dig eller av någon annan. Med <b>Gå vidare till steg 2</b> fortsätter du själv direkt, och filerna du har valt här ligger kvar om du går tillbaka. Gör steg 1 två gånger per tenta: direkt efter tentan, så att problemfrågor kan hittas före betygssättningen, och en gång till när allt är rättat, då med nya filer från Inspera. Datafilen är minimerad, inte anonym. Varje rad är en students poängmönster och kan på en liten omtenta kännas igen av den som vet vilka som skrev. Behandla filen som tentamaterial och dela den bara med den som ska göra steg 2 och 3. Den innehåller också tentans frågor.</div>
     </div>
     <div id="log"></div>
   </div>
@@ -759,13 +761,13 @@ function extractEmbedded(text){
   const m=t.match(new RegExp("<scr"+"ipt type=\"application/json\" id=\"fl-data\">([\\s\\S]*?)</scr"+"ipt>"));
   const cand = m ? m[1] : t;
   try{ if(isPackage(JSON.parse(cand))) return cand; }catch(_){}
-  throw new Error("Det här är inte en analysfil. Välj filen som heter analysfil_….json.");
+  throw new Error("Det här är inte en datafil från steg 1. Välj filen som heter datafil_….json.");
 }
 async function loadExaminerFile(text, name){
   try{
     const json=extractEmbedded(text);
     state.json=null; state.step=null;
-    state.jsonFiles=[{name:name||"analysfilen", text: async()=>json}];
+    state.jsonFiles=[{name:name||"datafilen", text: async()=>json}];
     state.pdfMcqs=null; state.pdfFromPackage=false; state.tagsFile=null; state.excluded=new Map(); state.comments=new Map(); state.commentOpen=null;
     await tryRun();
     if(state.json){ collapseUpload(); setStep("choose"); }
@@ -793,19 +795,19 @@ function renderStepBar(){
   const cur = state.prep ? "prep" : (state.step || state.want || "triage");
   [["#role-prep","prep"],["#step-triage","triage"],["#step-report","report"]].forEach(([sel,k])=>{ const b=$(sel); if(b) b.classList.toggle("on", cur===k); });
   const h=$("#rolehint");
-  if(h) h.textContent = state.prep ? "Släpp Insperas filer. Gå sedan vidare till steg 2, eller spara analysfilen åt någon annan." : (state.json ? "" : "Välj analysfilen från steg 1.");
+  if(h) h.textContent = state.prep ? "Släpp Insperas filer. Spara sedan den kombinerade datafilen, eller gå vidare till steg 2." : (state.json ? "" : "Välj datafilen från steg 1.");
   try{ if(typeof history!=="undefined" && history.replaceState) history.replaceState(null, "", cur==="prep" ? "#forbered" : cur==="report" ? "#rapporter" : "#problemfragor"); }catch(_){}
 }
-/* Gå till steg 2 eller 3. Finns en fil öppen visas steget direkt, annars ber sidan om analysfilen. */
+/* Gå till steg 2 eller 3. Finns en fil öppen visas steget direkt, annars ber sidan om datafilen. */
 async function goStep(which){
   state.want=which;
-  // Från steg 1 med filer valda: analysen görs direkt ur dem, utan att analysfilen sparas och väljs igen.
-  // Datan går samma väg som en sparad analysfil (buildPackage), så det finns fortfarande bara en väg in.
-  const hasFiles=(state.prepFiles || state.jsonFiles || []).some(f=>typeof f.text==="function");   // utan filer: fråga efter analysfilen direkt
+  // Från steg 1 med filer valda: analysen görs direkt ur dem, utan att datafilen sparas och väljs igen.
+  // Datan går samma väg som en sparad datafil (buildPackage), så det finns fortfarande bara en väg in.
+  const hasFiles=(state.prepFiles || state.jsonFiles || []).some(f=>typeof f.text==="function");   // utan filer: fråga efter datafilen direkt
   if(state.prep && hasFiles && (state.prepDirty || !state.json)){
     let text=null;
     try{ const inp=await prepInputs(); if(inp.jsonObjs.length){ prepReceipt(inp); text=JSON.stringify(buildPackage(inp)); keepPrepInputs(inp); } }catch(_){ text=null; }
-    if(text){ setPrep(false); await loadExaminerFile(text, "analysfilen"); state.prepDirty=false; renderStepBar(); return; }
+    if(text){ setPrep(false); await loadExaminerFile(text, "datafilen"); state.prepDirty=false; renderStepBar(); return; }
   }
   if(state.prep) setPrep(false);
   else if(state.json) setStep(which);
@@ -851,7 +853,7 @@ poäng, och hur väl poängen på frågan följer studentens poäng på resten a
 bara i hela rapporten, eftersom de kräver färdig rättning.</p>
 </div></details>
 <details class="helpsec"><summary>Steg 2 och 3</summary><div class="body">
-<p>Med analysfilen vald finns två steg, och du byter mellan dem i raden överst.</p>
+<p>Med datafilen vald finns två steg, och du byter mellan dem i raden överst.</p>
 <p><b>2 Hitta problemfrågor</b> – flervalsfrågor som kan behöva rättas i facit
 eller exkluderas, med diskriminering mot flervalsdelens poäng. Går att göra innan essäfrågorna
 är rättade. Vyn öppnar på frågorna <b>att se över</b>, alltså dem som statistiken pekar ut.
@@ -894,7 +896,7 @@ men ingen triage och inga åtgärdsförslag. Överst står det som gäller flera
 ruta bara när något gäller just den frågan. Mottagaren kan bocka för frågor och spara en egen
 sida med bara dem, att ge vidare till den som skrev frågorna. Rapporten innehåller bara
 sammanräknade resultat, aldrig enskilda studenters svar. Den innehåller också frågetexterna och rätt svar.</p>
-<p>Temarapporten är det som går till temagrupperna. Analysfilen skickas aldrig
+<p>Temarapporten är det som går till temagrupperna. Datafilen skickas aldrig
 vidare.</p>
 </div></details>
 <details class="helpsec"><summary>Inställningar</summary><div class="body">
@@ -906,16 +908,16 @@ sig dina gränser.</p>
 <details class="helpsec"><summary>De tre stegen</summary><div class="body">
 <p>Verktyget används i tre steg, som väljs i raden överst. Sidan öppnar på steg 1.</p>
 <p><b>1 Förbered filer.</b> Släpp resultatfilerna från Inspera, tentans PDF och taggfilen om den
-finns. Spara <b>analysfilen</b> om någon annan ska göra steg 2 och 3. Det görs två gånger per tenta: direkt efter tentan, och en
+finns. De kombineras till <b>en datafil</b>, som inte är analyserad än. Spara den, eller gå vidare direkt. Det görs två gånger per tenta: direkt efter tentan, och en
 gång till när allt är rättat, då med nya filer från Inspera. Studenternas skrivna svar, rättarnamn,
 tider, extratid och alla id tas bort, och kandidatnumren ersätts av löpnummer. Insperas slutbetyg
 och totalpoäng följer med, så att rättningen kan kontrolleras i steg 3. Inga resultat visas i
 steg 1. Utan tentans PDF saknas frågetexterna, och utan taggfil filtret på tema.</p>
-<p><b>2 Hitta problemfrågor</b> och <b>3 Skapa rapporter</b> börjar med att analysfilen väljs.
+<p><b>2 Hitta problemfrågor</b> och <b>3 Skapa rapporter</b> börjar med att datafilen väljs.
 Den som har gjort steg 1 går i stället direkt vidare med knappen <b>Gå vidare till steg 2</b>, utan att spara filen.</p>
 <p>Vem som gör vilket steg bestämmer ni själva. I Linköping gör kurssamordnaren steg 1, eftersom
 det är hen som hämtar filerna ur Inspera, och examinatorn steg 2 och 3.</p>
-<p>Analysfilen är minimerad, inte anonym: varje rad är en students poängmönster. Behandla den som
+<p>Datafilen är minimerad, inte anonym: varje rad är en students poängmönster. Behandla den som
 tentamaterial och skicka den inte vidare.</p>
 </div></details>`;
 
@@ -1394,10 +1396,10 @@ function buildPackage({jsonObjs, pdfMcqs, tagRows}){
 }
 function isPackage(obj){ return !!obj && typeof obj==="object" && !Array.isArray(obj) && obj.format===PKG_FORMAT; }
 function openPackage(pkg){
-  if(!isPackage(pkg)) throw new Error("Det här är inte en analysfil.");
+  if(!isPackage(pkg)) throw new Error("Det här är inte en datafil från steg 1.");
   if(Number(pkg.formatVersion)>PKG_VERSION)
     throw new Error("Paketet är gjort i en nyare version av Frågeluppen. Uppdatera verktyget och försök igen.");
-  const bad = () => new Error("Analysfilen går inte att läsa. Gör en ny i steg 1.");
+  const bad = () => new Error("Datafilen går inte att läsa. Gör en ny i steg 1.");
   if(!Array.isArray(pkg.data) || !pkg.data.length) throw bad();
   if(pkg.data.some(d=>!isPlainObj(d) || !Array.isArray(d.ext_inspera_candidates)
        || d.ext_inspera_candidates.some(c=>!isPlainObj(c) || !isPlainObj(c.result)))) throw bad();
@@ -1447,12 +1449,15 @@ function resolveInputs(objs, loaded){
 }
 /* Kvittot kurssamordnaren ser innan paketet sparas – aldrig några resultat. */
 function prepReceipt({jsonObjs, pdfMcqs, tagRows}){
-  if(jsonObjs.some(isPackage)) throw new Error("Det här är redan en analysfil. Släpp resultatfilerna från Inspera i stället.");
+  if(jsonObjs.some(isPackage)) throw new Error("Det här är redan en datafil från steg 1. Släpp resultatfilerna från Inspera i stället.");
   if(jsonObjs.some(o=>!isPlainObj(o))) throw new Error("Resultatfilen har inte det format som Inspera exporterar.");
   let n=0; for(const d of jsonObjs){ const l=(d && (d.ext_inspera_candidates || d.candidates)) || []; n+=l.length; }
   if(!n) throw new Error("Hittar inga studenter i resultatfilen. Är det rätt fil från Inspera?");
   const titles = jsonObjs.map(o=>o && o.ext_inspera_assessmentRunTitle).filter(Boolean);
-  return { examName:commonTitle(titles), candCount:n, mcqPdf: pdfMcqs ? pdfMcqs.length : null,
+  const tg = (tagRows && tagRows.length) ? parseTagsRows(tagRows) : null;
+  return { orter: ortNames(jsonObjs.map(o=>o && o.ext_inspera_assessmentRunTitle)).filter(Boolean), nFiles: jsonObjs.length,
+           tagCols: tg ? tg.tagCols.map(c=>c.name) : [], essays: pdfMcqs && pdfMcqs.essays ? pdfMcqs.essays.length : 0,
+           examName:commonTitle(titles), candCount:n, mcqPdf: pdfMcqs ? pdfMcqs.length : null,
            hasTags: !!(tagRows && tagRows.length), warning: examMismatch(pdfMcqs && pdfMcqs.examName, titles) || null };
 }
 
@@ -2519,7 +2524,7 @@ function render(){
       note.innerHTML = `<b>Filen saknar tentans PDF:</b> frågetexterna saknas, och alternativ `+
         `som ingen valde finns inte i Inspera-exporten och kan varken visas eller flaggas. `+
         `Distraktoranalysen blir därför mildare än med PDF, och alternativen visas i svarsordning, `+
-        `inte tentans ordning. Gör en ny analysfil med tentans PDF i steg 1 för fullständiga kort.`;
+        `inte tentans ordning. Gör en ny datafil med tentans PDF i steg 1 för fullständiga kort.`;
     } else if(pdfExtra.length){
       note.className="advnote";
       note.innerHTML = `${pdfExtra.length} fråga(or) ser i PDF:en ut som flervalsfrågor men är det inte enligt resultaten `+
@@ -3758,7 +3763,7 @@ async function tryRun(){
 function refreshCompute(){
   const h=$("#computehint");
   if(h) h.textContent = "";
-  if(state.prep){ if(h) h.textContent = "Resultatfilen behövs. PDF och taggfil är valfria, men utan PDF saknas frågetexterna i steg 2 och 3, och utan taggfil filtret på tema."; refreshPrep(); }
+  if(state.prep){ if(h) h.textContent = ""; refreshPrep(); }
 }
 /* ---------- Förbered tentan (kurssamordnarens steg) ---------- */
 function setPrep(on){
@@ -3795,6 +3800,9 @@ async function refreshPrep(){
   if(!ready){ box.innerHTML=""; return; }
   try{
     const k=prepReceipt(await prepInputs());
+    { const gj=$("#got-json"); if(gj) gj.textContent = `✓ ${k.nFiles} ${k.nFiles===1?"fil":"filer"} — ${k.candCount} studenter${k.orter.length?` (${k.orter.join(", ")})`:""}`;
+      const gp=$("#got-pdf"); if(gp && k.mcqPdf!=null) gp.textContent = `✓ ${k.mcqPdf} flervalsfrågor${k.essays?` och ${k.essays} essäfrågor`:""} lästa`;
+      const gt=$("#got-tags"); if(gt && k.hasTags) gt.textContent = `✓ ger filter på ${k.tagCols.join(", ") || "taggarna"}`; }
     box.innerHTML = `<b>${esc(k.examName||"Tenta utan namn")}</b><br>`
       + `${k.candCount} studenter · `
       + (k.mcqPdf!=null ? `${k.mcqPdf} flervalsfrågor lästa ur PDF:en` : "ingen PDF") + " · "
@@ -3805,8 +3813,8 @@ async function refreshPrep(){
 async function saveExaminerFile(){
   try{
     const inp=await prepInputs(); prepReceipt(inp);
-    downloadText(`analysfil_${stamp()}.json`, JSON.stringify(buildPackage(inp)), "application/json;charset=utf-8");
-    log("Analysfilen är sparad. Den väljs i steg 2 och 3.");
+    downloadText(`datafil_${stamp()}.json`, JSON.stringify(buildPackage(inp)), "application/json;charset=utf-8");
+    log("Den kombinerade datafilen är sparad. Den väljs i steg 2 och 3.");
   }catch(e){ log("Fel: "+e.message); console.error(e); }
 }
 /* Raden överst när en fil är vald: tentan, antal studenter och frågor (för att se att filen lästs rätt), och i
@@ -3844,7 +3852,7 @@ $("#pdf").addEventListener("change", async e=>{
   const f=e.target.files[0]; if(!f) return;
   $("#got-pdf").textContent="läser …";
   try{ state.pdfMcqs=await parsePDF(await f.arrayBuffer());
-       $("#got-pdf").textContent=`✓ ${f.name} — ${state.pdfMcqs.length} flervalsfrågor lästa`; }
+       $("#got-pdf").textContent=`✓ ${state.pdfMcqs.length} flervalsfrågor${(state.pdfMcqs.essays && state.pdfMcqs.essays.length)?` och ${state.pdfMcqs.essays.length} essäfrågor`:""} lästa`; }
   catch(err){ state.pdfMcqs=null; $("#got-pdf").textContent="✗ kunde inte läsa PDF"; log("PDF-fel: "+err.message); console.error(err); }
   state.pdfFromPackage = false; state.prepPdf = state.pdfMcqs; state.prepDirty = true;
   checkExamMatch();
@@ -3875,8 +3883,8 @@ $("#reopen").addEventListener("click", expandUpload);
   if(emb){
     // Examinatorns fil: tentan finns redan i filen. Öppna direkt i analysen; ingångarna behövs inte här.
     state.embedded=true;
-    state.jsonFiles=[{name:"analysfilen", text: async()=>emb.text}];
-    { const rp=$("#role-prep"); if(rp) rp.classList.add("hidden"); }      // en öppnad analysfil har steg 2 och 3
+    state.jsonFiles=[{name:"datafilen", text: async()=>emb.text}];
+    { const rp=$("#role-prep"); if(rp) rp.classList.add("hidden"); }      // en öppnad datafil har steg 2 och 3
     state.embeddedReady = tryRun().then(()=>{
       if(!state.json) return;
       collapseUpload(); setStep("choose");
