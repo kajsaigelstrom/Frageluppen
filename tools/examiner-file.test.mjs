@@ -44,7 +44,7 @@ test("den öppnade filen döljer steg 1 och har ingen ruta överst", async () =>
   const { ev } = fresh();
   const page = runHtml(ev("FILE"));
   await page.ev("state.embeddedReady");
-  assert.equal(page.el("#role-prep").classList.contains("hidden"), true);
+  assert.equal(page.el("#step-prep").classList.contains("hidden"), true);
   assert.ok(!ev("FILE").includes("embnote"));                    // rutan överst är borttagen (Kajsa 21 nov 2026)
   assert.ok(page.el("#uploadfull").classList.contains("hidden"));
 });
@@ -52,7 +52,7 @@ test("vanliga sidan har ingen inbäddad tenta och landar hos kurssamordnaren", (
   const { ev, el } = fresh();
   assert.equal(ev("state.embedded || null"), null);
   assert.equal(ev("state.prep"), true);
-  assert.equal(el("#role-prep").classList.contains("on"), true);
+  assert.equal(el("#step-prep").classList.contains("on"), true);
 });
 test("tillfällesvarningen följer med in i filen", async () => {
   const { ev } = fresh();

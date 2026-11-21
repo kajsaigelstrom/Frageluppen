@@ -11,7 +11,7 @@ const lastDownload = a => { const b = a.downloads[a.downloads.length - 1]; retur
 
 test("examinatorns hela rapport är en enda sida, utan flikar", () => {
   const { ev, evj, el } = app();
-  assert.deepEqual(evj("stepViews().map(v => v.layout)"), ["all"]);
+  assert.equal(ev("activeView().layout"), "all");
   assert.ok(!/class="reptab/.test(el("#viewtabs").innerHTML));
   assert.ok(!ev("VIEWS.some(v => v.layout === 'total')"));
 });

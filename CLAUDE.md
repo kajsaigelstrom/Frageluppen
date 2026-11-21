@@ -65,11 +65,11 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
   `exportOverview`), en fristående sida utan skript. Diskriminering = punkt-biseriell / item–total.
 - **Tre steg i stället för roller** (Kajsas beslut 21 nov 2026): 1 Förbered filer (`state.prep`,
   `setPrep`), 2 Hitta problemfrågor (`state.step==="triage"`) och 3 Skapa rapporter (`"report"`).
-  Stegraden (`#role-prep`, `#step-triage`, `#step-report`, `renderStepBar`, `goStep`) ligger utanför
+  Stegraden (`#step-prep`, `#step-triage`, `#step-report`, `renderStepBar`, `goStep`) ligger utanför
   filpanelen och syns alltid. Adressen följer steget (`#forbered`, `#problemfragor`, `#rapporter`;
   de äldre `#samordnare` och `#examinator` fungerar). Texterna säger aldrig vem som gör vad, utom
   i hjälpen där Linköpings uppdelning nämns som exempel. Filen mellan steg 1 och de andra heter
-  datafilen (`datafil_<stämpel>.html`, `extractEmbedded`, `loadExaminerFile`) och är enda vägen:
+  datafilen (`datafil_<stämpel>.html`, `extractEmbedded`, `loadDataFile`) och är enda vägen:
   de tre filrutorna för Insperas filer finns bara i steg 1 – lägg inte tillbaka en råfilsväg.
   Inget mellansteg: `setStep("choose")` visar det steg som är valt (`state.want`).
   Från steg 1 går `goStep` direkt vidare med de valda filerna, genom samma `buildPackage` som en
@@ -78,7 +78,8 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
   räknas om. Datafilen sparas som ren JSON; `buildExaminerFile` och den inbäddade läsningen
   finns kvar bara för äldre HTML-filer.
 - **Ingen godkäntstatistik i vyerna eller i temarapporten** (Kajsas beslut 20 nov 2026). Den
-  ska bli en egen export. `passMetric` finns kvar för det, men ritas inte.
+  ska bli en egen export. `passMetric` finns kvar för det, men ritas inte. G-regeln (gränsen nedåt,
+  studentens poäng uppåt) står på ett ställe, `gLimit` och `gPassed`, och används också av `statsData`.
 - **Examinatorns fil** (`buildExaminerFile`): kurssamordnaren sparar hela verktyget med
   tentapaketet inbäddat som ett JSON-block i `<head>` (`id="fl-data"`). Filen öppnar direkt i
   analysen. Den byggs ur `PRISTINE_HTML`, sidans källa fångad innan något lästs in – ändra
@@ -126,6 +127,7 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
 - **Temarapporten måste kunna bygga sig själv** (urvalssidan skapas inne i den exporterade
   filen). En funktion eller konstant som rapporten använder måste därför stå i `temaFns()`
   respektive `temaConsts()`. Testet "en exporterad sida kan själv bygga en urvalssida" fångar missar.
+  Det gäller också det som `card` och `scoreCard` delar: `cardIsApp`, `exclParts`, `selBoxHtml`, `levelBadge`.
 - **Gränserna i `state.th` är justerbara** och ändrar bara märkningar och vilka kort som får en
   kommentar. Minsta underlag (`MIN_N_DIST`, n ≥ 30) ligger fast.
 

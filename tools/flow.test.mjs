@@ -16,20 +16,20 @@ test("filens innehåll går att läsa ut ur datafilen", () => {
     assert.throws(() => ev(`extractEmbedded(${JSON.stringify(bad)})`), /inte en datafil/, bad);
 });
 test("steg 2 och 3 har en enda filruta, och steg 1 har de tre", () => {
-  assert.match(STATIC, /<input[^>]*id="examfile"[^>]*accept="[^"]*\.html/);
+  assert.match(STATIC, /<input[^>]*id="datafile"[^>]*accept="[^"]*\.html/);
   assert.ok(!STATIC.includes('id="compute"'));
   const { ev, el } = fresh();
   ev("setPrep(false)");
   assert.equal(el("#drops").classList.contains("hidden"), true);
-  assert.equal(el("#exambox").classList.contains("hidden"), false);
+  assert.equal(el("#databox").classList.contains("hidden"), false);
   ev("setPrep(true)");
   assert.equal(el("#drops").classList.contains("hidden"), false);
-  assert.equal(el("#exambox").classList.contains("hidden"), true);
+  assert.equal(el("#databox").classList.contains("hidden"), true);
 });
 test("när filen är vald visas steg 2 direkt, med samma siffror som råfilerna ger", async () => {
   const { ev, el } = fresh();
   ev("setPrep(false)");
-  await ev("loadExaminerFile(FILE, 'datafil.html')");
+  await ev("loadDataFile(FILE, 'datafil.html')");
   assert.equal(ev("state.step"), "triage");
   assert.equal(fingerprint(ev, "state.json"), fingerprint(ev, "parseJSON([dirty])"));
   assert.equal(el("#results").classList.contains("hidden"), false);
@@ -37,13 +37,13 @@ test("när filen är vald visas steg 2 direkt, med samma siffror som råfilerna 
 test("fel fil ger ett begripligt fel och inga resultat", async () => {
   const { ev, el } = fresh();
   ev("setPrep(false)");
-  await ev("loadExaminerFile('<html><body>något annat</body></html>', 'annan.html')");
+  await ev("loadDataFile('<html><body>något annat</body></html>', 'annan.html')");
   assert.match(el("#log").textContent, /inte en datafil/);
   assert.equal(ev("state.step"), null);
 });
 test("problemfrågor före betygssättning: en egen vy med bara flervalsfrågorna att se över", async () => {
   const { ev, el } = fresh();
-  ev("setPrep(false)"); await ev("loadExaminerFile(FILE, 'f.html')");
+  ev("setPrep(false)"); await ev("loadDataFile(FILE, 'f.html')");
   ev("setStep('triage')");
   assert.equal(ev("state.step"), "triage");
   assert.equal(ev("state.view"), "pre-mcq");
@@ -56,7 +56,7 @@ test("problemfrågor före betygssättning: en egen vy med bara flervalsfrågorn
 });
 test("hela rapporten: en sida efter rättning, med export", async () => {
   const { ev, el } = fresh();
-  ev("setPrep(false)"); await ev("loadExaminerFile(FILE, 'f.html')");
+  ev("setPrep(false)"); await ev("loadDataFile(FILE, 'f.html')");
   ev("setStep('report')");
   assert.equal(ev("state.step"), "report");
   assert.equal(ev("state.view"), "final");
@@ -68,7 +68,7 @@ test("hela rapporten: en sida efter rättning, med export", async () => {
 });
 test("hela rapporten kräver färdig rättning", async () => {
   const { ev, el } = fresh();
-  ev("setPrep(false)"); await ev("loadExaminerFile(FILE, 'f.html')");
+  ev("setPrep(false)"); await ev("loadDataFile(FILE, 'f.html')");
   ev("state.json.fullyGraded = false; state.json.ungradedPts = 12; setStep('choose');");
   assert.equal(el("#step-report").disabled, true);
   assert.match(el("#step-report-note").textContent, /färdig rättning/);
@@ -88,16 +88,16 @@ test("verktyget har ingen inbyggd exempeltenta", () => {
 });
 test("ingen godkäntstatistik i vyerna eller i temarapporten", async () => {
   const { ev, el } = fresh();
-  ev("setPrep(false)"); await ev("loadExaminerFile(FILE, 'f.html')");
+  ev("setPrep(false)"); await ev("loadDataFile(FILE, 'f.html')");
   ev("setStep('report')");
-  assert.equal(el("#passmetric").innerHTML, "");
+  assert.ok(!fs.readFileSync(INDEX, "utf8").includes("passmetric"));           // rutan för godkäntandel finns inte kvar
   ev("state.view = 'total'; render();");
   assert.ok(!/-gränsen|godkän/i.test(el("#totalreport").innerHTML));
   assert.ok(!ev("settingsHtml(false)").includes("Godkäntgräns"));
   assert.match(STATIC + fs.readFileSync(INDEX, "utf8"), /wireSettings\(false,/);
-  assert.equal(ev("temaEmbed().passSnapshot"), null);
+  assert.equal(ev("'passSnapshot' in temaEmbed()"), false);
+  assert.ok(!/passmetric|passSnapshot|passMetric/.test(ev("buildTemaReport(temaEmbed())")));   // varken ruta, data eller uträkning i rapporten
   const page = runHtml(ev("buildTemaReport(temaEmbed())"));
-  assert.equal(page.el("#passmetric").innerHTML, "");
   assert.ok(!/-gränsen/.test(page.el("#cards").innerHTML + page.el("#fileline").textContent));
 });
 test("steg 1 visar aldrig resultaten", () => {

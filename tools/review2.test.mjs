@@ -20,9 +20,9 @@ test("exkludering slår igenom i diskrimineringen även när Inspera kodar fråg
 });
 test("en trasig fil efter en fungerande lämnar inga gamla resultat kvar", async () => {
   const a = fresh();
-  await a.ev("loadExaminerFile(mk(dirty), 'f.json')");
+  await a.ev("loadDataFile(mk(dirty), 'f.json')");
   assert.equal(a.el("#results").classList.contains("hidden"), false);
-  await a.ev(`loadExaminerFile('{"format":"frageluppen-tentapaket","formatVersion":99}', 'trasig.json')`);
+  await a.ev(`loadDataFile('{"format":"frageluppen-tentapaket","formatVersion":99}', 'trasig.json')`);
   assert.equal(a.el("#results").classList.contains("hidden"), true);
   assert.equal(a.ev("state.step"), null);
   assert.equal(a.ev("state.vm || null"), null);
@@ -30,9 +30,9 @@ test("en trasig fil efter en fungerande lämnar inga gamla resultat kvar", async
 });
 test("filter, sökning och urval följer inte med till nästa fil", async () => {
   const a = fresh();
-  await a.ev("loadExaminerFile(mk(dirty), 'f.json')"); a.ev("setStep('report')");
+  await a.ev("loadDataFile(mk(dirty), 'f.json')"); a.ev("setStep('report')");
   a.ev(`toggleFacet('svar','latt'); toggleTag(state.tags.tagCols[0].name, state.vm.view[0].tagVals[0]); document.querySelector("#search").value = "x";`);
-  await a.ev("loadExaminerFile(mk(dirty), 'g.json')");
+  await a.ev("loadDataFile(mk(dirty), 'g.json')");
   assert.deepEqual(a.evj("[state.facets, state.activeTags]"), [{}, {}]);
   assert.equal(a.el("#search").value, "");
 });
@@ -44,7 +44,7 @@ test("temarapportens urvalsetikett har aldrig appens åtgärdsord", () => {
 });
 test("steg 1 visar inga varningar från förra analysen och låser inte steg 3", async () => {
   const a = fresh();
-  await a.ev("loadExaminerFile(mk(dirty), 'f.json')");
+  await a.ev("loadDataFile(mk(dirty), 'f.json')");
   a.ev("state.json.fullyGraded = false; state.json.ungradedPts = 5; setStep('triage');");
   assert.equal(a.el("#step-report").disabled, true);
   a.ev("setPrep(true)");
@@ -84,7 +84,7 @@ test("en fråga som är exkluderad i Inspera har ingen orsakslista att skriva ö
   const a = fresh();
   a.ev(`globalThis.W = makeDirty(); globalThis.QX = W.ext_inspera_candidates[0].result.ext_inspera_questions[3].ext_inspera_questionNumber;
         W.ext_inspera_candidates.forEach(c => c.result.ext_inspera_questions.forEach(q => { if (q.ext_inspera_questionNumber === QX) q.ext_inspera_questionWeight = 0; }));`);
-  await a.ev("loadExaminerFile(mk(W), 'f.json')"); a.ev("setStep('report')");
+  await a.ev("loadDataFile(mk(W), 'f.json')"); a.ev("setStep('report')");
   const card = a.el("#cards").innerHTML.split(`id="card-${a.ev("QX")}"`)[1].split('class="q ')[0];
   assert.match(card, /Viktad till 0 % i Inspera/);
   assert.ok(!/class="card-reason"/.test(card));

@@ -66,7 +66,6 @@
   .devpill{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);
     background:var(--accent-soft);border:1px solid var(--accent);padding:3px 10px;border-radius:999px;white-space:nowrap}
   header .subtitle{margin:2px 0 9px;color:var(--ink);font-size:14.5px;font-weight:500;max-width:760px}
-  header .devnote{margin:9px 0 0;color:var(--muted);font-size:12.5px;max-width:760px}
   .helpbtn{font-size:12.5px;font-weight:600;color:var(--accent);background:#fff;border:1.5px solid var(--accent);
     border-radius:8px;padding:5px 12px;cursor:pointer;white-space:nowrap}
   .helpbtn:hover{background:var(--accent-soft)}
@@ -88,8 +87,6 @@
   .helpsec .body{font-size:13.5px;color:var(--ink);line-height:1.65;padding:10px 2px 14px}
   .helpsec .body p{margin:0 0 9px}
   .helpsec .body b{color:var(--ink)}
-  .helpsec .body .lead{color:var(--muted)}
-  .nums{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
 
   .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin:22px 0}
   .drops{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
@@ -108,13 +105,6 @@
   #qa.bad,#examwarn.bad{color:var(--warn)}
   #weightnote .bad,#gradenote .bad{color:var(--warn);border:1px solid var(--warn);border-radius:8px;padding:9px 12px;font-size:13px;line-height:1.5;margin-bottom:8px}
 
-  .summary{display:flex;flex-wrap:wrap;gap:26px;align-items:baseline}
-  .summary .stat{display:flex;flex-direction:column}
-  .summary .stat b{font-family:"IBM Plex Mono",monospace;font-size:24px;font-weight:600}
-  .summary .stat span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-
-  .controls input,.controls select{font:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--line);
-    border-radius:7px;background:#fff;color:var(--ink)}
   .expbtn{font:inherit;font-size:13px;font-weight:600;padding:7px 13px;border:1px solid var(--accent);
     background:#fff;color:var(--accent);border-radius:7px;cursor:pointer;transition:.12s}
   .expbtn:hover{background:var(--accent);color:#fff}
@@ -170,7 +160,6 @@
     padding:2px 7px;letter-spacing:.03em;white-space:nowrap}
   .badge.hard{background:var(--warn-soft);color:var(--warn)}
   .badge.bad{background:#f3d5cf;color:#8f241a}
-  .badge.trap{background:#f6e2cf;color:#a85a16}
   .badge.easy{background:#e6efe6;color:#3a7a47}
   .q .stem{margin:9px 0 14px;font-size:15px}
   .opt{display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:center;margin:7px 0}
@@ -195,8 +184,6 @@
     background:#f6e2cf;border-radius:4px;padding:1px 7px;margin-left:8px;letter-spacing:.02em;cursor:help}
   .opt.outdisc .barwrap{box-shadow:0 0 0 1.5px #d9772b55}
   .q.flag{border-color:var(--warn)}
-  .q.flash{animation:cardflash 1.5s ease-out}
-  @keyframes cardflash{0%{box-shadow:0 0 0 3px var(--accent)}15%{box-shadow:0 0 0 3px var(--accent)}100%{box-shadow:0 0 0 0 rgba(0,0,0,0)}}
   .q .qanote{font-size:12px;color:var(--warn);margin-top:8px;font-family:"IBM Plex Mono",monospace}
   .hidden{display:none}
   /* mode toggle */
@@ -208,7 +195,7 @@
   .modebtn.on{background:var(--accent);color:#fff}
   .modebtn:disabled{color:var(--faint);cursor:not-allowed;background:#fff}
   .modehint{font-size:13px;color:var(--muted);flex:1 1 240px;min-width:200px}
-  /* filväljare: Beräkna-knapp + hopfällt läge */
+  /* steg 1: knapparna Spara kombinerad datafil och Gå vidare */
   .computebar{display:flex;align-items:center;gap:14px;margin-top:16px;flex-wrap:wrap}
   .btn-primary{font:inherit;font-size:15px;font-weight:600;padding:11px 28px;border:none;border-radius:9px;
     background:var(--accent);color:#fff;cursor:pointer;transition:.12s;box-shadow:0 1px 2px rgba(0,0,0,.08)}
@@ -233,7 +220,6 @@
   .askq{font-size:14px;line-height:1.5;margin:6px 0}
   .askfact{font-size:12.5px;color:var(--muted);margin-top:3px}
   .ftbars{margin-top:10px}
-  .cardctrls.hidden,.legend.hidden,.modebar.hidden{display:none!important}
   .patbox{margin:14px 0;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
   .pattitle{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:17px}
   .patnote{font-size:12.5px;color:var(--muted);margin:2px 0 8px}
@@ -261,38 +247,24 @@
   .linkbtn:hover{color:var(--ink)}
   .expbtn:disabled{opacity:.45;cursor:not-allowed}
   .expbtn.hidden{display:none}
-  .rolebar.hidden{display:none}
-  .exambox{max-width:560px}
-  .exambox.hidden,.drops.hidden,#stepchoice.hidden{display:none}
+  .databox{max-width:560px}
+  .databox.hidden,.drops.hidden{display:none}
   .steptitle{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:19px;margin-bottom:12px}
   .stepnote{font-size:13px;color:var(--muted);margin-top:10px}
-  .rolebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
   .prephead h2{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:20px;margin:0 0 4px}
   .prephead p{margin:0 0 14px;font-size:13.5px;color:var(--muted);max-width:70ch}
   #prep-receipt{margin-top:14px;font-size:13.5px;line-height:1.6}
   #prep-receipt .warn{color:#8a3b12}
   #prep-note{margin-top:12px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:#faf6ea;font-size:13px;max-width:78ch}
-  .computehint{font-size:13px;color:var(--muted);flex:1 1 100%}
   .computebar .btn-next{font-size:15px;padding:10px 22px;margin-left:0}
   .btn-ghost{font:inherit;font-size:13px;font-weight:600;padding:7px 16px;border:1px solid var(--line);
     background:#fff;color:var(--accent);border-radius:8px;cursor:pointer;transition:.12s;margin-left:auto}
   .btn-ghost:hover{border-color:var(--accent);background:var(--accent-soft)}
-  /* rapportflikar (toppnivå: väljer analys/kriterium) */
-  .reptabs{display:flex;gap:2px;border-bottom:2px solid var(--line);margin:4px 0 14px;flex-wrap:wrap}
-  .reptab{font:inherit;font-size:14px;font-weight:600;padding:9px 16px 10px;border:none;background:none;
-    color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.12s;position:relative}
-  .reptab:hover:not(:disabled){color:var(--ink)}
-  .reptab.on{color:var(--accent);border-bottom-color:var(--accent)}
-  .reptab:disabled{color:var(--faint);cursor:not-allowed}
-  .reptab .phase{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);display:block;margin-bottom:1px}
-  .reptab.on .phase{color:var(--accent)}
-  .rephint{font-size:12.5px;color:var(--muted);margin:-6px 0 14px;line-height:1.5}
   .viewstub{padding:48px 32px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px;margin:8px 0}
   .viewstub h3{font-size:17px;color:var(--ink);margin:0 0 8px}
   .viewstub p{font-size:13.5px;line-height:1.6;max-width:540px;margin:0 auto}
   #results.stubmode > *:not(#viewtabs):not(#viewstub){display:none}
-  /* legacy: filterbaren finns kvar i den exporterade HTML:en tills exporten byggs om */
-  /* ---------- samlat, klistrat kontrollband: sök · taggar · sortera · export ---------- */
+  /* ---------- samlat, klistrat kontrollband: sök · sortering · filter ---------- */
   #controlband{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:14px 0 6px;
     padding:9px 12px;background:rgba(244,241,234,.94);border:1px solid var(--line);border-radius:9px;
     position:sticky;top:0;z-index:30;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
@@ -301,29 +273,13 @@
   #controlband #clearfilter{margin-left:0}
   #controlband .cardctrls{display:flex;align-items:center;flex-wrap:wrap;gap:9px}
   #controlband .tagbar{flex:1 1 100%;margin:1px 0 0}
-  #controlband #dlctrls{display:flex;align-items:center;gap:8px;margin-left:auto}
   #printhead{display:none}
   @media print{
-    #controlband,.modebar,#dlctrls,#clearfilter,.reptabs,.rephint,.legend{display:none !important}
+    #controlband,#dlctrls,#clearfilter,.legend{display:none !important}
     #printhead{display:block;font:600 15px/1.4 'IBM Plex Sans',sans-serif;margin:0 0 12px;color:var(--ink)}
     body{background:#fff;margin:10mm}
     .q,tr,.ftcard{break-inside:avoid}
   }
-  /* ---------- summering: lyft det handlingsdrivande, tona ned det rent beskrivande ---------- */
-  /* totalrapport */
-  table.totaltable{width:100%;border-collapse:collapse;font-size:13px}
-  table.totaltable th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);
-    font-weight:600;padding:7px 10px;border-bottom:2px solid var(--line)}
-  table.totaltable th.num,table.totaltable td.num{text-align:right;font-family:"IBM Plex Mono",monospace}
-  table.totaltable td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
-  table.totaltable tr.trexcl td{background:#f0ede5;opacity:.7}
-  @media print{ table.totaltable .trex{display:none} }
-  .trexcltag{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
-    color:#7a5a14;background:#f0e6cc;border-radius:4px;padding:1px 5px;margin-left:4px;vertical-align:middle}
-  table.totaltable tr:hover td{background:#faf9f5}
-  /* action list */
-  .actionrow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;
-    border:1px solid var(--line);background:var(--card);border-radius:8px;padding:9px 13px;margin-bottom:6px;cursor:pointer;transition:.12s}
   /* advice blocks in cards */
   .advbox{margin-top:13px;border-top:1px solid var(--line);padding-top:11px;display:flex;flex-direction:column;gap:9px}
   .adv{border-radius:8px;padding:9px 12px;background:#faf8f2;border:1px solid var(--line)}
@@ -354,31 +310,6 @@
   .advbucket{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin:4px 0 1px}
   .advnote{font-size:12.5px;color:var(--muted);background:#eef2f4;border:1px solid #d5dee3;border-radius:8px;padding:9px 12px;line-height:1.5}
   .nnote{margin:0 0 4px}
-  .panel.metric{margin:4px 0 10px;padding:14px 16px}
-  .metrictop{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
-  .metrichead{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
-  .metricbig{font-family:Fraunces,Georgia,serif;font-size:26px;font-weight:600;margin:2px 0 1px}
-  .metricpct{color:var(--accent)}
-  .metricsub{font-size:12.5px;color:var(--muted)}
-  .metricwarn{margin-top:9px;font-size:12.5px;color:#8a5a00;background:#fdf4e3;border:1px solid #f0dcae;border-radius:8px;padding:8px 11px;line-height:1.5}
-  .exctoggle{flex:none;align-self:center;font:inherit;font-size:12.5px;color:var(--ink);background:#f3f1ea;border:1px solid #d9d5c8;border-radius:7px;padding:6px 11px;cursor:pointer;transition:.12s}
-  .exctoggle:hover{border-color:var(--ink)}
-  .excpanel{margin-top:12px;border-top:1px solid var(--line);padding-top:11px}
-  .exchint{font-size:12px;color:var(--muted);margin-bottom:9px}
-  .exchint a{color:var(--accent)}
-  .excgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:5px 14px}
-  .excrow{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3px 5px;border-radius:6px;cursor:pointer}
-  .excrow:hover{background:#f3f1ea}
-  .excrow input{margin:0;cursor:pointer}
-  .excrow .exnum{font-weight:600;min-width:64px}
-  .excrow .extype{font-size:11px;color:var(--muted);min-width:46px}
-  .excrow .exmax{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);margin-left:auto}
-  .excrow.exoff{opacity:.62}
-  .excrow.exoff .exnum,.excrow.exoff .exname{text-decoration:line-through}
-  .excrow .exreason{font:inherit;font-size:11px;padding:2px 4px;border:1px solid var(--line);border-radius:5px;
-    background:#fff;color:var(--ink);margin-left:6px;flex-basis:100%}
-  .excrow.exoff .exmax{text-decoration:none}
-  .excrow .exname{font-size:11px;color:var(--accent);font-family:"IBM Plex Mono",monospace}
   .code .qtitle{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:500;color:var(--accent);background:#eef4ef;border:1px solid #d4e4d8;border-radius:5px;padding:1px 6px;margin-left:8px}
   .ftcard .fttag{font-size:11px;color:var(--muted);background:#f0eee7;border:1px solid #ddd8cb;border-radius:5px;padding:1px 7px;margin-left:8px}
   .ftrow{display:flex;align-items:center;gap:10px}
@@ -387,15 +318,6 @@
   .ftbar{height:100%;background:var(--accent);border-radius:5px}
   .ftcnt{font-family:"IBM Plex Mono",monospace;font-size:12px;min-width:74px}
   .ftcnt small{color:var(--muted)}
-  .goodrow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:inherit;
-    border:1px solid #cfe3d7;border-left:4px solid var(--accent);cursor:pointer;transition:.12s;
-    background:#f3f8f5;border-radius:8px;padding:8px 13px;margin-bottom:6px;font-size:13px}
-  .advexpand{margin-top:2px}
-  .advexpand>summary{font-size:12.5px;color:var(--accent);cursor:pointer;font-weight:600;list-style:none;padding:4px 0}
-  .advexpand>summary::before{content:"▸ ";font-size:11px}
-  .advexpand[open]>summary::before{content:"▾ "}
-  .advexpand>summary:hover{text-decoration:underline}
-  .advexpand-body{display:flex;flex-direction:column;gap:9px;margin-top:8px;padding-left:10px;border-left:2px solid var(--line)}
   footer{margin-top:40px;color:var(--muted);font-size:12px;text-align:center;line-height:1.6}
   .credit{margin-top:8px;color:var(--ink)}
   .credit b{font-weight:600}
@@ -430,13 +352,13 @@
     </div>
   </div>
 
-  <div class="stepbar" id="rolebar">
-    <div class="modeseg" id="roleseg">
-      <button id="role-prep" class="modebtn" type="button" title="Släpp Insperas filer och kombinera dem till en datafil."><span class="stepno">1</span> Förbered filer</button>
+  <div class="stepbar" id="stepbar">
+    <div class="modeseg" id="stepseg">
+      <button id="step-prep" class="modebtn" type="button" title="Släpp Insperas filer och kombinera dem till en datafil."><span class="stepno">1</span> Förbered filer</button>
       <button id="step-triage" class="modebtn" type="button" title="Flervalsfrågor som kan behöva rättas i facit eller exkluderas. Går att göra innan essäfrågorna är rättade."><span class="stepno">2</span> Hitta problemfrågor</button>
       <button id="step-report" class="modebtn" type="button" title="Alla frågor efter rättningen. Härifrån skapas rapporterna till temagrupperna och tentamensstatistiken."><span class="stepno">3</span> Skapa rapporter</button>
     </div>
-    <span class="modehint" id="rolehint"></span>
+    <span class="modehint" id="stephint"></span>
     <div id="step-report-note" class="stepnote"></div>
   </div>
   <div class="panel" id="uploadpanel">
@@ -445,11 +367,11 @@
       <h2>Förbered filer</h2>
       <p>Släpp filerna från Inspera. De kombineras till en datafil, som du sparar eller går vidare med. Studenternas skrivna svar, rättarnamn, tider, extratid och alla id tas bort, och kandidatnumren ersätts av löpnummer. Insperas slutbetyg och totalpoäng följer med, så att rättningen kan kontrolleras i steg 3. Inga resultat visas här.</p>
     </div>
-    <div id="exambox" class="drop exambox hidden">
+    <div id="databox" class="drop databox hidden">
       <label>Kombinerad datafil</label>
       <div class="hint">Välj den kombinerade datafilen som sparades i steg 1. Den heter <b>datafil_….json</b>.</div>
-      <input type="file" id="examfile" accept=".html,.htm,.json,text/html,application/json">
-      <div class="got" id="got-exam"></div>
+      <input type="file" id="datafile" accept=".html,.htm,.json,text/html,application/json">
+      <div class="got" id="got-data"></div>
     </div>
     <div class="drops" id="drops">
       <div class="drop" id="d-json">
@@ -482,7 +404,6 @@
     <div class="computebar">
       <button id="prep-save" class="btn-primary hidden" type="button" disabled title="Sparar den kombinerade datafilen, som väljs i steg 2 och 3. Den är inte analyserad än.">Spara kombinerad datafil</button>
       <button id="prep-next" class="btn-ghost btn-next hidden" type="button" disabled title="Fortsätt själv med filerna du har valt här. De ligger kvar om du går tillbaka.">Gå vidare till steg 2</button>
-      <span class="computehint" id="computehint"></span>
     </div>
     <div id="prep-receipt" class="hidden"></div>
     <div id="prep-note" class="hidden">Filerna från Inspera kombineras till <b>en datafil</b>. Den är inte analyserad än; analysen görs i steg 2 och 3. <b>Spara kombinerad datafil</b> ger en fil som väljs i steg 2 och 3, av dig eller av någon annan. Med <b>Gå vidare till steg 2</b> fortsätter du själv direkt, och filerna du har valt här ligger kvar om du går tillbaka. Gör steg 1 två gånger per tenta: direkt efter tentan, så att problemfrågor kan hittas före betygssättningen, och en gång till när allt är rättat, då med nya filer från Inspera. Datafilen är minimerad, inte anonym. Varje rad är en students poängmönster och kan på en liten omtenta kännas igen av den som vet vilka som skrev. Behandla filen som tentamaterial och dela den bara med den som ska göra steg 2 och 3. Den innehåller också tentans frågor.</div>
@@ -515,7 +436,6 @@
     <div class="modehint" id="modehint"></div>
     <div id="viewstub" class="viewstub hidden"></div>
     <div class="nnote" id="nnote"></div>
-    <div id="passmetric"></div>
 
     <div id="controlband">
       <input type="text" id="search" placeholder="Sök">
@@ -555,12 +475,12 @@
 
 <script>
 "use strict";
-/* Sidans egen källa, fångad innan något i den har ändrats och innan någon fil har lästs in. Examinatorns fil
-   byggs ur den (buildExaminerFile) – den innehåller därför aldrig något annat än verktyget självt. */
+/* Sidans egen källa, fångad innan något i den har ändrats och innan någon fil har lästs in. Den äldre HTML-filen
+   med inbäddad data byggs ur den (buildExaminerFile) – den innehåller därför aldrig något annat än verktyget självt. */
 const PRISTINE_HTML = (typeof document!=="undefined" && document.documentElement && document.documentElement.outerHTML) || "";
 const pdfjsLib = window.pdfjsLib;
 // Skydda mot att hela sidan vitskärmar om pdf.js-CDN:en är blockerad (t.ex. på ett låst
-// institutionsnät). Utan pdf.js kan man inte läsa en PDF, men hjälpen, examinatorns filval och
+// institutionsnät). Utan pdf.js kan man inte läsa en PDF, men hjälpen, valet av datafil och
 // resten av verktyget fungerar ändå.
 if (pdfjsLib && pdfjsLib.GlobalWorkerOptions)
   pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
@@ -569,10 +489,11 @@ const $ = s => document.querySelector(s);
 const logEl = $("#log");
 function log(m){ logEl.textContent = m; }
 /* Justerbara gränser. Ändrar bara märkningar och vilka kort som får en fråga/ett tips – aldrig mätvärdena.
-   Minsta underlag (MIN_N_DIST, n>=30) och gränserna 0,10/0,30 för diskrimineringsetiketterna ligger fast. */
+   Minsta underlag (MIN_N_DIST för svårighet och distraktorer, n ≥ 30 för diskriminering) och gränserna 0,10/0,30
+   för diskrimineringsetiketterna ligger fast. */
 const TH_DEFAULT = { easy:90, hard:60, goodDisc:0.20, pass:65 };
 const TH_RANGE   = { easy:[70,100], hard:[30,70], goodDisc:[0.10,0.30], pass:[50,100] };
-const TH_LABEL   = { easy:"Lätt från (% rätt)", hard:"Svår under (% rätt)", goodDisc:"God diskriminering från (r)", pass:"Godkäntgräns (%)" };
+const TH_LABEL   = { easy:"Lätt från (% rätt)", hard:"Svår under (% rätt)", goodDisc:"God diskriminering från (r)" };   // G-gränsen har ett eget fält (#g-pct)
 const state = { pdfMcqs:null, jsonFiles:[], tags:null, activeTags:{}, facets:{}, mode:"edu", view:"pre-mcq", excluded:new Map(), comments:new Map(), th:Object.assign({},TH_DEFAULT), prep:false, embedded:false };
 function setThreshold(key, value){
   if(!Object.prototype.hasOwnProperty.call(TH_RANGE,key)) return false;
@@ -585,19 +506,17 @@ function setThreshold(key, value){
   if(key==="easy" && x<=state.th.hard) return false;
   state.th[key]=x; return true;
 }
-/* withPass=false (temarapporten): godkäntgränsen är examinatorns och varken räknas som anpassad eller återställs där –
-   godkäntandelen i rapporten är räknad med den. */
+/* withPass=false (så anropas de från inställningspanelen, i appen och i temarapporten): G-gränsen räknas inte som en
+   anpassad gräns och återställs inte. Den sätts i sitt eget fält på rapportsidan. */
 function thresholdsCustom(withPass){ return Object.keys(TH_DEFAULT).some(k=>(withPass!==false || k!=="pass") && state.th[k]!==TH_DEFAULT[k]); }
 function resetThresholds(withPass){ state.th=Object.assign({},TH_DEFAULT, withPass===false ? {pass:state.th.pass} : {}); }
 function thFmt(key){ return key==="goodDisc" ? state.th.goodDisc.toFixed(2).replace(".",",") : String(state.th[key]); }
-function thresholdsText(withPass){
-  return `Lätt från ${thFmt("easy")} % · Svår under ${thFmt("hard")} % · God diskriminering från ${thFmt("goodDisc")}`
-       + ((withPass && state.th.pass!==TH_DEFAULT.pass) ? ` · Godkäntgräns ${thFmt("pass")} %` : "");
+function thresholdsText(){
+  return `Lätt från ${thFmt("easy")} % · Svår under ${thFmt("hard")} % · God diskriminering från ${thFmt("goodDisc")}`;
 }
-/* Inställningspanelen: dold tills någon klickar på "Inställningar". Samma kod i appen och i temarapporten
-   (withPass=false där – godkäntgränsen ändrar godkäntandelen och hör till examinatorn). */
-function settingsHtml(withPass){
-  const keys = withPass ? ["easy","hard","goodDisc","pass"] : ["easy","hard","goodDisc"];
+/* Inställningspanelen: dold tills någon klickar på "Inställningar". Samma kod i appen och i temarapporten. */
+function settingsHtml(){
+  const keys = ["easy","hard","goodDisc"];
   return `<div class="setgrid">` + keys.map(k=>`<label class="setrow"><span>${TH_LABEL[k]}</span>`
       + `<input type="text" inputmode="decimal" class="setinp" data-th="${k}" value="${thFmt(k)}" size="5">`
       + `<span class="setrange">${String(TH_RANGE[k][0]).replace(".",",")}–${String(TH_RANGE[k][1]).replace(".",",")}</span></label>`).join("")
@@ -608,11 +527,11 @@ function renderThCustom(withPass){
   const el=$("#th-custom"); if(!el) return;
   if(!thresholdsCustom(withPass)){ el.className="hidden"; el.innerHTML=""; return; }
   el.className="thcustom";
-  el.innerHTML=`<b>Anpassade gränser:</b> ${thresholdsText(withPass)} <button type="button" class="linkbtn" id="th-reset">Återställ</button>`;
+  el.innerHTML=`<b>Anpassade gränser:</b> ${thresholdsText()} <button type="button" class="linkbtn" id="th-reset">Återställ</button>`;
 }
 function wireSettings(withPass, onChange){
   const open=$("#settings-open"), panel=$("#settings"); if(!open || !panel) return;
-  const draw=()=>{ panel.innerHTML=settingsHtml(withPass); renderThCustom(withPass); };
+  const draw=()=>{ panel.innerHTML=settingsHtml(); renderThCustom(withPass); };
   const reset=()=>{ resetThresholds(withPass); draw(); onChange(); renderThCustom(withPass); };
   open.addEventListener("click", ()=>{ panel.classList.toggle("hidden"); if(!panel.classList.contains("hidden")) draw(); });
   panel.addEventListener("change", e=>{
@@ -624,8 +543,8 @@ function wireSettings(withPass, onChange){
   panel.addEventListener("click", e=>{ if(e.target.closest("#set-reset")) reset(); });
   document.addEventListener("click", e=>{ if(e.target.closest && e.target.closest("#th-reset")) reset(); });
 }
-/* Vyn före betygssättning: bara det som statistiken pekar ut, eller alla flervalsfrågor reducerat (Kajsa 21 nov 2026). */
-function isPre(){ return typeof EMBED==="undefined" && typeof activeView==="function" && activeView().id==="pre-mcq"; }
+/* Steg 2, före betygssättning: bara det som statistiken pekar ut, eller alla flervalsfrågor (Kajsa 21 nov 2026). */
+function isPre(){ return typeof EMBED==="undefined" && activeView().id==="pre-mcq"; }
 function modeHint(m){
   const pre=" Diskrimineringen räknas mot poängen på flervalsdelen, eftersom essäfrågorna inte är rättade än.";
   return m==="ask" ? "Hur varje fråga fungerade. Där svaren följer ett mönster står en eller två frågor att ställa sig."
@@ -634,28 +553,21 @@ function modeHint(m){
     : isPre() ? "Alla flervalsfrågor med mätvärden, för överblick över svårighet och diskriminering." + pre
     : "Alla frågor efter rättningen, med tolkningar och råd där statistiken ger anledning. Diskrimineringen räknas mot poängen på hela tentan."; }
 
-/* ---------- vy-registry (toppnivå: väljer analys, kriterium och omfång) ----------
-   Varje vy är ren konfiguration; render() läser aktiv vy och kör computeDiscrimination med
-   dess kriterium. layout 'mcq' = de befintliga korten (single-best-MCQ); 'total' = ny radvy
-   över alla frågor (byggs i steg 4). built:false renderar en platshållare tills vyn finns. */
+/* ---------- De två vyerna ----------
+   En vy per steg: steg 2 visar "pre-mcq" och steg 3 visar "final" (setStep väljer). Varje vy är ren konfiguration;
+   render() läser den aktiva vyn och räknar diskrimineringen med dess kriterium. layout "mcq" = bara MCQ-korten,
+   "all" = MCQ-, essä- och flersvarskort på samma sida. */
 const VIEWS = [
-  { id:"pre-mcq",   label:"Preliminär MCQ",  phase:"Innan rättning", criterion:"mcq",
-    layout:"mcq",   needsFullyGraded:false, needsPdf:true,  built:true,  showFreetext:false, showPassMetric:false, showExemplary:false,
-    modes:[{id:"action",label:"Att se över"},{id:"edu",label:"Alla flervalsfrågor"}],
-    hint:"Flervalsfrågor som kan behöva rättas i facit eller exkluderas före betygssättningen. Diskrimineringen (r<sub>pb</sub>) räknas mot poängen på flervalsdelen, eftersom essäfrågorna inte är rättade än." },
+  { id:"pre-mcq",   label:"Preliminär MCQ",  criterion:"mcq",   layout:"mcq",   needsFullyGraded:false,
+    modes:[{id:"action",label:"Att se över"},{id:"edu",label:"Alla flervalsfrågor"}] },
   // Hela rapporten är en sida med alla frågetyper (Kajsa 20 nov 2026). Frågetyp väljs i filtret, och översikten
   // i tabellform är en egen export (exportOverview).
-  { id:"final",     label:"Hela rapporten",  phase:"Efter rättning", criterion:"whole",
-    layout:"all",   needsFullyGraded:true,  needsPdf:true,  built:true,  showFreetext:false, showPassMetric:false, showExemplary:true,
-    modes:[{id:"edu",label:"Med råd"},{id:"simple",label:"Bara mätvärden"}],
-    hint:"" },
+  { id:"final",     label:"Hela rapporten",  criterion:"whole", layout:"all",   needsFullyGraded:true,
+    modes:[{id:"edu",label:"Med råd"},{id:"simple",label:"Bara mätvärden"}] },
 ];
 function activeView(){ return VIEWS.find(v=>v.id===state.view) || VIEWS[0]; }
-function critLabel(){
-  const c = (typeof activeView==="function") ? activeView().criterion
-          : (typeof EMBED!=="undefined" && EMBED ? EMBED.criterion : "mcq");
-  return c==="whole" ? "poäng på hela tentan" : "poäng på flervalsdelen";
-}
+/* I temarapporten finns activeView() också (rapportens wrapper ger den inbakade vyn), så samma kod gäller där. */
+function critLabel(){ return activeView().criterion==="whole" ? "poäng på hela tentan" : "poäng på flervalsdelen"; }
 /* Polytom item–total-tolkning (fler-svars och fritext): n≥30 + spridning i poängen.
    Minoritetsgrindar gäller bara dikotoma frågor, så de ersätts här av en variansgrind. */
 function polyInfo(scores, r, max, typ){
@@ -682,25 +594,15 @@ function polyInfo(scores, r, max, typ){
   return {cls,value:`r ${fmt}`,label,
     tip:`Korrigerad item–total-korrelation mot studentens ${critLabel()} (exkl. frågan) – hur väl poängen på frågan följer studentens prestation i stort. 0,20+ god, 0,30+ mycket god. n=${n}.`};
 }
-function stepViews(){
-  return VIEWS.filter(v=> state.step==="triage" ? v.id==="pre-mcq" : state.step==="report" ? v.id!=="pre-mcq" : true);
-}
+/* Rubriken över korten: vilket steg som visas. Stegen har var sin vy, så det finns inga flikar att välja mellan. */
 function renderViewTabs(){
   const host=$("#viewtabs"); if(!host) return;
-  const cur=activeView(), list=stepViews();
-  host.innerHTML =
-    (list.length>1 ? `<div class="reptabs">` +
-      list.map(v=>`<button class="reptab ${v.id===state.view?'on':''}" data-view="${v.id}">`+
-        `<span class="phase">${v.phase}</span>${v.label}${v.built?'':' ·'}</button>`).join("") + `</div>`
-      : `<div class="steptitle">${state.step==="triage" ? "Problemfrågor före betygssättning" : esc(cur.label)}</div>`);
-  host.querySelectorAll(".reptab").forEach(b=>b.addEventListener("click",()=>{
-    if(b.dataset.view===state.view) return;
-    state.view=b.dataset.view; render();
-  }));
+  host.innerHTML = `<div class="steptitle">${state.step==="triage" ? "Problemfrågor före betygssättning" : esc(activeView().label)}</div>`;
 }
-/* ---------- Examinatorns flöde: välj filen → välj vad du vill göra ----------
-   Steg "choose" visar valet; "triage" = problemfrågor före betygssättning (bara flervalsfrågorna, mot
-   flervalsdelens poäng, med exkludering); "report" = hela rapporten efter rättning, med export. */
+/* ---------- Steg 2 och 3: datafilen väljs, och det valda steget visas ----------
+   "triage" = problemfrågor före betygssättning (bara flervalsfrågorna, mot flervalsdelens poäng), "report" = hela
+   rapporten efter rättning, med exporterna. extractEmbedded tar datafilen som ren JSON, eller ur en äldre HTML-fil
+   med datan inbäddad. */
 function extractEmbedded(text){
   const t=String(text||"");
   const m=t.match(new RegExp("<scr"+"ipt type=\"application/json\" id=\"fl-data\">([\\s\\S]*?)</scr"+"ipt>"));
@@ -708,7 +610,7 @@ function extractEmbedded(text){
   try{ if(isPackage(JSON.parse(cand))) return cand; }catch(_){}
   throw new Error("Det här är inte en datafil från steg 1. Välj filen som heter datafil_….json.");
 }
-async function loadExaminerFile(text, name){
+async function loadDataFile(text, name){
   try{
     const json=extractEmbedded(text);
     state.json=null; state.step=null;
@@ -724,7 +626,7 @@ async function loadExaminerFile(text, name){
 function setStep(step){
   const res=$("#results");
   if(!state.json) step=null;
-  if(step==="choose") step = state.want || "triage";           // "välj" finns inte längre: det valda steget visas direkt
+  if(step==="choose") step = state.want || "triage";           // "choose" = det steg som är valt i stegraden
   const ungraded = !!(state.json && !state.json.fullyGraded);
   if(step==="report" && ungraded) step="triage";
   state.step=step||null;
@@ -741,8 +643,8 @@ function setStep(step){
 /* Stegraden: 1 Förbered filer, 2 Hitta problemfrågor, 3 Skapa rapporter. Vilket steg som är valt, och adressen. */
 function renderStepBar(){
   const cur = state.prep ? "prep" : (state.step || state.want || "triage");
-  [["#role-prep","prep"],["#step-triage","triage"],["#step-report","report"]].forEach(([sel,k])=>{ const b=$(sel); if(b) b.classList.toggle("on", cur===k); });
-  const h=$("#rolehint");
+  [["#step-prep","prep"],["#step-triage","triage"],["#step-report","report"]].forEach(([sel,k])=>{ const b=$(sel); if(b) b.classList.toggle("on", cur===k); });
+  const h=$("#stephint");
   if(h) h.textContent = state.prep ? "Släpp Insperas filer. Spara sedan den kombinerade datafilen, eller gå vidare till steg 2." : (state.json ? "" : "Välj datafilen från steg 1.");
   try{ if(typeof history!=="undefined" && history.replaceState) history.replaceState(null, "", cur==="prep" ? "#forbered" : cur==="report" ? "#rapporter" : "#problemfragor"); }catch(_){}
 }
@@ -755,7 +657,7 @@ async function goStep(which){
   if(state.prep && hasFiles && (state.prepDirty || !state.json)){
     let text=null;
     try{ const inp=await prepInputs(); if(inp.jsonObjs.length){ prepReceipt(inp); text=JSON.stringify(buildPackage(inp)); keepPrepInputs(inp); } }catch(_){ text=null; }
-    if(text){ setPrep(false); await loadExaminerFile(text, "datafilen"); state.prepDirty=false; renderStepBar(); return; }
+    if(text){ setPrep(false); await loadDataFile(text, "datafilen"); state.prepDirty=false; renderStepBar(); return; }
   }
   if(state.prep) setPrep(false);
   else if(state.json) setStep(which);
@@ -771,8 +673,7 @@ function keepPrepInputs(inp){
    väger ett enda svar för mycket (1 svar = 100/n procentenheter) för att flagga något. */
 const MIN_N_DIST = 20;
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
-   funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum.
-   Låt filnamnet följa samma nummer (mcq_analys_v3_12_0.html). */
+   funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum. */
 const VERSION = "3.26.0";
 const UPDATED = "2026-11-21";
 
@@ -882,8 +783,8 @@ function wireHelp(){
 /* Exkludering = frågan dras ur poängsättningen. state.excluded: Map(frågenummer → orsak).
    Allt räknas om på den reducerade tentan; frågan visas kvar men märkt. */
 const EXCL_REASONS = ["Tekniskt fel","Låg kvalitet","Annan orsak"];
-/* Kommentar på en fråga: examinatorn skriver den på kortet, och den följer med till betygskollegiet (Problemfrågor)
-   och till temagrupperna (Temarapporten), där den bara kan läsas. Finns bara så länge filen är öppen. */
+/* Kommentar på en fråga: skrivs på kortet och följer med till betygskollegiet (Problemfrågor) och till
+   temagrupperna (Temarapporten), där mottagaren kan lägga till egna. Finns bara så länge filen är öppen. */
 function commentHtml(seq){
   seq=String(seq);
   const t=(state.comments && state.comments.get(seq)) || "";
@@ -1186,12 +1087,13 @@ function optPbis(optData, val){
   if(sxx===0||syy===0) return null;
   return sxy/Math.sqrt(sxx*syy);
 }
-/* computeDiscrimination(model, {criterion}) → {qn: r}
-   Kärnan i flervy-arkitekturen: statistiken är frikopplad från kriteriet.
-   criterion:'mcq'   → varje MCQ:s 0/1-poäng mot flervalsdelens summa (korrigerad). Allt som finns
-                       FÖRE rättning. Identisk med tidigare inline-beräkning (verifierad).
-   criterion:'whole' → varje frågas poäng (MCQ 0/1, fritext 0..max) mot hela tentans poäng
-                       (korrigerad item-rest). Kräver färdigrättad tenta. Vy 2 + 3.
+/* computeDiscrimination(model, {criterion, excluded}) → {qn: r}
+   Statistiken är frikopplad från kriteriet, så att stegen kan räkna mot olika totalpoäng.
+   criterion:'mcq'   → varje MCQ:s 0/1-poäng mot flervalsdelens summa (korrigerad). Det som finns
+                       FÖRE rättning: steg 2.
+   criterion:'whole' → varje frågas poäng (MCQ 0/1, essä och flersvar 0..max) mot hela tentans poäng
+                       (korrigerad item-rest). Kräver färdigrättad tenta: steg 3 och temarapporten.
+   excluded = state.excluded (strängnycklar), därav String() i jämförelserna.
    Förutsätter model = parseJSON:s returobjekt (agg, mcqSeqs, qMeta, cohortScores). */
 function computeDiscrimination(model, {criterion, excluded}){
   const ex = excluded || new Set();
@@ -1199,7 +1101,7 @@ function computeDiscrimination(model, {criterion, excluded}){
   const idx={}; model.qMeta.forEach((m,i)=>idx[m.num]=i);
   if(criterion==='mcq'){
     if(!ex.size){
-      for(const qn of model.mcqSeqs) out[qn]=pearson(model.agg[qn].pairs, true);   // identiskt med idag
+      for(const qn of model.mcqSeqs) out[qn]=pearson(model.agg[qn].pairs, true);   // paren är redan räknade i parseJSON
     } else {
       // bygg om MCQ-delsumman (0/1) ur cohortScores, exkl. exkluderade MCQ
       const inc=model.mcqSeqs.filter(qn=>!ex.has(String(qn)));
@@ -1220,11 +1122,11 @@ function computeDiscrimination(model, {criterion, excluded}){
   }
   return out;
 }
-/* computeOptDisc(model, {criterion}) → {qn: Map(slot → r)}
+/* computeOptDisc(model, {criterion, excluded}) → {qn: Map(slot → r)}
    Per-alternativ point-biserial (valde slot 0/1 mot korrigerad total) per aktivt kriterium.
-   'mcq' återanvänder förberäknade a.optRpb (mot flervalsdelens summa, identiskt med tidigare);
-   'whole' räknar om mot hela tentans poäng – så vy 2:s distraktorbedömningar är konsekventa
-   med dess headline-r_pb. Endast studenter som svarade med enkelval ingår (då slot är definierad). */
+   'mcq' återanvänder förberäknade a.optRpb (mot flervalsdelens summa) när inget är exkluderat;
+   'whole' räknar om mot hela tentans poäng – så att omdömena om distraktorerna i hela rapporten stämmer
+   med frågans r_pb där. Endast studenter som svarade med enkelval ingår (då slot är definierad). */
 function computeOptDisc(model, {criterion, excluded}){
   const ex = excluded || new Set();
   const out={};
@@ -1258,7 +1160,7 @@ function computeOptDisc(model, {criterion, excluded}){
   return out;
 }
 
-/* ---------- minimering (tentapaket) ----------
+/* ---------- minimering (datafilen) ----------
    Bygger en ny, minimerad kopia av en Inspera-resultatfil. VITLISTA: bara de fält som räknas upp här
    följer med – allt annat (fritextsvar, rättare, tider, extratid, betyg, alla id) faller bort, även
    fält som Inspera lägger till i framtiden. Bygg alltid nya objekt fält för fält; kopiera aldrig ett
@@ -1297,10 +1199,11 @@ function minimizeInspera(obj, offset){
   return out;
 }
 
-/* ---------- tentapaket ----------
-   Kurssamordnaren bygger EN fil som examinatorn öppnar: minimerad resultatdata (minimizeInspera),
-   frågetexterna som de lästes ur PDF:en och taggfilens rader. Paketet är minimerat, inte anonymt
-   (varje rad är en students poängmönster) och hanteras som tentamaterial. */
+/* ---------- datafilen (i koden: paketet) ----------
+   Steg 1 bygger EN fil som steg 2 och 3 öppnar: minimerad resultatdata (minimizeInspera), frågetexterna
+   som de lästes ur PDF:en och taggfilens rader. Paketet är minimerat, inte anonymt (varje rad är en
+   students poängmönster) och hanteras som tentamaterial. Formatnamnet är det äldre "tentapaket", så att
+   redan sparade filer går att öppna. */
 const PKG_FORMAT = "frageluppen-tentapaket";
 const PKG_VERSION = 1;
 /* Tentans namn: det som resultatfilernas titlar har gemensamt från början (en fil per ort har ortens namn sist). */
@@ -1353,8 +1256,9 @@ function openPackage(pkg){
   return { jsonObjs:pkg.data, pdfMcqs, tagRows:pkg.tagRows||null, examWarning:pkg.examWarning||null };
 }
 
-/* Examinatorns fil: hela verktyget med ett tentapaket inbäddat. Kurssamordnaren sparar den, examinatorn öppnar den
-   med ett dubbelklick och hamnar direkt i analysen (ingen uppladdning). Datan läggs som ett JSON-block i <head>;
+/* Det äldre filformatet: hela verktyget med paketet inbäddat, så att filen öppnar direkt i analysen. Datafilen
+   sparas numera som ren JSON (saveDataFile); funktionen finns kvar för de äldre HTML-filerna och deras tester.
+   Datan läggs som ett JSON-block i <head>;
    "<" skrivs som \u003c så att ingen frågetext kan avsluta blocket eller starta ett skript. */
 function buildExaminerFile(pkg){
   const src = PRISTINE_HTML;
@@ -1364,16 +1268,16 @@ function buildExaminerFile(pkg){
   const block = "<scr"+"ipt type=\"application/json\" id=\""+"fl-data"+"\">" + JSON.stringify(pkg).replace(/</g,"\\u003c") + "</scr"+"ipt>";
   return "<!DOCTYPE html>\n" + src.slice(0,i) + block + src.slice(i);
 }
-/* Läser den inbäddade tentan, om filen är en examinatorsfil. Ger {text} eller null; tolkningen sker i tryRun
-   så att en trasig fil ger samma felmeddelande som en trasig uppladdning. */
+/* Läser den inbäddade datan, om sidan är en äldre HTML-fil med paketet i sig. Ger {text} eller null; tolkningen
+   sker i tryRun så att en trasig fil ger samma felmeddelande som en trasig datafil. */
 function readEmbedded(){
   const el = (typeof document!=="undefined") ? document.getElementById("fl-data") : null;
   const t = el && el.textContent;
   return (t && String(t).trim()) ? {text:String(t)} : null;
 }
-/* Avgör vad en körning ska bygga på. Exakt ett objekt som är ett paket → öppna det; PDF eller taggar
-   som examinatorn själv har laddat gäller före paketets (taggfiler kommer ofta sent, och en rättad
-   PDF-läsning ska kunna nå en gammal tenta). Paket + andra filer → fel, aldrig dubbelräkning. */
+/* Avgör vad en körning ska bygga på. Exakt ett objekt som är ett paket → öppna det. Verktyget ger numera
+   alltid ett paket och inget eget (loadDataFile); grenarna för råfiler och för egen PDF eller taggfil (loaded)
+   finns kvar för de äldre vägarna och prövas av testerna. Paket + andra filer → fel, aldrig dubbelräkning. */
 function resolveInputs(objs, loaded){
   const own = loaded || {};
   if(objs.some(o=>!isPlainObj(o))) throw new Error("Resultatfilen har inte det format som Inspera exporterar.");
@@ -1385,7 +1289,7 @@ function resolveInputs(objs, loaded){
   return { jsonObjs:P.jsonObjs, pdfMcqs: own.pdfMcqs || P.pdfMcqs, tagRows: own.tagRows || P.tagRows,
            fromPackage:true, examWarning: own.pdfMcqs ? null : P.examWarning };
 }
-/* Kvittot kurssamordnaren ser innan paketet sparas – aldrig några resultat. */
+/* Kvittot i steg 1, innan datafilen sparas – aldrig några resultat. */
 function prepReceipt({jsonObjs, pdfMcqs, tagRows}){
   if(jsonObjs.some(isPackage)) throw new Error("Det här är redan en datafil från steg 1. Släpp resultatfilerna från Inspera i stället.");
   if(jsonObjs.some(o=>!isPlainObj(o))) throw new Error("Resultatfilen har inte det format som Inspera exporterar.");
@@ -1412,7 +1316,7 @@ function parseJSON(jsonObjs){
   // alternativtext. Inspera kodar specialteckenalternativ (Na⁺, H₂CO₃ …) med tom interactionValue, men
   // slot-id:t finns alltid – så slot-baserad räkning tappar aldrig svar även när texten saknas.
   for(const qn of order) agg[qn]={max:null, anyChoice:false, maxSel:0, picks:new Map(), n:0, ncorr:0, total:0,
-    _cc:new Map(), pairs:[], optData:[], noText:0,
+    pairs:[], optData:[],
     slotN:new Map(), slotCorr:new Map(), slotText:new Map()};
   for(const c of cands){
     for(const q of c.ext_inspera_questions){
@@ -1427,10 +1331,9 @@ function parseJSON(jsonObjs){
           const slot=String(r0.ext_inspera_response||"");   // alternativets slot-id (alltid satt för val)
           a.n++; a.picks.set(v,(a.picks.get(v)||0)+1);
           a.slotN.set(slot,(a.slotN.get(slot)||0)+1);
-          if(v && !a.slotText.has(slot)) a.slotText.set(slot,v);   // lär oss slottens text när den finns
-          if(!v) a.noText++;   // Inspera utelämnar alternativtext för alternativ med specialtecken (sub/upphöjt)
+          if(v && !a.slotText.has(slot)) a.slotText.set(slot,v);   // lär oss slottens text när den finns (saknas för specialtecken)
           if(q.ext_inspera_autoScore===q.ext_inspera_maxQuestionScore){
-            a.ncorr++; a._cc.set(v,(a._cc.get(v)||0)+1);
+            a.ncorr++;
             a.slotCorr.set(slot,(a.slotCorr.get(slot)||0)+1);
           }
         }
@@ -1459,18 +1362,17 @@ function parseJSON(jsonObjs){
     }
   }
   for(const qn of mcqSeqs){ const a=agg[qn];
-    if(a._cc.size) a.correctVal=[...a._cc.entries()].sort((x,y)=>y[1]-x[1])[0][0];
     if(a.slotCorr.size) a.correctSlot=[...a.slotCorr.entries()].sort((x,y)=>y[1]-x[1])[0][0];  // slot som rättats som rätt
     a.optRpb = new Map();
     for(const slot of a.slotN.keys()) a.optRpb.set(slot, optPbis(a.optData, slot));  // r_pb per slot
   }
-  // ---- Heltentadata för G-gränsmetriken (hela tentan: auto + manuell rättning) ----
+  // ---- Hela tentan (auto + manuell rättning): underlag för diskrimineringen mot hela tentan och för G-gränsen ----
   // qMeta i frågeordning; cohortScores[k][i] = kandidat k:s poäng på fråga i (autoScore + ev. manuell).
   const titleOf={}; for(const q of cands[0].ext_inspera_questions) titleOf[q.ext_inspera_questionNumber]=q.ext_inspera_questionTitle||"";
-  // Frågetyp efter svarsform: 'single' = single-best-val (≤1 markering) → vy 1/2 om även max===1;
+  // Frågetyp efter svarsform: 'single' = single-best-val (≤1 markering) → MCQ-kort om även max===1;
   // 'multi' = fler-svars-val (partiell poäng); 'text' = konstruerat svar (ingen valruta, auto- el. manuellt rättat).
   const qtype = a => !a.anyChoice ? "text" : (a.maxSel>1 ? "multi" : "single");
-  const qMeta = order.map(qn=>{ const a=agg[qn]; return {num:qn, title:titleOf[qn]||"", max:(a.max||0), isMCQ:mcqSet.has(qn), type:qtype(a)}; });
+  const qMeta = order.map(qn=>{ const a=agg[qn]; return {num:qn, title:titleOf[qn]||"", max:(a.max||0), type:qtype(a)}; });
   const anyManual = order.map(()=>false);
   const anyAuto   = order.map(()=>false);   // någon kandidat har autoScore > 0 → frågan är auto-rättad
   const cohortScores = cands.map(c=>{
@@ -1504,8 +1406,7 @@ function parseJSON(jsonObjs){
   const J={candCount:cands.length, agg, mcqSeqs, qMeta, qTitle:titleOf, cohortScores, ungradedPts, fullyGraded, maxTotal, mcqSlot:mcqSlotByCand, candMeta, zeroWeight, partialZero, candFile,
     insp: cands.map(c=>({grade:(typeof c.ext_inspera_finalGrade==="string" ? c.ext_inspera_finalGrade : ""),
                          total:(typeof c.ext_inspera_totalScore==="number" ? c.ext_inspera_totalScore : null)}))};
-  // Steg 1: diskriminering frikopplad till computeDiscrimination. 'mcq'-kriteriet reproducerar
-  // tidigare inline-r_pb exakt (verifierat mot riktig data). Vyerna väljer kriterium per vy.
+  // Diskrimineringen mot flervalsdelen räknas en gång här; vyerna räknar om med sitt eget kriterium i render().
   J.discMcq = computeDiscrimination(J, {criterion:'mcq'});
   for(const qn of mcqSeqs) agg[qn].rpb = J.discMcq[qn];
   return J;
@@ -1643,7 +1544,6 @@ function buildView(){
     // Bara när minst en slot inte kunde knytas till en rad är kopplingen genuint okänd.
     const unmappedPdf=[];
     if(orphanSlots.length) for(let i=0;i<nopt;i++) if(!usedPdf.has(i)) unmappedPdf.push(i);
-    const noTextN=orphanSlots.reduce((s,o)=>s+(o.hadText?0:o.cnt),0);  // svar på textlösa specialteckenalt.
     const exportGap=orphanSlots.some(o=>!o.hadText);
     const slotAmbiguous=orphanSlots.length>0;   // minst en slot kunde inte knytas till ett PDF-alternativ
     if(unmatched>0) qaFails++;
@@ -1659,9 +1559,9 @@ function buildView(){
       }
     }
     view.push({code:P.code, pts:P.pts, stem:P.stem, opts:P.opts, counts, optPbis:optPbisArr,
-               n:a.n, total:a.total, ncorr:a.ncorr, pcorr:pc, rpb:(state.disc?state.disc[seq]:a.rpb), sig,
+               n:a.n, ncorr:a.ncorr, pcorr:pc, rpb:(state.disc?state.disc[seq]:a.rpb), sig,
                correctIdx, topDist, bestDistIdx, bestDistPbis, unmatched,
-               orphanSlots, unmappedPdf, slotAmbiguous, exportGap, noTextN,
+               orphanSlots, unmappedPdf, slotAmbiguous, exportGap,
                title:(J.qTitle&&J.qTitle[seq])||"",
                tagVals:lookupTagVals(P.code,seq), tags:lookupTagVals(P.code,seq).filter(Boolean),
                tagKey:(lookupTagVals(P.code,seq)[0]||"~"), seq});
@@ -2318,7 +2218,7 @@ const ASK_PSY = { "none-correct":"facit", "rpb-neg":"facit", "dist-pos":"forsvar
                   "target-vs-norm":"ledtrad", "distractor-eff":"distraktor" };
 function askQuestions(v){
   if(isExcluded(v.seq) || !(v.n>=MIN_N_DIST)) return [];
-  const adv=advice(v), hit={};
+  const adv=v.advice||advice(v), hit={};      // render() och xExportRender() har redan räknat råden för korten
   for(const a of adv.l1.concat(adv.l2)){
     const k=ASK_PSY[a.psy]; if(!k || hit[k]) continue;
     const q={key:k, psy:a.psy, text:ASK_TEXT[k]};
@@ -2353,7 +2253,7 @@ function patternSummary(view){
   const easy=withStat.filter(v=>v.pcorr>=state.th.easy);
   if(easy.length) rows.push(Object.assign({key:"latt", seqs:ids(easy),
     head:`${easy.length} av ${N} MCQ-frågor klarades av minst ${thFmt("easy")} %.`, ask:SUM_TEXT.latt}, sub(easy,"latt")));
-  const dead=withStat.filter(v=>{ const a=advice(v); return a.l1.concat(a.l2).some(x=>x.psy==="distractor-eff"); });
+  const dead=withStat.filter(v=>{ const a=v.advice||advice(v); return a.l1.concat(a.l2).some(x=>x.psy==="distractor-eff"); });
   if(dead.length) rows.push(Object.assign({key:"distraktor", seqs:ids(dead),
     head:`I ${dead.length} av ${N} MCQ-frågor valdes minst ett alternativ av färre än 5 %.`, ask:SUM_TEXT.distraktor}, sub(dead,"distraktor")));
   return rows;
@@ -2379,28 +2279,24 @@ function togglePattern(k){
 }
 
 /* ---------- render ---------- */
-function showGate(spec, kind){
+/* Spärr om hela rapporten skulle ritas innan allt är rättat. setStep visar då steg 2 i stället, så spärren nås inte
+   i det vanliga flödet. Den finns kvar som skydd mot att diskrimineringen räknas mot en ofärdig totalpoäng. */
+function showGate(spec){
   const results=$("#results"); results.classList.add("stubmode");
   const stub=$("#viewstub"); stub.classList.remove("hidden");
-  if(kind==="coming"){
-    stub.innerHTML = `<h3>${spec.label}</h3>`+
-      `<p>${spec.hint}<br><br>Den här vyn är inte tillgänglig än. `+
-      `Växla till <b>Preliminär MCQ</b> för den färdiga analysen.</p>`;
-  } else if(kind==="ungraded"){
-    const J=state.json;
-    stub.innerHTML = `<h3>${spec.label} – väntar på rättning</h3>`+
-      `<p>Den här rapporten beräknar r<sub>pb</sub> mot <b>hela tentans poäng</b> och kräver att allt är rättat. `+
-      `Cirka <b>${(+J.ungradedPts.toFixed(1))} p</b> ser ut att vara orättade (konstruerade svar utan vare sig manuell rättning eller auto-poäng). `+
-      `Tills de är rättade och exporterade på nytt blir hela-tentan-kriteriet missvisande.<br><br>`+
-      `Använd <b>Preliminär MCQ</b> så länge – den fungerar utan färdig rättning.</p>`;
-  }
+  const J=state.json;
+  stub.innerHTML = `<h3>${spec.label} – väntar på rättning</h3>`+
+    `<p>Den här rapporten beräknar r<sub>pb</sub> mot <b>hela tentans poäng</b> och kräver att allt är rättat. `+
+    `Cirka <b>${(+J.ungradedPts.toFixed(1))} p</b> ser ut att vara orättade (konstruerade svar utan vare sig manuell rättning eller auto-poäng). `+
+    `Tills de är rättade och exporterade på nytt blir hela-tentan-kriteriet missvisande.<br><br>`+
+    `Använd <b>Preliminär MCQ</b> så länge – den fungerar utan färdig rättning.</p>`;
 }
 function render(){
   renderViewTabs();
   const spec=activeView();
   { const eh=$("#exp-html");                      // temarapporten kräver färdig rättning
     if(eh){ eh.disabled=!(state.json && state.json.fullyGraded); }
-    // Vyn för problemfrågor har inga exporter. Temarapport, översiktstabell och Excel hör till hela rapporten.
+    // Steg 2 har bara exporten Problemfrågor. Temarapport, översiktstabell, Excel och diagram hör till steg 3.
     const tri = state.step==="triage", hx=$("#exp-xlsx"), ho=$("#exp-overview");
     { const hpq=$("#exp-problems"); if(hpq) hpq.classList.toggle("hidden", !tri); }
     { const hc=$("#exp-charts"); if(hc) hc.classList.toggle("hidden", tri); }
@@ -2408,14 +2304,11 @@ function render(){
     { const gc=$("#gctl"); if(gc) gc.classList.toggle("hidden", tri); }
     if(eh) eh.classList.toggle("hidden", tri); if(hx) hx.classList.toggle("hidden", tri); if(ho) ho.classList.toggle("hidden", tri); }
   const results=$("#results"); results.classList.remove("hidden");
-  results.classList.remove("stubmode","totalmode");
-  // Grind 1: obyggd vy → platshållare.
-  if(!spec.built){ showGate(spec,"coming"); return; }
-  // Grind 2 borttagen (v3.24.0): utan PDF byggs MCQ-korten i JSON-läge ur svarsdatan
-  // (synthMcqsFromJson) i stället för att spärras. Läget markeras i #pdfnote nedan.
-  if(spec.needsPdf && !state.pdfMcqs && !state.synthMcqs) state.synthMcqs=synthMcqsFromJson(state.json);
-  // Grind 3: vyn kräver färdigrättad tenta men allt är inte rättat → spärr med förklaring.
-  if(spec.needsFullyGraded && !state.json.fullyGraded){ showGate(spec,"ungraded"); return; }
+  results.classList.remove("stubmode");
+  // Utan PDF byggs MCQ-korten ur svarsdatan (synthMcqsFromJson). Det sägs i #pdfnote nedan.
+  if(!state.pdfMcqs && !state.synthMcqs) state.synthMcqs=synthMcqsFromJson(state.json);
+  // Vyn kräver färdigrättad tenta men allt är inte rättat → spärr med förklaring.
+  if(spec.needsFullyGraded && !state.json.fullyGraded){ showGate(spec); return; }
   $("#viewstub").classList.add("hidden");
   // Diskriminering enligt aktiv vys kriterium (täcker alla frågor för 'whole').
   state.disc = computeDiscrimination(state.json, {criterion:spec.criterion, excluded:state.excluded});
@@ -2431,17 +2324,11 @@ function render(){
   // Lägen är vy-specifika; återställ om aktivt läge inte finns i den här vyn.
   const modeIds = activeView().modes.map(m=>m.id);
   if(modeIds.length && !modeIds.includes(state.mode)) state.mode = modeIds[0];
-  const scored = view.filter(v=>!isExcluded(v.seq));       // exkluderade frågor räknas inte i omdömena
-  const nExcl = view.length - scored.length;
-  const has1=v=>v.advice.l1.length, has2=v=>v.advice.l2.length;
-  const showExe = activeView().showExemplary;
-  const nAction = scored.filter(has1).length;                              // att se över
-  const nEss = state.scored.filter(e=>e.typ==="text").length, nMul = state.scored.filter(e=>e.typ==="multi").length;
-  const nExclAll = nExcl + state.scored.filter(e=>e.excluded).length;
+  const nAction = view.filter(v=>!isExcluded(v.seq) && v.advice.l1.length).length;   // att se över; exkluderade räknas inte
   results.classList.toggle("premode", isPre());
   renderFileLine();
-  renderGLimit();
-  renderGradeNote();
+  { const sd = state.step==="report" ? statsData() : null;   // räknas en gång, till G-gränsen och till jämförelsen med Inspera
+    renderGLimit(sd); renderGradeNote(sd); }
   $("#nnote").innerHTML = state.smallN
     ? `<div class="advnote">Litet underlag: ${esc(state.json.candCount)} studenter. Andel rätt och svarsfördelning visas, men diskriminering (r<sub>pb</sub>) och automatiska omdömen om svårighet och distraktorer kräver fler svar (riktmärke n ≥ 30). Tolka enskilda procenttal försiktigt – ett svar väger ${Math.round(100/Math.max(1,state.json.candCount))} procentenheter.</div>`
     : "";
@@ -2475,85 +2362,31 @@ function render(){
         `De visas som essä- eller flersvarskort i hela rapporten.`;
     } else note.innerHTML="";
   }
-  if(activeView().showPassMetric){ renderPassMetric(); } else { $("#passmetric").innerHTML=""; }
   const modeCount = m => !isPre() ? "" : ` · ${m.id==="action" ? nAction : view.length}`;   // före betygssättning: vad ett klick ger
   $("#modeseg").innerHTML = activeView().modes.map(m=>
     `<button class="modebtn ${m.id===state.mode?'on':''}" data-mode="${esc(m.id)}">${esc(m.label)}${modeCount(m)}</button>`).join("");
   $("#modehint").textContent = modeHint(state.mode);
-  refreshLists();
   buildTagbar();
   drawCards();
 }
-/* Triage-listan visas bara i vyer med triage-läge; "exemplariska" göms i förenklad vy.
-   Fungerar både i appen (activeView) och i den exporterade filen (EMBED.modes). */
-function availableModeIds(){
-  if(typeof activeView==="function") return activeView().modes.map(m=>m.id);
-  return (typeof EMBED!=="undefined" && EMBED && EMBED.modes) ? EMBED.modes.map(m=>m.id) : ["edu"];
-}
-function refreshLists(){ }     // listorna ovanför korten är borttagna; kvar som krok för omritning
-/* ---------- G-gränsmetrik: andel studenter som nått 65 % av hela tentans poäng ----------
-   65 %-gränsen avrundas NEDÅT till heltal poäng; varje students poäng avrundas UPPÅT.
-   Godkänd = ceil(studentpoäng) ≥ floor(0,65 × inkluderad maxpoäng). Frågor kan exkluderas. */
+/* ---------- G-gränsen ----------
+   Gränsen i procent (state.th.pass) av den inkluderade maxpoängen avrundas NEDÅT till hela poäng, och varje students
+   poäng avrundas UPPÅT. Samma två regler i passMetric och i tentamensstatistiken (statsData). */
+function gLimit(maxP){ return Math.floor(state.th.pass/100*maxP + 1e-9); }
+function gPassed(points, limit){ return Math.ceil(points - 1e-9) >= limit; }
+/* Andel studenter som nått G-gränsen, utan de exkluderade frågorna (exc = Map eller Set med strängnycklar).
+   Ritas inte i någon vy: godkäntstatistiken ska bli en egen export (Kajsa 20 nov 2026). */
 function passMetric(exc){
   const J=state.json; if(!J || !J.qMeta || !J.cohortScores) return null;
   const incl=[]; let maxP=0;
   J.qMeta.forEach((m,i)=>{ if(!exc.has(String(m.num))){ incl.push(i); maxP+=m.max; } });
-  const thr=Math.floor(state.th.pass/100*maxP + 1e-9);          // gränsen nedåt
+  const thr=gLimit(maxP);
   let pass=0; const N=J.cohortScores.length;
   for(const row of J.cohortScores){
     let p=0; for(const i of incl) p+=row[i];
-    if(Math.ceil(p - 1e-9) >= thr) pass++;              // studentpoäng uppåt
+    if(gPassed(p, thr)) pass++;
   }
   return {pass, N, pct:N?pass/N*100:0, thr, maxP, nExcluded:exc.size};
-}
-function renderPassMetric(){
-  const el=$("#passmetric"); if(!el) return;
-  const J=state.json;
-  const interactive = !!(J && J.qMeta && J.qMeta.length && J.cohortScores);
-  let m, ungraded=0;
-  if(interactive){ m=passMetric(state.excluded); ungraded=J.ungradedPts||0; }
-  else if(state.passSnapshot){ m=state.passSnapshot; ungraded=m.ungradedPts||0; }
-  if(!m){ el.innerHTML=""; return; }
-  const exNote = m.nExcluded ? ` · ${m.nExcluded} fråga(or) exkluderade` : "";
-  const warn = ungraded>0
-    ? `<div class="metricwarn">⚠ ca ${ungraded} p verkar orättade (fritext utan manuell rättning). Gränsen blir missvisande tills allt är rättat och exporterat på nytt.</div>` : "";
-  const toggleBtn = interactive
-    ? `<button class="exctoggle" type="button">${state.excOpen?'Dölj frågeval ▴':'Exkludera frågor ▾'}</button>` : "";
-  const reasonSel = (qn)=>{
-    const cur=exclReason(qn);
-    const opts=EXCL_REASONS.map(r=>`<option ${r===cur?'selected':''}>${esc(r)}</option>`).join("");
-    return `<select class="exreason" data-qnum="${esc(String(qn))}"><option value=""${cur?'':' selected'}>Orsak…</option>${opts}</select>`;
-  };
-  let excPanel="";
-  if(interactive){
-    const rows = J.qMeta.map(q=>{
-      const off=isExcluded(q.num);
-      const nm=(q.title && q.title!==String(q.num)) ? `<span class="exname">${esc(q.title)}</span>` : "";
-      return `<label class="excrow ${off?'exoff':''}"><input type="checkbox" data-qnum="${esc(String(q.num))}" ${off?'':'checked'}>
-        <span class="exnum">Fråga ${esc(String(q.num))}</span>${nm}<span class="extype">${q.isMCQ?'MCQ':'Fritext'}</span><span class="exmax">${q.max} p</span>${off?reasonSel(q.num):''}</label>`;
-    }).join("");
-    excPanel = `<div class="excpanel ${state.excOpen?'':'hidden'}">
-      <div class="exchint">Avmarkera frågor som ska <b>dras ur poängsättningen</b>. Allt räknas om: maxpoäng, varje students poäng, diskriminering och godkäntgränsen. Frågan visas kvar men märkt.${m.nExcluded?' <a href="#" class="exreset">Återställ alla</a>':''}</div>
-      <div class="excgrid">${rows}</div></div>`;
-  }
-  el.innerHTML = `<div class="panel metric"><div class="metrictop"><div>
-      <div class="metrichead">Nått ${state.th.pass} %-gränsen</div>
-      <div class="metricbig">${m.pass} av ${m.N} <span class="metricpct">(${m.pct.toFixed(1)} %)</span></div>
-      <div class="metricsub">Gräns ≥ ${m.thr} av ${m.maxP} p (hela tentan; ${state.th.pass} %-gränsen nedåt, studentpoäng uppåt)${exNote}</div>
-    </div>${toggleBtn}</div>${warn}${excPanel}</div>`;
-  if(interactive){
-    el.querySelector(".exctoggle").addEventListener("click",()=>{ state.excOpen=!state.excOpen; renderPassMetric(); });
-    el.querySelectorAll(".excrow input").forEach(cb=>cb.addEventListener("change",()=>{
-      const qn=cb.dataset.qnum;
-      if(cb.checked) state.excluded.delete(qn); else state.excluded.set(qn, state.excluded.get(qn)||"");
-      state.excOpen=true; render();
-    }));
-    el.querySelectorAll(".exreason").forEach(sel=>sel.addEventListener("change",()=>{
-      state.excluded.set(sel.dataset.qnum, sel.value); state.excOpen=true; render();
-    }));
-    const rst=el.querySelector(".exreset");
-    if(rst) rst.addEventListener("click",e=>{ e.preventDefault(); state.excluded.clear(); state.excOpen=true; render(); });
-  }
 }
 /* ---------- Essä- och flersvarsfrågor: kort med poängfördelning ----------
    Frågor med poäng i stället för ett enda rätt svar. Bara sammanräknade tal: medel, item–total-korrelation,
@@ -2577,26 +2410,25 @@ function scoredItems(disc, neutral){
   return out;
 }
 /* ---------- Översiktstabellen: alla frågor i tentans ordning, en rad per fråga ----------
-   Ersätter fliken Totalrapport (v3.26.0). Räknas mot hela tentans poäng, med temarapportens neutrala etiketter. */
+   Underlaget till exporten Översiktstabell. Räknas mot hela tentans poäng, med temarapportens neutrala etiketter. */
 function overviewPayload(){
   const J=state.json; if(!J || !J.qMeta || !J.cohortScores) return null;
   const disc=computeDiscrimination(J,{criterion:'whole',excluded:state.excluded});
   const n=J.candCount;
-  const TYPE={single:["MCQ","single"],multi:["Flersvar","multi"],text:["Essä","text"]};
+  const TYPE={single:"MCQ",multi:"Flersvar",text:"Essä"};
   const rows=J.qMeta.map((m,i)=>{
     const a=J.agg[m.num], r=disc[m.num];
     const scores=J.cohortScores.map(row=>row[i]);
-    const [tlabel,tcls]=TYPE[m.type]||TYPE.text;
+    const tlabel=TYPE[m.type]||TYPE.text;
     const isSingle=m.type==='single';
     const mean = isSingle? null : (n?scores.reduce((s,v)=>s+v,0)/n:0);
     const info = isSingle ? rpbInfo({n:a?a.n:0,ncorr:a?a.ncorr:0,rpb:r}) : polyInfo(scores,r,m.max,m.type);
-    return {num:m.num,title:m.title,typeLabel:tlabel,typeCls:tcls,max:m.max,isSingle,
+    return {num:m.num,title:m.title,typeLabel:tlabel,max:m.max,isSingle,
       diffPc: isSingle?(a&&a.n?a.ncorr/a.n*100:0):null,
       diffMean: mean, diffPct: isSingle?null:(m.max?mean/m.max*100:0),
       excluded:isExcluded(m.num), reason:exclReason(m.num),
       r:(r===null||r===undefined)?null:r,
-      info:neutralInfo({cls:info.cls,value:info.value,label:info.label,tip:info.tip}, r),
-      tagVals:lookupTagVals(m.title,m.num)};
+      info:neutralInfo({cls:info.cls,value:info.value,label:info.label,tip:info.tip}, r)};
   });
   const nExcl=J.qMeta.filter(m=>isExcluded(m.num)).length;
   return {head:{exam:state.examName||"", n, nq:J.qMeta.length, nExcl, maxRed:+reducedMax(J).toFixed(1), maxTotal:+J.maxTotal.toFixed(1)}, rows};
@@ -2639,7 +2471,7 @@ function overviewHtml(payload, rows, filt, credit){
 }
 /* Exporten Översiktstabell: alla frågor, eller de som syns när ett filter är valt. Fungerar i appen och i temarapporten. */
 function exportOverview(){
-  const tema=(typeof EMBED!=="undefined" && EMBED);
+  const tema=isTemaPage();
   const payload = tema ? EMBED.views[state.viewIdx].total : overviewPayload();
   if(!payload) return;
   let rows=payload.rows;
@@ -2655,24 +2487,6 @@ function isExemplary(v){
   return v.rpb!=null && v.n>=30 && minority>=10 && v.rpb>=0.30
       && !(v.advice && (v.advice.l1.length || v.advice.l2.length));
 }
-function jumpToCard(seq){
-  seq=String(seq);
-  let el=document.getElementById("card-"+seq);
-  const fb = availableModeIds()[0] || "edu";   // vyns första läge – aldrig ett läge som vyn saknar (temarapporten har inget "edu")
-  if(!el && state.mode!==fb){
-    // Exemplariska frågor ritas inte i triageläget – växla till hela listan så att kortet finns.
-    state.mode=fb;
-    const seg=$("#modeseg"); if(seg) seg.querySelectorAll(".modebtn").forEach(x=>x.classList.toggle("on", x.dataset.mode===fb));
-    const mh=$("#modehint"); if(mh) mh.textContent=modeHint(fb);
-    refreshLists(); drawCards();
-    el=document.getElementById("card-"+seq);
-  }
-  if(!el) return;
-  const y=el.getBoundingClientRect().top + window.scrollY - 70;   // marginal för fast verktygsrad
-  window.scrollTo({top:y, behavior:"smooth"});
-  el.classList.add("flash"); setTimeout(()=>{ if(el) el.classList.remove("flash"); }, 1500);
-}
-function stat(b,s,t,cls){ return `<div class="stat${cls?` ${cls}`:""}"${t?` title="${esc(t)}"`:""}><b class="nums">${esc(b)}</b><span>${esc(s)}</span></div>`; }
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
 /* ---------- Filterraden ----------
@@ -2722,7 +2536,7 @@ function facetsOfMcq(v){
   const tema=isTemaPage(), ex=isExcluded(v.seq);
   return mkFacets({typ:"single", pct:v.pcorr, info:rpbInfo(v), r:v.rpb, excluded:ex,
     fraga: !ex && (tema ? cardQuestions(v).length>0 : !!((v.advice||advice(v)).l1.length)),
-    stark: !tema && !ex && isExemplary(v),            // appen: r minst 0,30 och inga råd. Ersätter listan ovanför korten.
+    stark: !tema && !ex && isExemplary(v),            // appen: r minst 0,30 och inga råd
     forebild: tema && isForebild(v)});
 }
 function facetsOfScored(e){
@@ -2745,7 +2559,7 @@ function filtersActive(){ const s=$("#search"); return (!!s && s.value.trim()!==
 function updateClearBtn(){ const b=$("#clearfilter"); if(b) b.classList.toggle("hidden", !filtersActive()); }
 function applyFilters(){
   buildTagbar(); updateClearBtn();
-  if(state.vm){ if(typeof refreshLists==="function") refreshLists(); drawCards(); }
+  if(state.vm) drawCards();
 }
 function clearFilters(){ const s=$("#search"); if(s) s.value=""; state.activeTags={}; state.facets={}; state.patternKey=null; state.patternSeqs=null; applyFilters(); }
 function toggleFacet(key, val){
@@ -2767,7 +2581,7 @@ function filterBase(){
     .concat(scoredVisible({noFacets:true}).map(e=>({tagVals:e.tagVals||[], f:facetsOfScored(e)})));
 }
 /* Grupperna med räknade knappar. Tema och "att titta på" visas så fort något finns; de andra grupperna bara när
-   de har minst två värden eller ett val. Ett värde som inte finns i fliken visas bara om det är valt. */
+   de har minst två värden eller ett val. Ett värde som ingen fråga på sidan har visas bara om det är valt. */
 function filterGroups(){
   const base=filterBase(), out=[];
   if(state.tags) state.tags.tagCols.forEach((col,ci)=>{
@@ -2816,7 +2630,7 @@ function currentView(opts){
   if(q) v=v.filter(x=> key(x.stem).includes(q) || x.opts.some(o=>key(o).includes(q)) || x.code.toLowerCase().includes(q));
   // Att se över: det statistiken pekar ut, plus exkluderade frågor (så att en exkludering går att ångra). Sök går förbi
   // urvalet, och vid för litet underlag pekar statistiken inte ut något, så då visas alla.
-  if(!opts.allModes && state.mode==="action" && !q && !state.smallN) v=v.filter(x=>(x.advice && x.advice.l1.length) || isExcluded(x.seq));
+  if(state.mode==="action" && !q && !state.smallN) v=v.filter(x=>(x.advice && x.advice.l1.length) || isExcluded(x.seq));
   if(!opts.noFacets) v=v.filter(x=>tagPass(x.tagVals) && facetPass(facetsOfMcq(x)));
   if(state.patternSeqs && !opts.ignorePattern) v=v.filter(x=>state.patternSeqs.has(String(x.seq)));   // "Visa frågorna" i mönstersammanfattningen
   if(sort==="pc-asc") v.sort((a,b)=>a.pcorr-b.pcorr || cmpArr(codeSortKey(a.code),codeSortKey(b.code)));
@@ -2878,16 +2692,37 @@ function unmapReason(v){
     : {tag:"matchade ej svarsdata", roll:"Ej kopplad (matchade ej svarsdata)",
        title:"Inget av de valda svaren matchade det här PDF-alternativet. Se noten under alternativen – kontrollera att rätt PDF är inläst."};
 }
+/* ---------- Det som MCQ-kortet och essä-/flersvarskortet har gemensamt ---------- */
+/* Appen har ändringskontroller på korten; temarapporten och exporten Problemfrågor har bara markeringen. */
+function cardIsApp(){ return (typeof EMBED==="undefined") && !state.exporting; }
+/* Bannern på en exkluderad fråga, i delar: korten sätter ihop dem med var sin radbrytning. seq är redan escapad.
+   En fråga som är exkluderad i Inspera har ingen orsak att välja och ingen upplysning om att exkluderingen bara gäller här. */
+function exclParts(seq, reason, isApp){
+  const local = isApp && reason!==INSPERA_REASON;
+  return {
+    head: `<span class="exclmark">Exkluderad ur tentan</span>${reason?`<span class="exclreasontag">${esc(reason)}</span>`:""}`,
+    ctrl: (local?`<select class="card-reason" data-qnum="${seq}"><option value=""${reason?'':' selected'}>Orsak…</option>${EXCL_REASONS.map(r=>`<option ${r===reason?'selected':''}>${esc(r)}</option>`).join("")}</select>`:"")
+        + (isApp?`<button type="button" class="card-reinclude" data-qnum="${seq}">Återinkludera</button>`:""),
+    note: local?`<div class="exclnote">${esc(LOCAL_EXCL_NOTE)}</div>`:"" };
+}
+/* Rutan för att välja frågan till en egen sida. Finns bara i temarapporten. */
+function selBoxHtml(seq){
+  return isTemaPage() ? `<label class="selwrap" title="Välj frågan till en egen sida"><input type="checkbox" class="selbox" data-seq="${esc(String(seq))}"${(state.sel && state.sel.has(String(seq)))?" checked":""}></label>` : "";
+}
+/* Märkningen Svår eller Lätt efter de justerbara gränserna. Korten avgör själva om underlaget räcker. */
+function levelBadge(pct){
+  return pct<state.th.hard ? `<span class="badge hard">Svår</span>` : pct>=state.th.easy ? `<span class="badge easy">Lätt</span>` : "";
+}
 function card(v){
   const simple = state.mode==="simple";   // Bara mätvärden: inga råd eller tolkningar
   const askMode = state.mode==="ask";   // temarapporten: frågor, aldrig åtgärder
   const excluded = isExcluded(v.seq);
-  const isApp = (typeof EMBED==="undefined") && !state.exporting;   // temarapport och export: inga ändringskontroller, bara markering
-  const exReason = exclReason(v.seq);
-  const exclBanner = excluded ? `<div class="exclbanner">
-      <span class="exclmark">Exkluderad ur tentan</span>${exReason?`<span class="exclreasontag">${esc(exReason)}</span>`:""}
-      ${(isApp && exReason!==INSPERA_REASON)?`<select class="card-reason" data-qnum="${esc(String(v.seq))}"><option value=""${exReason?'':' selected'}>Orsak…</option>${EXCL_REASONS.map(r=>`<option ${r===exReason?'selected':''}>${esc(r)}</option>`).join("")}</select>`:""}${isApp?`<button type="button" class="card-reinclude" data-qnum="${esc(String(v.seq))}">Återinkludera</button>`:""}
-      ${(isApp && exReason!==INSPERA_REASON)?`<div class="exclnote">${esc(LOCAL_EXCL_NOTE)}</div>`:""}
+  const isApp = cardIsApp();
+  const ex = excluded ? exclParts(esc(String(v.seq)), exclReason(v.seq), isApp) : null;
+  const exclBanner = ex ? `<div class="exclbanner">
+      ${ex.head}
+      ${ex.ctrl}
+      ${ex.note}
     </div>` : "";
   const exclCtrl = (isApp && !excluded && !simple && !askMode)
     ? `<div class="exclctrl"><button type="button" class="card-exclude" data-qnum="${esc(String(v.seq))}">Exkludera frågan</button></div>` : "";
@@ -2938,11 +2773,7 @@ function card(v){
       </div></div>`;
   }).join("");
   const tags=v.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("");
-  let badge="";
-  if(v.n>=MIN_N_DIST){
-    if(v.pcorr<state.th.hard) badge=`<span class="badge hard">Svår</span>`;
-    else if(v.pcorr>=state.th.easy) badge=`<span class="badge easy">Lätt</span>`;
-  }
+  let badge = v.n>=MIN_N_DIST ? levelBadge(v.pcorr) : "";
   const flag=v.unmatched>0;
   const ri = askMode ? Object.assign(neutralInfo(rpbInfo(v), v.rpb), {badge: rpbInfo(v).state==="miskey" ? "" : rpbInfo(v).badge}) : rpbInfo(v);
   badge += ri.badge;
@@ -2964,23 +2795,17 @@ function card(v){
     </div>`;
   const noteTxt = (askMode && adv.note) ? adv.note.replace(" – bedöm utifrån fördelningen ovan och frågans innehåll.", ".") : adv.note;
   const noteHtml = noteTxt ? `<div class="advnote">${esc(noteTxt)}</div>` : "";
-  const bucket = (title, items, edu) => items.length
-    ? `<div class="advbucket">${title}</div>${items.map(a=>renderAdv(a,edu)).join("")}` : "";
+  const bucket = (title, items) => items.length
+    ? `<div class="advbucket">${title}</div>${items.map(a=>renderAdv(a,true)).join("")}` : "";
   let advHtml="";
   if(simple){
     advHtml = "";   // Bara mätvärden: inga råd eller tolkningar
   } else if(isPre()){
     // Före betygssättning: bara det som ska ses över nu, med förklaringen. Råden till nästa gång hör till hela rapporten.
-    advHtml = adv.l1.length ? `<div class="advbox">${noteHtml}${bucket("Att se över", adv.l1, true)}</div>` : noteHtml;
+    advHtml = adv.l1.length ? `<div class="advbox">${noteHtml}${bucket("Att se över", adv.l1)}</div>` : noteHtml;
   } else if(state.mode==="edu"){
-    const body = bucket("Att se över", adv.l1, true) + bucket("Till nästa gång", adv.l2, true);
+    const body = bucket("Att se över", adv.l1) + bucket("Till nästa gång", adv.l2);
     advHtml = (body || noteHtml) ? `<div class="advbox">${noteHtml}${body}</div>` : "";   // kort utan råd har ingen ruta
-  } else if(state.mode==="action" && adv.l1.length){
-    // triage: action label(s) under the "now" bucket, full explanation expandable
-    advHtml = `<div class="advbox">${bucket("Att se över", adv.l1, false)}
-      <details class="advexpand"><summary>Visa förklaring och tips</summary>
-        <div class="advexpand-body">${noteHtml}${bucket("Att se över", adv.l1, true)}${bucket("Till nästa gång", adv.l2, true)}</div>
-      </details></div>`;
   }
   if(askMode){
     const allQ=askQuestions(v), qs=allQ.filter(q=>!ASK_SUMMARY.includes(q.key)), forms=formFor(v, allQ);
@@ -3002,7 +2827,7 @@ function card(v){
   if(excluded) advHtml="";   // exkluderad fråga: ingen åtgärdsruta – beslutet är taget, talen visas som dokumentation
   return `<div class="q ${flag?'flag':''}${excluded?' excluded':''}" id="card-${esc(String(v.seq))}">
     <div class="top">
-      <div class="code">${(typeof EMBED!=="undefined" && EMBED && EMBED.kind==="tema") ? `<label class="selwrap" title="Välj frågan till en egen sida"><input type="checkbox" class="selbox" data-seq="${esc(String(v.seq))}"${(state.sel && state.sel.has(String(v.seq)))?" checked":""}></label>` : ""}Fråga ${esc(String(v.seq))}${(v.title && v.title!==String(v.seq))?`<span class="qtitle">${esc(v.title)}</span>`:""}${v.pts?`<span class="pts">${esc(v.pts)}</span>`:""}${tags}</div>
+      <div class="code">${selBoxHtml(v.seq)}Fråga ${esc(String(v.seq))}${(v.title && v.title!==String(v.seq))?`<span class="qtitle">${esc(v.title)}</span>`:""}${v.pts?`<span class="pts">${esc(v.pts)}</span>`:""}${tags}</div>
       <div class="metrics">${badge}
         <div class="pc">${v.pcorr.toFixed(1)} % rätt <small>(n=${v.n})</small></div>
         ${rpbHtml}
@@ -3046,7 +2871,7 @@ function card(v){
 /* ---------- Tentamensstatistik ----------
    Liknar den Excel-mall kurssamordnarna fyller i för hand (flikarna Sammanfattning, Resultat per sektion och
    Resultat per fall), så att den känns igen. Bara statistik: löpnummer i stället för Insperas id. Exkluderade
-   frågor räknas inte och har ingen kolumn. G-gränsen följer passMetric: gränsen nedåt, studentens poäng uppåt. */
+   frågor räknas inte och har ingen kolumn. G-gränsen räknas som i passMetric (gLimit, gPassed). */
 function statsData(){
   const J=state.json; if(!J || !J.qMeta || !J.cohortScores) return null;
   const keep=[], excluded=[];
@@ -3055,11 +2880,11 @@ function statsData(){
   const N=J.cohortScores.length;
   const questions=keep.map(i=>{ const m=J.qMeta[i]; const mean=N?J.cohortScores.reduce((s,r)=>s+r[i],0)/N:0;
     return {num:m.num, title:m.title||"", max:m.max, mean, tema:tema(i)}; });
-  const max=questions.reduce((s,q)=>s+q.max,0), gThr=Math.floor(state.th.pass/100*max + 1e-9);
+  const max=questions.reduce((s,q)=>s+q.max,0), gThr=gLimit(max);
   const orter=state.orter||[];
   const students=J.cohortScores.map((row,k)=>{ const scores=keep.map(i=>+(+row[i]).toFixed(2)), total=scores.reduce((s,v)=>s+v,0);
     const x=(J.insp||[])[k]||{};
-    return {nr:k+1, ort:orter[(J.candFile||[])[k]]||"", scores, total:+total.toFixed(2), g:Math.ceil(total-1e-9)>=gThr,
+    return {nr:k+1, ort:orter[(J.candFile||[])[k]]||"", scores, total:+total.toFixed(2), g:gPassed(total, gThr),
             inspTotal:(x.total===null||x.total===undefined)?"":x.total, inspGrade:x.grade||""}; });
   const names=[...new Set(questions.map(q=>q.tema).filter(Boolean))];
   const themes=names.map(t=>{ const qs=questions.filter(q=>q.tema===t);
@@ -3067,12 +2892,12 @@ function statsData(){
   return {exam:state.examName||"", max:+max.toFixed(2), gThr, passPct:state.th.pass, questions, students, themes, excluded,
           orter:[...new Set(students.map(x=>x.ort).filter(Boolean))]};
 }
-/* "nr 1-7, 10-18" av en lista frågenummer. */
 /* Jämför verktygets uträkning med Insperas egen totalpoäng och slutbetyg, student för student. Skillnader betyder
    att något räknas olika: en fråga som är exkluderad på ena stället men inte det andra, en annan G-gräns, eller
-   ett fel i rättningen. Bara antal redovisas, aldrig vilka studenter. null = uppgifterna saknas i filen. */
-function gradeCheck(){
-  const J=state.json, d=statsData();
+   ett fel i rättningen. Bara antal redovisas, aldrig vilka studenter. null = uppgifterna saknas i filen.
+   d = statsData(), om anroparen redan har räknat fram den. */
+function gradeCheck(d){
+  const J=state.json; d=d||statsData();
   if(!J || !d || !J.fullyGraded || !Array.isArray(J.insp)) return null;
   const hasT=J.insp.some(x=>x.total!==null), hasG=J.insp.some(x=>x.grade);
   if(!hasT && !hasG) return null;
@@ -3082,9 +2907,9 @@ function gradeCheck(){
     if(x.grade){ const pass = x.grade.toUpperCase()!=="U"; if(pass) inspG++; else inspU++; if(pass!==st.g) gradeDiff++; } });
   return {n:d.students.length, totalDiff, gradeDiff, toolG:d.students.filter(x=>x.g).length, inspG, inspU, hasT, hasG, gThr:d.gThr, passPct:d.passPct};
 }
-function renderGradeNote(){
+function renderGradeNote(d){
   const el=$("#gradenote"); if(!el) return;
-  const c=(state.step==="report") ? gradeCheck() : null;
+  const c=(state.step==="report") ? gradeCheck(d) : null;
   if(!c || (!c.totalDiff && !c.gradeDiff)){ el.innerHTML=""; return; }
   const parts=[];
   if(c.totalDiff) parts.push(`Totalpoängen skiljer sig från Insperas för ${c.totalDiff} av ${c.n} studenter. Det händer när en fråga räknas på ena stället men inte på det andra, till exempel en fråga som är exkluderad här men inte nedviktad i Inspera, eller tvärtom.`);
@@ -3092,12 +2917,13 @@ function renderGradeNote(){
   el.innerHTML = `<div class="bad">⚠ ${parts.join(" ")}</div>`;
 }
 /* G-gränsen på rapportsidan: procent av maxpoängen, och vad det blir i poäng utan exkluderade frågor. */
-function renderGLimit(){
+function renderGLimit(d){
   const inp=$("#g-pct"), out=$("#g-pts"); if(!inp) return;
   inp.value=thFmt("pass");
-  const d=(state.step==="report") ? statsData() : null;
+  d = (state.step==="report") ? (d||statsData()) : null;
   if(out) out.textContent = d ? `= ${d.gThr} p` : "";
 }
+/* "nr 1-7, 10-18" av en lista frågenummer. */
 function numRanges(nums){
   const a=nums.map(Number).filter(x=>!isNaN(x)).sort((x,y)=>x-y), out=[]; let i=0;
   while(i<a.length){ let j=i; while(j+1<a.length && a[j+1]===a[j]+1) j++; out.push(i===j?`${a[i]}`:`${a[i]}-${a[j]}`); i=j+1; }
@@ -3183,27 +3009,10 @@ function exportCharts(){
 function stamp(){ const d=new Date(); const p=n=>String(n).padStart(2,"0");
   return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`; }
 
-/* Init som körs i den paketerade fristående filen (aldrig i appen). Refererar EMBED/state/$
-   som deklareras i den genererade filens wrapper. Bygger sammanfattning + binder events. */
-/* ---------- Exporterad-fil-runtime (vyväxling) ----------
-   Dessa körs ENDAST i den exporterade HTML:en (där EMBED finns). Wrappern definierar
-   activeView() så att de bakade hjälparna (availableModeIds, applyFilters,
-   filterBase …) hittar rätt vy. Varje vys data är förberäknad och inbakad – ingen omräkning,
-   inga per-kandidat-data. */
-function xExportTabs(){
-  const host=$("#viewtabs"); if(!host) return;
-  const cur=EMBED.views[state.viewIdx];
-  host.innerHTML=(EMBED.views.length>1 ? '<div class="reptabs">'+
-    EMBED.views.map((v,i)=>`<button class="reptab ${i===state.viewIdx?'on':''}" data-vi="${i}"><span class="phase">${esc(v.phase)}</span>${esc(v.label)}</button>`).join("")+
-    '</div>' : '')+'<div class="rephint">'+cur.hint+'</div>';
-  host.querySelectorAll(".reptab").forEach(b=>b.addEventListener("click",()=>{
-    const i=+b.dataset.vi; if(i===state.viewIdx) return;
-    state.viewIdx=i; const sp=EMBED.views[i];
-    state.mode = (sp.modes&&sp.modes.length) ? sp.modes[0].id : "edu";
-    state.patternKey=null; state.patternSeqs=null;
-    xExportTabs(); xExportRender();
-  }));
-}
+/* ---------- Temarapportens egen körning ----------
+   Funktionerna xExport… körs BARA i den exporterade temarapporten (där EMBED finns). Rapportens wrapper
+   (buildTemaReport) deklarerar EMBED, state, $ och activeView(), så att de serialiserade funktionerna hittar
+   den inbakade vyn. Datan är färdigräknad och inbakad – ingen omräkning, inga data per student. */
 function xExportRender(){
   const spec=EMBED.views[state.viewIdx];
   state.vm = {view: spec.view||[]};
@@ -3220,8 +3029,7 @@ function xExportRender(){
   if(!modes.some(m=>m.id===state.mode)) state.mode=modes[0].id;
   $("#modeseg").innerHTML = modes.length>1 ? modes.map(m=>`<button class="modebtn ${m.id===state.mode?'on':''}" data-mode="${esc(m.id)}">${esc(m.label)}</button>`).join("") : "";
   $("#modehint").textContent=modeHint(state.mode);
-  $("#passmetric").innerHTML="";
-  refreshLists(); buildTagbar(); drawCards();
+  buildTagbar(); drawCards();
 }
 /* Skriv ut / spara som PDF via webbläsarens utskrift – inget bibliotek, fungerar offline.
    Skriver ut den aktiva vyn som den visas (efter filter). */
@@ -3244,7 +3052,7 @@ function xExportInit(){
     state.mode=b.dataset.mode;
     seg.querySelectorAll(".modebtn").forEach(x=>x.classList.toggle("on",x===b));
     $("#modehint").textContent=modeHint(state.mode);
-    refreshLists(); drawCards();
+    drawCards();
   });
   wireSettings(false, ()=>{ xExportRender(); });
   renderThCustom(false);
@@ -3267,7 +3075,7 @@ function xExportInit(){
   { const a=$("#sel-all"), c=$("#sel-clear"), sv=$("#sel-save");
     if(a) a.addEventListener("click", selAllVisible); if(c) c.addEventListener("click", selClear); if(sv) sv.addEventListener("click", saveSubset); }
   renderSelBar();
-  xExportTabs(); xExportRender();
+  xExportRender();
 }
 
 /* Temarapporten bakar BARA aggregat (antal per alternativ, n, r_pb, poängfördelningar, taggar,
@@ -3380,10 +3188,10 @@ function temaEmbed(){
   if(!state.json || !state.json.qMeta || !state.json.fullyGraded) return null;   // temarapporten kräver färdig rättning
   const J=state.json;
   const SER = v => ({code:v.code,pts:v.pts,stem:v.stem,opts:v.opts,counts:v.counts,optPbis:v.optPbis,
-    n:v.n,total:v.total,ncorr:v.ncorr,pcorr:v.pcorr,rpb:v.rpb,sig:v.sig,correctIdx:v.correctIdx,
+    n:v.n,ncorr:v.ncorr,pcorr:v.pcorr,rpb:v.rpb,sig:v.sig,correctIdx:v.correctIdx,
     topDist:v.topDist,bestDistIdx:v.bestDistIdx,bestDistPbis:v.bestDistPbis,unmatched:v.unmatched,
     orphanSlots:v.orphanSlots,unmappedPdf:v.unmappedPdf,slotAmbiguous:v.slotAmbiguous,exportGap:v.exportGap,
-    noTextN:v.noTextN,title:v.title,tagVals:v.tagVals,tags:v.tags,tagKey:v.tagKey,seq:v.seq});
+    title:v.title,tagVals:v.tagVals,tags:v.tags,tagKey:v.tagKey,seq:v.seq});
   // spara globala fält vi tillfälligt skriver om under bakningen
   const sd=state.disc, sod=state.optDisc, svm=state.vm;
   const cardsFor = criterion => {
@@ -3391,31 +3199,28 @@ function temaEmbed(){
     state.optDisc=computeOptDisc(J,{criterion,excluded:state.excluded});
     return buildView().view.map(SER);
   };
-  // En sida med alla frågetyper (v3.26.0): MCQ-kort, essä- och flersvarskort, och översiktstabellens rader för exporten.
+  // En sida med alla frågetyper: MCQ-kort, essä- och flersvarskort, och översiktstabellens rader för exporten.
   const jsonMode = !state.pdfMcqs;
   if(jsonMode && !state.synthMcqs) state.synthMcqs=synthMcqsFromJson(J);   // MCQ-kort i JSON-läge
   const spec=VIEWS.find(v=>v.layout==="all");
   const view=cardsFor(spec.criterion);
   state.disc=sd; state.optDisc=sod; state.vm=svm;   // återställ appens tillstånd
-  const views=[{id:spec.id, label:spec.label, phase:spec.phase, layout:"all", criterion:spec.criterion,
+  const views=[{id:spec.id, label:spec.label, layout:"all", criterion:spec.criterion,
     modes:[{id:"ask",label:"Rapport"}],          // ett enda läge: förklaringen av måttet är en utfällning på kortet
-    hint:"Hur varje fråga fungerade: flervalsfrågor (MCQ) med svarsfördelning, essä- och flersvarsfrågor med poängfördelning, och diskriminering mot hela tentans poäng. Välj frågetyp i filtret.",
-    showExemplary:true, showFreetext:false, showPassMetric:false,
     view, scored:scoredItems(computeDiscrimination(J,{criterion:'whole',excluded:state.excluded}), true), total:overviewPayload()}];
 
   const tags = state.tags ? {tagCols: state.tags.tagCols.map(c=>({i:c.i, name:c.name}))} : null;
-  const snap = null;   // godkäntstatistiken följer inte med i temarapporten
+  // Godkäntstatistiken följer inte med i temarapporten.
   return { kind:"tema", subset:null, exam:state.examName||"", credit:creditText(), generated:new Date().toLocaleDateString('sv-SE'),
                   views, viewIdx:0, candCount: J.candCount, smallN: !!state.smallN, tags,
-                  passSnapshot: snap,
                   excluded: [...state.excluded.entries()], comments: [...state.comments.entries()].filter(c=>c[1]), mode: "ask", th: Object.assign({},state.th) };
 }
-/* Urval: en kopia av rapportens data med bara de valda frågorna. Helhetssiffror (godkäntandel, maxpoäng)
+/* Urval: en kopia av rapportens data med bara de valda frågorna. Helhetssiffror (maxpoäng, antal exkluderade)
    följer inte med – de gäller inte urvalet. Vid urval ur ett urval behålls ursprungstentans antal frågor. */
 function subsetEmbed(embed, sel, th, label){
   const S=new Set([...sel].map(String));
   const out=JSON.parse(JSON.stringify(embed));
-  const found=new Set(); let cand=embed.candCount, origN=0;
+  const found=new Set(); let origN=0;
   for(const v of out.views){
     if(v.total){
       origN = v.total.head.nq;
@@ -3432,7 +3237,6 @@ function subsetEmbed(embed, sel, th, label){
       v.scored.forEach(e=>found.add(String(e.seq)));
     }
   }
-  out.passSnapshot = null;
   out.excluded = (out.excluded||[]).filter(e=>S.has(String(e[0])));
   out.comments = (out.comments||[]).filter(c=>S.has(String(c[0])));
   out.subset = { n:found.size, of: embed.subset ? embed.subset.of : origN };
@@ -3487,27 +3291,19 @@ function scoredVisible(opts){
 }
 function scoreCard(e){
   const info=thInfo(e.info, e.r), fmt=x=>String(+x.toFixed(2)).replace(".",",");
-  const tema=(typeof EMBED!=="undefined" && EMBED && EMBED.kind==="tema");
-  const isApp=(typeof EMBED==="undefined") && !state.exporting, simple=state.mode==="simple";
+  const isApp=cardIsApp(), simple=state.mode==="simple";
   const seq=esc(String(e.seq));
-  const sel = tema ? `<label class="selwrap" title="Välj frågan till en egen sida"><input type="checkbox" class="selbox" data-seq="${seq}"${(state.sel && state.sel.has(String(e.seq)))?" checked":""}></label>` : "";
+  const sel = selBoxHtml(e.seq);
   const nm=(e.title && e.title!==String(e.num)) ? `<span class="qtitle">${esc(e.title)}</span>` : "";
   const tags=(e.tagVals||[]).filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join("");
-  let badge="";
-  if(!e.excluded && e.n>=MIN_N_DIST){
-    if(e.pct<state.th.hard) badge=`<span class="badge hard">Svår</span>`;
-    else if(e.pct>=state.th.easy) badge=`<span class="badge easy">Lätt</span>`;
-  }
+  const badge = (!e.excluded && e.n>=MIN_N_DIST) ? levelBadge(e.pct) : "";
   const maxCount=e.dist.reduce((m,d)=>Math.max(m,d.count),0)||1;
   const bars=e.dist.map(d=>{ const w=Math.max(d.count/maxCount*100,2), pc=e.n?d.count/e.n*100:0;
     return `<div class="ftrow"><div class="ftpts">${fmt(d.pts)} p</div><div class="ftbarwrap"><div class="ftbar" style="width:${w}%"></div></div><div class="ftcnt">${d.count} <small>(${pc.toFixed(0)} %)</small></div></div>`; }).join("");
   const qs=scoreQuestions(e);
   const ask = (qs.length && !simple) ? `<div class="askbox"><div class="askhead">Att fråga sig</div>${qs.map(q=>`<div class="askq">${esc(q.text)}</div>`).join("")}</div>` : "";
-  const reason=e.reason||"";
-  const excl = e.excluded ? `<div class="exclbanner"><span class="exclmark">Exkluderad ur tentan</span>${reason?`<span class="exclreasontag">${esc(reason)}</span>`:""}`
-      + ((isApp && reason!==INSPERA_REASON) ? `<select class="card-reason" data-qnum="${seq}"><option value=""${reason?'':' selected'}>Orsak…</option>${EXCL_REASONS.map(r=>`<option ${r===reason?'selected':''}>${esc(r)}</option>`).join("")}</select>` : "") + (isApp ? `<button type="button" class="card-reinclude" data-qnum="${seq}">Återinkludera</button>` : "")
-      + ((isApp && reason!==INSPERA_REASON) ? `<div class="exclnote">${esc(LOCAL_EXCL_NOTE)}</div>` : "")
-      + `</div>` : "";
+  const ex = e.excluded ? exclParts(seq, e.reason||"", isApp) : null;
+  const excl = ex ? `<div class="exclbanner">${ex.head}${ex.ctrl}${ex.note}</div>` : "";
   const exclCtrl = (isApp && !e.excluded && !simple) ? `<div class="exclctrl"><button type="button" class="card-exclude" data-qnum="${seq}">Exkludera frågan</button></div>` : "";
   return `<div class="q ftcard${e.excluded?" excluded":""}" id="card-${seq}">
     <div class="top">
@@ -3532,17 +3328,17 @@ function activePatternRows(){
 /* Funktioner och konstanter som den fristående rapporten behöver. Listorna används både när appen bygger
    rapporten och när rapporten själv bygger en urvalssida – därför måste de innehålla sig själva. */
 function temaFns(){
-  return [esc,norm,key,stat,codeSortKey,cmpArr,rpbSortVal,distColor,critLabel,isPre,commentHtml,modeHint,availableModeIds,refreshLists,
+  return [esc,norm,key,codeSortKey,cmpArr,rpbSortVal,distColor,critLabel,isPre,commentHtml,modeHint,
              isTemaPage,facetLabel,facetTitle,discBucket,mkFacets,facetsOfMcq,facetsOfScored,facetPass,anyFacet,toggleFacet,toggleTag,filterBase,filterGroups,tagPass,filtersActive,updateClearBtn,applyFilters,clearFilters,rpbInfo,isExcluded,exclReason,
-             cueWords,cueHas,cueScan,advice,askQuestions,isExemplary,unmapReason,card,
-             currentView,pageItems,drawCards,jumpToCard,passMetric,renderPassMetric,buildTagbar,
+             cueWords,cueHas,cueScan,advice,askQuestions,isExemplary,unmapReason,cardIsApp,exclParts,selBoxHtml,levelBadge,card,
+             currentView,pageItems,drawCards,buildTagbar,
              setThreshold,thresholdsCustom,resetThresholds,thFmt,thresholdsText,settingsHtml,renderThCustom,wireSettings,thInfo,neutralInfo,
              temaFns,temaConsts,buildTemaReport,downloadText,stamp,
              cardQuestions,patternSummary,renderPatterns,togglePattern,
              scoreQuestions,scorePatterns,scoredVisible,scoreCard,activePatternRows,filterText,overviewHtml,exportOverview,
              lathundKontrollInit,splitStem,formFindings,formFor,renderForm,isForebild,
              subsetEmbed,selVisible,renderSelBar,selRedraw,selAllVisible,selClear,saveSubset,
-             fileLineText,temaSource,xExportTabs,xExportRender,xExportPrint,openHelp,closeHelp,wireHelp,xExportInit];
+             fileLineText,temaSource,xExportRender,xExportPrint,openHelp,closeHelp,wireHelp,xExportInit];
 }
 function temaConsts(){
   return `const MIN_N_DIST=${MIN_N_DIST};const TH_DEFAULT=${JSON.stringify(TH_DEFAULT)};const TH_RANGE=${JSON.stringify(TH_RANGE)};const TH_LABEL=${JSON.stringify(TH_LABEL)};const PSY=${JSON.stringify(PSY)};`
@@ -3559,7 +3355,7 @@ function buildTemaReport(EMBED){
   const wrapper = `const EMBED=${JSON.stringify(EMBED)};`
     + `const $=s=>document.querySelector(s);`
     + `const state={vm:{view:[]},json:{candCount:EMBED.candCount},smallN:EMBED.smallN,tags:EMBED.tags,activeTags:{},facets:{},`
-    + `mode:EMBED.mode,viewIdx:EMBED.viewIdx,scored:[],passSnapshot:EMBED.passSnapshot,excluded:new Map(EMBED.excluded||[]),comments:new Map(EMBED.comments||[]),open:new Set(),commentOpen:null,th:Object.assign({},TH_DEFAULT,EMBED.th||{}),sel:new Set()};`
+    + `mode:EMBED.mode,viewIdx:EMBED.viewIdx,scored:[],excluded:new Map(EMBED.excluded||[]),comments:new Map(EMBED.comments||[]),open:new Set(),commentOpen:null,th:Object.assign({},TH_DEFAULT,EMBED.th||{}),sel:new Set()};`
     + `const activeView=()=>EMBED.views[state.viewIdx];`
     + `lathundKontrollInit();xExportInit();`;
   let js = `"use strict";\n${consts}\n${FNS.map(f=>f.toString()).join("\n")}\n${wrapper}`;
@@ -3601,7 +3397,6 @@ function buildTemaReport(EMBED){
         </div>
       </div>
       <div class="nnote" id="nnote"></div>
-      <div id="passmetric"></div>
       <div id="controlband">
         <input type="text" id="search" placeholder="Sök">
         <button id="clearfilter" class="btn-ghost hidden">Rensa filter</button>
@@ -3645,10 +3440,9 @@ function downloadText(name, text, type){
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),3000);
 }
-/* Temarapporten: den delbara rapporten till temagrupperna. Bara vyerna efter rättning, frågor i stället
-   för åtgärder, bara aggregat. Ersätter den tidigare interaktiva exporten (v3.26.0). */
-/* Rapporten följer examinatorns filter: med ett filter valt innehåller den bara de frågor som syns, och säger vilket
-   filter det var. Så skapas till exempel en rapport per tema. */
+/* Temarapporten: den delbara rapporten till temagrupperna. Bara hela rapporten efter rättning, frågor i stället
+   för åtgärder, bara aggregat. Den följer filtret på rapportsidan: med ett filter valt innehåller den bara de
+   frågor som syns, och säger vilket filter det var. Så skapas till exempel en rapport per tema. */
 function temaEmbedFiltered(){
   const embed=temaEmbed(); if(!embed) return null;
   if(!filtersActive()) return embed;
@@ -3668,20 +3462,21 @@ function exportTemaPdf(){
   w.document.open(); w.document.write(buildTemaReport(Object.assign({}, embed, {autoPrint:true}))); w.document.close();
 }
 
-/* ---------- file wiring ---------- */
+/* ---------- Inläsning och filrutor ---------- */
+/* Läser state.jsonFiles (datafilen, eller den inbäddade datan i en äldre HTML-fil) och bygger state.json. */
 async function tryRun(){
   if(!state.jsonFiles.length) return;
   try{
     log("Bearbetar JSON …");
     const objs=[]; for(const f of state.jsonFiles){ objs.push(parseJsonFile(await f.text(), f.name)); }
-    // En PDF som kom ur ett tidigare öppnat paket är inte examinatorns egen – släpp den före ny körning.
+    // En PDF som kom ur ett tidigare öppnat paket hör till det paketet – släpp den före ny körning.
     if(state.pdfFromPackage){ state.pdfMcqs=null; state.pdfFromPackage=false; const w=$("#examwarn"); if(w){ w.className=""; w.textContent=""; } }
     // typeof-vakten: en filstubb utan arrayBuffer() läses inte utan släpps.
     let ownTagRows=null;
     if(state.tagsFile && typeof state.tagsFile.arrayBuffer==="function"){ log("Läser taggar …"); ownTagRows = readTagRows(await state.tagsFile.arrayBuffer()); }
     else if(state.tagsFile){ state.tagsFile=null; state.tags=null; state.activeTags={}; $("#got-tags").textContent=""; }
     const ownPdf = state.pdfMcqs;
-    const R = resolveInputs(objs, {pdfMcqs:ownPdf, tagRows:ownTagRows});   // tentapaket eller råfiler
+    const R = resolveInputs(objs, {pdfMcqs:ownPdf, tagRows:ownTagRows});   // datafilen (paketet); råfiler bara på de äldre vägarna
     state.json = parseJSON(R.jsonObjs);
     (state.json.zeroWeight||[]).forEach(n=>{ if(!state.excluded.has(n)) state.excluded.set(n, INSPERA_REASON); });
     renderWeightNote();
@@ -3704,27 +3499,22 @@ async function tryRun(){
       + (state.pdfMcqs ? "" : " Tentans PDF är inte med, så frågetexterna visas inte."));
   }catch(e){ state.json=null; log("Fel: "+e.message); console.error(e); }
 }
-function refreshCompute(){
-  const h=$("#computehint");
-  if(h) h.textContent = "";
-  if(state.prep){ if(h) h.textContent = ""; refreshPrep(); }
-}
-/* ---------- Förbered tentan (kurssamordnarens steg) ---------- */
+/* ---------- Steg 1: Förbered filer ---------- */
 function setPrep(on){
   state.prep=!!on;
   const tog=(sel,hide)=>{ const e=$(sel); if(e) e.classList.toggle("hidden", hide); };
   tog("#prephead",!on); tog("#prep-save",!on); tog("#prep-next",!on); tog("#prep-receipt",!on); tog("#prep-note",!on);
-  tog("#drops",!on); tog("#exambox",on);
+  tog("#drops",!on); tog("#databox",on);
   tog("#settings-open",!!on); if(on){ tog("#settings",true); }      // gränserna gäller analysen, som inte syns i steg 1
   tog("#warnings",!!on);                                       // varningarna gäller analysen, inte filerna i steg 1
   if(on){ $("#results").classList.add("hidden"); expandUpload(); log("");
     const b=$("#step-report"), n=$("#step-report-note"); if(b) b.disabled=false; if(n) n.textContent=""; }
   else if(state.json){ collapseUpload(); setStep(state.want||"triage"); }
   renderStepBar();
-  refreshCompute();
+  refreshPrep();
 }
 /* Adressen följer steget: #forbered, #problemfragor och #rapporter. De äldre #samordnare och #examinator fungerar. */
-function roleFromHash(hash){
+function stepFromHash(hash){
   const h=String(hash||"").replace(/^#/,"").toLowerCase();
   return (h==="forbered" || h==="samordnare" || h==="kurssamordnare") ? "prep"
        : (h==="problemfragor" || h==="examinator") ? "triage"
@@ -3756,7 +3546,8 @@ async function refreshPrep(){
       + (k.warning ? `<br><span class="warn">⚠ ${esc(k.warning)}</span>` : "");
   }catch(e){ b.disabled=true; if(nx) nx.disabled=true; box.innerHTML=`<span class="warn">⚠ ${esc(e.message)}</span>`; }
 }
-async function saveExaminerFile(){
+/* Sparar den kombinerade datafilen som ren JSON. */
+async function saveDataFile(){
   try{
     const inp=await prepInputs(); prepReceipt(inp);
     downloadText(`datafil_${stamp()}.json`, JSON.stringify(buildPackage(inp)), "application/json;charset=utf-8");
@@ -3764,7 +3555,7 @@ async function saveExaminerFile(){
   }catch(e){ log("Fel: "+e.message); console.error(e); }
 }
 /* Raden överst när en fil är vald: tentan, antal studenter och frågor (för att se att filen lästs rätt), och i
-   hela rapporten exkluderade frågor och maxpoäng. Ersätter filrutan, statusraden och sifferrutan. */
+   hela rapporten exkluderade frågor och maxpoäng. */
 function fileLineText(name, nStud, counts, nExcl, maxText){
   const nq=counts.single+counts.text+counts.multi;
   const kinds=[]; if(counts.single) kinds.push(`${counts.single} MCQ`); if(counts.text) kinds.push(`${counts.text} essä`); if(counts.multi) kinds.push(`${counts.multi} flersvar`);
@@ -3802,50 +3593,50 @@ $("#pdf").addEventListener("change", async e=>{
   catch(err){ state.pdfMcqs=null; $("#got-pdf").textContent="✗ kunde inte läsa PDF"; log("PDF-fel: "+err.message); console.error(err); }
   state.pdfFromPackage = false; state.prepPdf = state.pdfMcqs; state.prepDirty = true;
   checkExamMatch();
-  refreshCompute();
+  refreshPrep();
 });
 $("#json").addEventListener("change", e=>{
   state.jsonFiles=[...e.target.files]; state.prepFiles=state.jsonFiles; state.prepDirty=true;
-  $("#got-json").textContent=state.jsonFiles.length?`✓ ${state.jsonFiles.length} fil(er)`:""; checkExamMatch(); refreshCompute();
+  $("#got-json").textContent=state.jsonFiles.length?`✓ ${state.jsonFiles.length} fil(er)`:""; checkExamMatch(); refreshPrep();
 });
 $("#tags").addEventListener("change", e=>{
   state.tagsFile=e.target.files[0]; state.prepTags=state.tagsFile; state.prepDirty=true; state.activeTags={};
-  $("#got-tags").textContent=state.tagsFile?`✓ ${state.tagsFile.name}`:""; refreshCompute();
+  $("#got-tags").textContent=state.tagsFile?`✓ ${state.tagsFile.name}`:""; refreshPrep();
 });
-$("#examfile").addEventListener("change", async e=>{
+$("#datafile").addEventListener("change", async e=>{
   const f=e.target.files && e.target.files[0]; if(!f) return;
-  $("#got-exam").textContent="läser …";
-  await loadExaminerFile(await f.text(), f.name);
-  $("#got-exam").textContent = state.json ? `✓ ${f.name}` : "";
+  $("#got-data").textContent="läser …";
+  await loadDataFile(await f.text(), f.name);
+  $("#got-data").textContent = state.json ? `✓ ${f.name}` : "";
 });
 $("#step-triage").addEventListener("click", ()=>{ goStep("triage"); });
 $("#step-report").addEventListener("click", ()=>{ goStep("report"); });
-$("#role-prep").addEventListener("click", ()=>{ if(!state.prep) setPrep(true); });
-$("#prep-save").addEventListener("click", saveExaminerFile);
+$("#step-prep").addEventListener("click", ()=>{ if(!state.prep) setPrep(true); });
+$("#prep-save").addEventListener("click", saveDataFile);
 $("#prep-next").addEventListener("click", ()=>goStep("triage"));
 $("#reopen").addEventListener("click", expandUpload);
 {
   const emb=readEmbedded();
   if(emb){
-    // Examinatorns fil: tentan finns redan i filen. Öppna direkt i analysen; ingångarna behövs inte här.
+    // Äldre HTML-fil med datan inbäddad: tentan finns redan i filen. Öppna direkt i analysen, utan steg 1.
     state.embedded=true;
     state.jsonFiles=[{name:"datafilen", text: async()=>emb.text}];
-    { const rp=$("#role-prep"); if(rp) rp.classList.add("hidden"); }      // en öppnad datafil har steg 2 och 3
+    { const rp=$("#step-prep"); if(rp) rp.classList.add("hidden"); }      // en öppnad datafil har steg 2 och 3
     state.embeddedReady = tryRun().then(()=>{
       if(!state.json) return;
       collapseUpload(); setStep("choose");
     });
   } else {
-    // Vanliga sidan: kurssamordnaren är landningsstället (hen är den enda som kan hämta filerna ur Inspera).
+    // Vanliga sidan öppnar på steg 1, om adressen inte pekar ut steg 2 eller 3.
     const hash = () => (typeof location!=="undefined" && location.hash) || "";
     const go=r=>{ if(r==="triage" || r==="report") goStep(r); else setPrep(true); };
-    go(roleFromHash(hash()));
-    if(typeof window.addEventListener==="function") window.addEventListener("hashchange", ()=>{ const r=roleFromHash(hash()); if(r) go(r); });
+    go(stepFromHash(hash()));
+    if(typeof window.addEventListener==="function") window.addEventListener("hashchange", ()=>{ const r=stepFromHash(hash()); if(r) go(r); });
   }
 }
-refreshCompute();
+refreshPrep();
 wireHelp();
-wireSettings(false, ()=>{ if(state.json && (state.step==="triage" || state.step==="report")) render(); });   // godkäntgränsen visas inte (ingen godkäntstatistik i vyerna)
+wireSettings(false, ()=>{ if(state.json && (state.step==="triage" || state.step==="report")) render(); });   // G-gränsen har ett eget fält på rapportsidan
 { const c=$("#credit"); if(c) c.innerHTML=creditText(); }
 ["search","sort"].forEach(id=>$("#"+id).addEventListener("input", ()=>{ if(state.json) applyFilters(); }));
 $("#clearfilter").addEventListener("click", clearFilters);
@@ -3854,14 +3645,15 @@ $("#exp-overview").addEventListener("click", ()=>{ if(state.json) exportOverview
 $("#exp-problems").addEventListener("click", ()=>{ if(state.vm) exportProblems(); });
 $("#exp-charts").addEventListener("click", ()=>{ if(state.json) exportCharts(); });
 $("#exp-temapdf").addEventListener("click", ()=>{ if(state.vm) exportTemaPdf(); });
-$("#g-pct").addEventListener("change", e=>{ setThreshold("pass", e.target.value); renderGLimit(); renderGradeNote(); });   // ogiltigt värde: fältet återgår
+$("#g-pct").addEventListener("change", e=>{ setThreshold("pass", e.target.value);            // ogiltigt värde: fältet återgår
+  const sd = state.step==="report" ? statsData() : null; renderGLimit(sd); renderGradeNote(sd); });
 $("#exp-html").addEventListener("click", ()=>{ if(state.vm) exportInteractive(); });
 $("#modeseg").addEventListener("click", e=>{
   const b=e.target.closest(".modebtn"); if(!b || b.dataset.mode===state.mode) return;
   state.mode=b.dataset.mode;
   $("#modeseg").querySelectorAll(".modebtn").forEach(x=>x.classList.toggle("on",x===b));
   $("#modehint").textContent = modeHint(state.mode);
-  if(state.vm){ refreshLists(); drawCards(); }
+  if(state.vm) drawCards();
 });
 // Exkludera/återinkludera direkt på kortet, alla frågetyper. Delegerat → överlever drawCards-omritning.
 { const cards=$("#cards");

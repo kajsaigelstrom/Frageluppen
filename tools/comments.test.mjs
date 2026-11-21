@@ -71,6 +71,6 @@ test("en ny fil börjar utan kommentarer", async () => {
   const a = at("triage");
   a.ev("state.comments.set('1', 'x')");
   a.ev("globalThis.F = buildExaminerFile(JSON.parse(JSON.stringify(buildPackage({jsonObjs:[demoToInspera(DEMO_DATA.DEMO)], pdfMcqs:DEMO_DATA.PDF, tagRows:null}))))");
-  await a.ev("loadExaminerFile(F, 'f.html')");
+  await a.ev("loadDataFile(F, 'f.html')");
   assert.equal(a.ev("state.comments.size"), 0);
 });

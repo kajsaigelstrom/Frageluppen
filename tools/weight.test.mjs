@@ -32,7 +32,7 @@ test("bara en fråga som ALLA studenter har vikten 0 på räknas som exkluderad;
 });
 test("när filen öppnas räknas frågan som exkluderad, och det står varför", async () => {
   const { ev, el } = fresh();
-  ev("setPrep(false)"); await ev("loadExaminerFile(mk(W), 'f.html')");
+  ev("setPrep(false)"); await ev("loadDataFile(mk(W), 'f.html')");
   assert.equal(ev("isExcluded(QX)"), true);
   assert.match(ev("exclReason(QX)"), /0 % i Inspera/);
   assert.equal(ev("isExcluded(QY)"), false);
@@ -50,13 +50,13 @@ test("när filen öppnas räknas frågan som exkluderad, och det står varför",
 });
 test("en fil utan viktade frågor ger ingen exkludering och ingen rad", async () => {
   const { ev, el } = fresh();
-  ev("setPrep(false)"); await ev("loadExaminerFile(mk(dirty), 'f.html')");
+  ev("setPrep(false)"); await ev("loadDataFile(mk(dirty), 'f.html')");
   assert.equal(ev("state.excluded.size"), 0);
   assert.equal(el("#weightnote").innerHTML, "");
 });
 test("en exkludering som bara görs i verktyget säger att den ska göras i Inspera också", async () => {
   const { ev, el } = fresh();
-  ev("setPrep(false)"); await ev("loadExaminerFile(mk(W), 'f.html')"); ev("setStep('triage')");
+  ev("setPrep(false)"); await ev("loadDataFile(mk(W), 'f.html')"); ev("setStep('triage')");
   const other = ev("String(state.vm.view.find(v => String(v.seq) !== String(QX)).seq)");
   ev(`state.excluded.set('${other}', ''); render();`);
   const part = seq => el("#cards").innerHTML.split(`id="card-${seq}"`)[1].split('class="q ')[0];
@@ -65,7 +65,7 @@ test("en exkludering som bara görs i verktyget säger att den ska göras i Insp
 });
 test("temarapporten visar frågan som exkluderad utan uppmaningen till examinatorn", async () => {
   const { ev } = fresh();
-  ev("setPrep(false)"); await ev("loadExaminerFile(mk(W), 'f.html')"); ev("setStep('report')");
+  ev("setPrep(false)"); await ev("loadDataFile(mk(W), 'f.html')"); ev("setStep('report')");
   const page = runHtml(ev("buildTemaReport(temaEmbed())"));
   assert.match(page.el("#cards").innerHTML, /Exkluderad ur tentan/);
   assert.ok(!/Gäller bara här/.test(page.el("#cards").innerHTML));

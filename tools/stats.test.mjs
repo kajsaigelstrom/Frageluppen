@@ -9,7 +9,7 @@ const two = async () => { const a = loadApp(); setupDirty(a.ev);
         globalThis.A2 = makeDirty(); A2.ext_inspera_assessmentRunTitle = "8LPG50 2026-06-01 Norrköping 9754";
         globalThis.PK = JSON.parse(JSON.stringify(buildPackage({jsonObjs:[A1, A2], pdfMcqs:DEMO_DATA.PDF, tagRows:DEMO_DATA.TAGS})));
         setPrep(false);`);
-  await a.ev("loadExaminerFile(buildExaminerFile(PK), 'f.html')"); a.ev("setStep('report')"); return a; };
+  await a.ev("loadDataFile(buildExaminerFile(PK), 'f.html')"); a.ev("setStep('report')"); return a; };
 
 test("studieorten läses ur resultatfilernas namn och följer med i filen till examinatorn", async () => {
   const a = loadApp();

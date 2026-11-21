@@ -13,7 +13,7 @@ const fresh = () => { const a = loadApp(); setupDirty(a.ev);
         globalThis.mk = d => buildExaminerFile(JSON.parse(JSON.stringify(buildPackage({jsonObjs:[d], pdfMcqs:DEMO_DATA.PDF, tagRows:DEMO_DATA.TAGS}))));
         setPrep(false);`);
   return a; };
-const open = async (a, expr) => { await a.ev(`loadExaminerFile(mk(${expr}), 'f.html')`); a.ev("setStep('report')"); };
+const open = async (a, expr) => { await a.ev(`loadDataFile(mk(${expr}), 'f.html')`); a.ev("setStep('report')"); };
 
 test("slutbetyg och totalpoäng följer med i filen, men inte datumet", () => {
   const { ev } = fresh();
@@ -58,7 +58,7 @@ test("en fil utan Insperas betyg och totalpoäng ger ingen kontroll, och ingen v
   assert.equal(a.el("#gradenote").innerHTML, "");
   const b = fresh();
   b.ev(`globalThis.G1 = JSON.parse(JSON.stringify(G0)); G1.ext_inspera_candidates[0].result.ext_inspera_totalScore += 3;`);
-  await b.ev("loadExaminerFile(mk(G1), 'f.html')"); b.ev("setStep('triage')");
+  await b.ev("loadDataFile(mk(G1), 'f.html')"); b.ev("setStep('triage')");
   assert.equal(b.el("#gradenote").innerHTML, "");
 });
 test("Tentamensstatistiken har Insperas slutpoäng och betyg bredvid verktygets", async () => {

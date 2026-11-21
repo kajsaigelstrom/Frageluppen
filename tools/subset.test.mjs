@@ -22,7 +22,7 @@ test("ovalda frågor finns inte kvar någonstans", () => {
 });
 test("urvalet bär inga helhetssiffror", () => {
   const { ev, evj } = fresh();
-  assert.equal(ev("S2.passSnapshot"), null);
+  assert.equal(ev("'passSnapshot' in S2"), false);
   const head = evj("S2.views[0].total.head");
   assert.deepEqual(Object.keys(head).sort(), ["n", "nq"]);
   assert.equal(head.n, ev("E.candCount")); assert.equal(head.nq, 2);
@@ -64,7 +64,7 @@ test("urvalssidan visar urvalsraden och ingen godkäntandel", () => {
   const { ev } = fresh();
   const page = runHtml(ev("buildTemaReport(S2)"));
   assert.match(page.el("#subsetline").innerHTML, /Urval: 2 av \d+ frågor/);
-  assert.equal(page.el("#passmetric").innerHTML, "");
+  assert.ok(!/passmetric|passSnapshot/.test(ev("buildTemaReport(S2)")));
   page.ev("exportOverview()");
   const tab = page.downloads[page.downloads.length - 1].parts.join("");
   assert.match(tab, /2 frågor/);

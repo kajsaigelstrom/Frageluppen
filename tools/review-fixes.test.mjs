@@ -3,17 +3,7 @@ import test from "node:test"; import assert from "node:assert/strict";
 import { loadApp, runHtml } from "./harness.mjs";
 import { setupDemoView, setupDirty } from "./fixtures.mjs";
 const fresh = () => { const a = loadApp(); setupDemoView(a.ev); setupDirty(a.ev); return a; };
-const ACTION = /Dubbelkolla facit|[Öö]verväg|Att se över|utesluta/;
 
-test("hopp till ett bortfiltrerat kort lämnar aldrig temarapportens läge", () => {
-  const { ev } = fresh();
-  const page = runHtml(ev("buildTemaReport(temaEmbed())"));
-  page.ev("document.getElementById = () => null; jumpToCard(String(EMBED.views[0].view[0].seq));");
-  assert.equal(page.ev("state.mode"), "ask");
-  assert.doesNotMatch(page.el("#cards").innerHTML, ACTION);
-  page.ev("jumpToCard('finns-inte');");
-  assert.equal(page.ev("state.mode"), "ask");
-});
 test("godkäntgränsen i en temarapport kan inte återställas av läsaren", () => {
   const { ev } = fresh();
   ev("setThreshold('pass', 55)");
@@ -101,7 +91,7 @@ test("från steg 1 tillbaka till steg 2 eller 3: resultaten visas igen", () => {
 test("examinatorns fil sparas utan att länken dras in direkt", async () => {
   const { ev, downloads, urlEvents } = fresh();
   ev("state.prep = true; prepSynthetic();");
-  await ev("saveExaminerFile()");
+  await ev("saveDataFile()");
   assert.equal(downloads.length, 1);
   assert.match(downloads[0].parts[0], /"format":"frageluppen-tentapaket"/);
   assert.deepEqual(urlEvents, ["create"]);
@@ -111,21 +101,21 @@ test("examinatorns fil sparas utan att länken dras in direkt", async () => {
 import fs from "node:fs"; import { INDEX } from "./harness.mjs";
 test("adressen väljer ingång", () => {
   const { ev } = fresh();
-  assert.equal(ev("roleFromHash('#samordnare')"), "prep");
-  assert.equal(ev("roleFromHash('#kurssamordnare')"), "prep");
-  assert.equal(ev("roleFromHash('#examinator')"), "triage");
-  assert.equal(ev("roleFromHash('')"), null);
-  assert.equal(ev("roleFromHash('#card-12')"), null);
-  assert.equal(ev("roleFromHash('#SAMORDNARE')"), "prep");
+  assert.equal(ev("stepFromHash('#samordnare')"), "prep");
+  assert.equal(ev("stepFromHash('#kurssamordnare')"), "prep");
+  assert.equal(ev("stepFromHash('#examinator')"), "triage");
+  assert.equal(ev("stepFromHash('')"), null);
+  assert.equal(ev("stepFromHash('#card-12')"), null);
+  assert.equal(ev("stepFromHash('#SAMORDNARE')"), "prep");
 });
 test("flikarna följer läget", () => {
   const { ev, el } = fresh();
   ev("setPrep(true)");
-  assert.equal(el("#role-prep").classList.contains("on"), true);
+  assert.equal(el("#step-prep").classList.contains("on"), true);
   assert.equal(el("#step-triage").classList.contains("on"), false);
   ev("setPrep(false)");
   assert.equal(el("#step-triage").classList.contains("on"), true);
-  assert.equal(el("#role-prep").classList.contains("on"), false);
+  assert.equal(el("#step-prep").classList.contains("on"), false);
 });
 test("rutan för resultat finns bara hos kurssamordnaren och talar till hen", () => {
   const html = fs.readFileSync(INDEX, "utf8").split("<script>")[0];

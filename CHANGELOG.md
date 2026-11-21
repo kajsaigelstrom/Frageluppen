@@ -27,6 +27,12 @@ inte dokumenterad här.
   utskriften behåller färgerna och får rubrik även via Temarapport (PDF). I Tentamensstatistiken
   räknas procenten vid antal G och U om när G-gränsen ändras. En fråga som är exkluderad i Inspera
   har ingen orsakslista. Död kod och 57 oanvända stilregler är borttagna.
+- **Kodstädning utan ändrat beteende.** Död kod och oanvända fält, element och stilregler är
+  borttagna (filen är drygt 200 rader kortare). G-gränsen och godkäntregeln räknas på ett ställe
+  (`gLimit`, `gPassed`), och korten för flervalsfrågor och för essä- och flersvarsfrågor delar
+  hjälpare för exkludering, urvalsruta och märkning. Interna namn följer stegen i stället för de
+  tidigare rollerna, och kommentarerna beskriver verktyget som det är nu. Kortens och exporternas
+  utdata jämfördes tecken för tecken mot versionen före städningen: inga skillnader.
 - **Tre steg i stället för rollvalet.** Raden överst har 1 Förbered filer, 2 Hitta problemfrågor
   och 3 Skapa rapporter, och ersätter både "Jag är Kurssamordnare/Examinator" och mellansteget
   "Vad vill du göra?". Med en fil öppen byter man steg med ett klick. Steg 3 kräver färdig
