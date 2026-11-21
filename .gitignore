@@ -12,6 +12,8 @@ mcq-resultat_*.html
 tenta-till-examinator_*.html
 temarapport_*.html
 oversiktstabell_*.html
+problemfragor_*.html
+tentamensstatistik_*
 
 # OS- och editorskräp
 .DS_Store
