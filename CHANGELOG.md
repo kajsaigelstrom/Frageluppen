@@ -18,6 +18,13 @@ inte dokumenterad här.
   följer resten av tentan, frågan "Stämmer facit och poängregeln?" (för essäfrågor gäller
   bedömningsmallen). Mönsterraderna säger "MCQ-frågor" och "essäfrågor" så att de inte blandas
   ihop. Excel och CSV ur temarapporten har en rad per synlig fråga med kolumnen Typ.
+- **Vyn före betygssättning är renodlad.** Den öppnar på frågorna **att se över**, alltså dem som
+  statistiken pekar ut (tecken på fel i facit, eller mycket svåra frågor som inte skiljer mellan
+  studenter), plus exkluderade frågor så att en exkludering går att ångra. **Alla flervalsfrågor**
+  ger en reducerad överblick: kort med mätvärden och alternativ, och ruta bara där något ska ses
+  över. Inget filter i vyn, bara sök och sortering, och sökrutan hittar vilken fråga som helst.
+  Råden "till nästa gång" visas inte före betygssättning, varken på korten eller i examinatorns
+  PDF. Pekar statistiken inte ut någon fråga står det, och vid för få svar visas alla frågor.
 - **Textgenomgång ur tre läsares perspektiv** (kurssamordnaren, examinatorn före och efter
   rättning, temagruppens representant). Samma sak heter nu samma sak: "att se över" (inte "att
   åtgärda"), "exkludera" (inte "utesluta"), "facit" (inte "nyckel"), "studenter" (inte

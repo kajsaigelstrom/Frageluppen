@@ -135,17 +135,19 @@ test("frågetyperna heter MCQ, Flersvar och Essä i översiktstabellen", () => {
   const t = page.downloads[page.downloads.length - 1].parts.join("");
   assert.ok(t.includes(">Essä<") && t.includes(">MCQ<") && !t.includes(">Fritext<"));
 });
-test("listan över förebilder och åtgärdslistan följer filtret", () => {
+test("listan över förebilder följer filtret, och registret före betygssättning följer sökningen", () => {
   const { ev, el, page } = tema();
   const nFb = page.ev("EMBED.views[0].view.filter(isForebild).length");
   assert.ok(nFb > 0);
   assert.match(page.el("#goodlist").innerHTML, new RegExp(`${nFb} fråga\\(or\\) som fungerar som förebild`));
   page.ev("toggleFacet('disk','lag')");                                  // förebilder skiljer väl, så ingen är kvar
   assert.equal(page.el("#goodlist").innerHTML, "");
-  ev("setPrep(false); loadSynthetic(); setStep('triage');");
+  // före betygssättning finns inget filter, men registret över frågor att se över följer sökningen
+  ev("setPrep(false); loadSynthetic(); setStep('triage'); state.mode = 'edu'; render();");
   const nAct = (el("#actionlist").innerHTML.match(/class="actionrow/g) || []).length;
-  ev("toggleFacet('svar','latt')");
+  assert.ok(nAct > 0);
+  const code = ev("state.vm.view.find(v => v.advice.l1.length).code");
+  ev(`document.querySelector("#search").value = ${JSON.stringify(code)}; applyFilters();`);
   const nAct2 = (el("#actionlist").innerHTML.match(/class="actionrow/g) || []).length;
-  assert.ok(nAct2 <= nAct);
-  assert.equal(nAct2, ev("currentView({allModes:true}).filter(v => v.advice && v.advice.l1.length && !isExcluded(v.seq)).length"));
+  assert.ok(nAct2 >= 1 && nAct2 <= nAct);
 });

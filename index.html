@@ -656,12 +656,16 @@ function wireSettings(withPass, onChange){
   panel.addEventListener("click", e=>{ if(e.target.closest("#set-reset")) reset(); });
   document.addEventListener("click", e=>{ if(e.target.closest && e.target.closest("#th-reset")) reset(); });
 }
+/* Vyn före betygssättning: bara det som statistiken pekar ut, eller alla flervalsfrågor reducerat (Kajsa 21 nov 2026). */
+function isPre(){ return typeof EMBED==="undefined" && typeof activeView==="function" && activeView().id==="pre-mcq"; }
 function modeHint(m){ return m==="ask"
   ? "Kort med mätvärden. Där svaren följer ett mönster står en eller två frågor att ställa sig."
   : m==="ask-explain"
   ? "Som Rapport, och dessutom en förklaring av måttet bakom varje fråga."
   : m==="action"
-  ? "Triage visar bara frågorna att se över. Övriga är dolda. Växla till Alla frågor för att se dem."
+  ? "Frågor som statistiken pekar ut: tecken på fel i facit, eller mycket svåra frågor som inte skiljer mellan studenter. Sökrutan hittar även övriga frågor."
+  : (m==="edu" && isPre())
+  ? "Alla flervalsfrågor med mätvärden, för överblick över svårighet och diskriminering. Sortera för att hitta det du söker."
   : m==="simple"
   ? "Förenklad vy: bara korten med mätvärden – tolkningar och tips är dolda."
   : "Visar alla frågor med tolkningar och tips."; }
@@ -673,7 +677,7 @@ function modeHint(m){ return m==="ask"
 const VIEWS = [
   { id:"pre-mcq",   label:"Preliminär MCQ",  phase:"Innan rättning", criterion:"mcq",
     layout:"mcq",   needsFullyGraded:false, needsPdf:true,  built:true,  showFreetext:false, showPassMetric:false, showExemplary:false,
-    modes:[{id:"edu",label:"Alla frågor"},{id:"action",label:"Triage"}],
+    modes:[{id:"action",label:"Att se över"},{id:"edu",label:"Alla flervalsfrågor"}],
     hint:"Flervalsfrågor som kan behöva rättas i facit eller exkluderas före betygssättningen. Diskrimineringen (r<sub>pb</sub>) räknas mot poängen på flervalsdelen, eftersom essäfrågorna inte är rättade än." },
   // Hela rapporten är en sida med alla frågetyper (Kajsa 20 nov 2026). Frågetyp väljs i filtret, och översikten
   // i tabellform är en egen export (exportOverview).
@@ -767,7 +771,7 @@ function setStep(step){
     return;
   }
   if(sc) sc.classList.add("hidden");
-  if(step==="triage"){ state.view="pre-mcq"; state.mode="action"; } else { state.view="final"; state.mode="edu"; }
+  if(step==="triage"){ state.view="pre-mcq"; state.mode="action"; state.facets={}; state.activeTags={}; } else { state.view="final"; state.mode="edu"; }
   render();
 }
 /* Minsta underlag för automatiska omdömen om svårighet/distraktorer. Under detta
@@ -807,7 +811,10 @@ bara i hela rapporten, eftersom de kräver färdig rättning.</p>
 <p>När filen från kurssamordnaren är vald finns två vägar.</p>
 <p><b>Hitta problemfrågor före betygssättning</b> – flervalsfrågor som kan behöva rättas i facit
 eller exkluderas, med diskriminering mot flervalsdelens poäng. Går att göra innan essäfrågorna
-är rättade. En fråga exkluderas med knappen på kortet, och allt räknas då om. <b>PDF
+är rättade. Vyn öppnar på frågorna <b>att se över</b>, alltså dem som statistiken pekar ut.
+<b>Alla flervalsfrågor</b> ger överblick över svårighet och diskriminering, och sökrutan hittar
+vilken fråga som helst. Råden till nästa gång står inte här utan i hela rapporten.
+En fråga exkluderas med knappen på kortet, och allt räknas då om. <b>PDF
 (examinatorns)</b> sparar listan med åtgärdsförslagen som ditt eget arbetsunderlag.</p>
 <p><b>Se hela rapporten</b> – alla frågor efter rättningen på en sida: flervalsfrågor (MCQ),
 essäfrågor och flersvarsfrågor, med diskriminering mot hela tentans poäng. Frågetyp väljs i
@@ -2363,10 +2370,10 @@ function render(){
     (nExclAll?stat(nExclAll,"exkluderade","Dragna ur poängsättningen – visas kvar men bidrar inte till total, diskriminering eller godkäntgränsen."):"") +
     stat(meanPc.toFixed(1)+" %", state.scored.length ? "genomsnittlig andel rätt, MCQ" : "genomsnittlig andel rätt") +
     (state.smallN||!showExe?"":stat(nExe,"stark diskriminering","Skiljer starka från svaga väl (hög item–total-korrelation) utan automatiska flaggor. Diskriminering är evidens, inte bevis – bekräfta att frågan testar rätt sak innan du återanvänder den.")) +
-    (state.smallN?"":stat(nClean,"inga automatiska flaggor","Inga flaggor från de automatiska kontrollerna (statistik, distraktorer, vanliga ledtrådar). Inget kvalitetsintyg – innehåll, måluppfyllelse och subtilare ledtrådar syns inte här.")) +
-    stat(nTips,"tips") +
+    ((state.smallN||isPre())?"":stat(nClean,"inga automatiska flaggor","Inga flaggor från de automatiska kontrollerna (statistik, distraktorer, vanliga ledtrådar). Inget kvalitetsintyg – innehåll, måluppfyllelse och subtilare ledtrådar syns inte här.")) +
+    (isPre()?"":stat(nTips,"tips")) +
     stat(nAction,"att se över","",nAction>0?"s-act-on":"s-act-off") +
-    (state.tags?stat(state.tags.tagCols.map(c=>c.name).join(" · "),"taggkolumner","","s-muted"):"");
+    ((state.tags && !isPre())?stat(state.tags.tagCols.map(c=>c.name).join(" · "),"taggkolumner","","s-muted"):"");
   $("#nnote").innerHTML = state.smallN
     ? `<div class="advnote">Litet underlag: ${esc(state.json.candCount)} studenter. Andel rätt och svarsfördelning visas, men diskriminering (r<sub>pb</sub>) och automatiska omdömen om svårighet och distraktorer kräver fler svar (riktmärke n ≥ 30). Tolka enskilda procenttal försiktigt – ett svar väger ${Math.round(100/Math.max(1,state.json.candCount))} procentenheter.</div>`
     : "";
@@ -2416,7 +2423,8 @@ function availableModeIds(){
 }
 function refreshLists(){
   const ids=availableModeIds();
-  if(ids.includes("action")) buildActionList(); else { const a=$("#actionlist"); if(a) a.innerHTML=""; }
+  // Listan är ett register över frågorna att se över. I läget som bara visar dem vore den en upprepning av korten.
+  if(ids.includes("action") && state.mode!=="action") buildActionList(); else { const a=$("#actionlist"); if(a) a.innerHTML=""; }
   const showExe = (typeof activeView==="function") ? activeView().showExemplary
                 : (typeof EMBED!=="undefined" && EMBED ? EMBED.showExemplary : true);
   if(showExe && state.mode!=="simple") buildGoodList(); else { const g=$("#goodlist"); if(g) g.innerHTML=""; }
@@ -2763,6 +2771,7 @@ function filterGroups(){
 }
 function buildTagbar(){
   const bar=$("#tagbar"); if(!bar) return;
+  if(isPre()){ bar.innerHTML=""; return; }             // före betygssättning: inget filter, bara sök och sortering
   const groups=filterGroups();
   let html = groups.map(g=>`<div class="tagrow"><span class="tagrow-label">${esc(g.label)}</span>`
     + g.values.map(v=>`<span class="chip ${v.on?'on':''}${v.n?'':' zero'}" ${g.tag!==undefined?`data-col="${esc(g.tag)}"`:`data-facet="${esc(g.key)}"`} data-val="${esc(v.val)}"${v.title?` title="${esc(v.title)}"`:""}>${esc(v.label)}<span class="c">${v.n}</span></span>`).join("")
@@ -2782,7 +2791,9 @@ function currentView(opts){
   let v=[...state.vm.view];
   const q=key($("#search").value), sort=$("#sort").value;
   if(q) v=v.filter(x=> key(x.stem).includes(q) || x.opts.some(o=>key(o).includes(q)) || x.code.toLowerCase().includes(q));
-  if(!opts.allModes && state.mode==="action" && !q) v=v.filter(x=>x.advice && x.advice.l1.length && !isExcluded(x.seq));
+  // Att se över: det statistiken pekar ut, plus exkluderade frågor (så att en exkludering går att ångra). Sök går förbi
+  // urvalet, och vid för litet underlag pekar statistiken inte ut något, så då visas alla.
+  if(!opts.allModes && state.mode==="action" && !q && !state.smallN) v=v.filter(x=>(x.advice && x.advice.l1.length) || isExcluded(x.seq));
   if(!opts.noFacets) v=v.filter(x=>tagPass(x.tagVals) && facetPass(facetsOfMcq(x)));
   if(state.patternSeqs && !opts.ignorePattern) v=v.filter(x=>state.patternSeqs.has(String(x.seq)));   // "Visa frågorna" i mönstersammanfattningen
   if(sort==="pc-asc") v.sort((a,b)=>a.pcorr-b.pcorr || cmpArr(codeSortKey(a.code),codeSortKey(b.code)));
@@ -2798,7 +2809,7 @@ function filterSummary(){
   const parts=activeCols.map(col=>`${col}: ${[...state.activeTags[col]].join(", ")}`);
   const q=$("#search").value.trim();
   if(q) parts.unshift(`sök: "${q}"`);
-  parts.unshift(state.mode==="action"?"Triage":"Alla frågor");
+  parts.unshift(state.mode==="action"?"Att se över":(isPre()?"Alla flervalsfrågor":"Alla frågor"));
   return parts.join(" · ");
 }
 /* Korten på sidan: MCQ, essä och flersvar i en lista, sorterad som valt (tentans ordning som standard). */
@@ -2830,8 +2841,11 @@ function drawCards(){
   const activeSummary=Object.keys(state.activeTags).map(col=>`${col}: ${[...state.activeTags[col]].join(", ")}`).join(" · ");
   $("#count").textContent = `Visar ${items.length} av ${all} frågor`
     + (activeSummary?` · ${activeSummary}`:"");
+  const s=$("#search"), searching=!!(s && s.value && s.value.trim());
   $("#cards").innerHTML = items.map(it=>it.k==="mcq" ? card(it.x) : scoreCard(it.x)).join("")
-    || `<div class="panel">Inga frågor matchar filtret.</div>`;
+    || ((isPre() && state.mode==="action" && !searching)
+        ? `<div class="panel">✓ Statistiken pekar inte ut någon fråga. Under <b>Alla flervalsfrågor</b> finns överblicken över svårighet och diskriminering.</div>`
+        : `<div class="panel">Inga frågor matchar ${isPre() ? "sökningen" : "filtret"}.</div>`);
   updateClearBtn();
 }
 
@@ -2942,6 +2956,9 @@ function card(v){
   let advHtml="";
   if(simple){
     advHtml = "";   // Förenklad vy: inga tips eller tolkningar
+  } else if(isPre()){
+    // Före betygssättning: bara det som ska ses över nu, med förklaringen. Råden till nästa gång hör till hela rapporten.
+    advHtml = adv.l1.length ? `<div class="advbox">${noteHtml}${bucket("Att se över", adv.l1, true)}</div>` : noteHtml;
   } else if(state.mode==="edu"){
     const body = bucket("Att se över", adv.l1, true) + bucket("Till nästa gång", adv.l2, true);
     advHtml = `<div class="advbox">${noteHtml}${ body || (adv.note?"":`<div class="advok">${okMsg}</div>`)}</div>`;
@@ -3507,7 +3524,7 @@ function activePatternRows(){
 /* Funktioner och konstanter som den fristående rapporten behöver. Listorna används både när appen bygger
    rapporten och när rapporten själv bygger en urvalssida – därför måste de innehålla sig själva. */
 function temaFns(){
-  return [esc,norm,key,stat,codeSortKey,cmpArr,rpbSortVal,distColor,critLabel,modeHint,availableModeIds,refreshLists,
+  return [esc,norm,key,stat,codeSortKey,cmpArr,rpbSortVal,distColor,critLabel,isPre,modeHint,availableModeIds,refreshLists,
              isTemaPage,facetLabel,facetTitle,discBucket,mkFacets,facetsOfMcq,facetsOfScored,facetPass,anyFacet,toggleFacet,toggleTag,filterBase,filterGroups,tagPass,filtersActive,updateClearBtn,applyFilters,clearFilters,rpbInfo,isExcluded,exclReason,
              cueWords,cueHas,cueScan,advice,askQuestions,isExemplary,exemplaryReason,unmapReason,card,
              currentView,pageItems,drawCards,jumpToCard,passMetric,renderPassMetric,buildActionList,buildGoodList,buildTagbar,
@@ -3647,7 +3664,7 @@ function exportPdf(){
       const pb = r.pb!==null ? ` <span class="p-pb">r_pb ${r.pb>=0?"+":""}${r.pb.toFixed(2)}</span>`:"";
       return `<tr class="${cls}"><td class="p-pct">${r.cnt===0?"0 %":r.pct.toFixed(1)+" %"}</td><td>${esc(r.text)}${pb}</td></tr>`;
     }).join("");
-    const adv = ex ? "" : [...x.advice.l1, ...x.advice.l2].map(a=>
+    const adv = ex ? "" : [...x.advice.l1, ...(isPre() ? [] : x.advice.l2)].map(a=>
       `<div class="p-adv p-${a.cls.replace('adv-','')}"><b>${esc(a.action)}</b> – ${esc(a.why)}</div>`).join("");
     const exReason=exclReason(x.seq);
     const exMark = ex ? `<span class="p-exclmark">Exkluderad${exReason?` · ${esc(exReason)}`:""}</span>` : "";
