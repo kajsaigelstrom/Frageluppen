@@ -18,6 +18,13 @@ inte dokumenterad här.
   följer resten av tentan, frågan "Stämmer facit och poängregeln?" (för essäfrågor gäller
   bedömningsmallen). Mönsterraderna säger "MCQ-frågor" och "essäfrågor" så att de inte blandas
   ihop. Excel och CSV ur temarapporten har en rad per synlig fråga med kolumnen Typ.
+- **Tre steg i stället för rollvalet.** Raden överst har 1 Förbered filer, 2 Hitta problemfrågor
+  och 3 Skapa rapporter, och ersätter både "Jag är Kurssamordnare/Examinator" och mellansteget
+  "Vad vill du göra?". Med en fil öppen byter man steg med ett klick. Steg 3 kräver färdig
+  rättning och säger det. Filen från steg 1 heter nu **analysfilen** (`analysfil_….html`), och
+  texterna säger inte längre vem som gör vad; hjälpen nämner Linköpings uppdelning som exempel.
+  Adressen följer steget (`#forbered`, `#problemfragor`, `#rapporter`), och de äldre adresserna
+  fungerar. Äldre filer (`tenta-till-examinator_….html`) går fortfarande att öppna.
 - **Temarapporten är renodlad.** Den följer examinatorns filter: med till exempel ett tema valt
   innehåller rapporten bara de frågorna och säger vilket filter det var. Den skapas som interaktiv
   sida (**Temarapport**) eller för utskrift (**Temarapport (PDF)**). Kommentarer kan skrivas även i

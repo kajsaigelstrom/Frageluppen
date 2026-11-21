@@ -40,11 +40,11 @@ test("filen öppnar direkt i analysen med samma siffror som råfilen", async () 
   assert.equal(page.ev("state.pdfMcqs.length"), ev("pdf.length"));
   assert.ok(page.ev("!!state.tags"));
 });
-test("den öppnade filen döljer ingångarna och har ingen ruta överst", async () => {
+test("den öppnade filen döljer steg 1 och har ingen ruta överst", async () => {
   const { ev } = fresh();
   const page = runHtml(ev("FILE"));
   await page.ev("state.embeddedReady");
-  assert.equal(page.el("#rolebar").classList.contains("hidden"), true);
+  assert.equal(page.el("#role-prep").classList.contains("hidden"), true);
   assert.ok(!ev("FILE").includes("embnote"));                    // rutan överst är borttagen (Kajsa 21 nov 2026)
   assert.ok(page.el("#uploadfull").classList.contains("hidden"));
 });

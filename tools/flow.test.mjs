@@ -8,14 +8,14 @@ const fresh = () => { const a = loadApp(); setupDirty(a.ev);
         globalThis.FILE = buildExaminerFile(pkg);`); return a; };
 const STATIC = fs.readFileSync(INDEX, "utf8").split("<script>")[0];
 
-test("filens innehåll går att läsa ut ur kurssamordnarens HTML-fil", () => {
+test("filens innehåll går att läsa ut ur analysfilen", () => {
   const { ev, evj } = fresh();
   assert.deepEqual(JSON.parse(ev("extractEmbedded(FILE)")), evj("pkg"));
   assert.deepEqual(JSON.parse(ev("extractEmbedded(JSON.stringify(pkg))")), evj("pkg"));       // ett tentapaket från 3.25.0 går också
   for (const bad of ["", "<html><body>hej</body></html>", "%PDF-1.4", '{"ext_inspera_candidates":[]}'])
-    assert.throws(() => ev(`extractEmbedded(${JSON.stringify(bad)})`), /inte en fil från kurssamordnaren/, bad);
+    assert.throws(() => ev(`extractEmbedded(${JSON.stringify(bad)})`), /inte en analysfil/, bad);
 });
-test("examinatorns ingång har en enda filruta, och kurssamordnarens har de tre", () => {
+test("steg 2 och 3 har en enda filruta, och steg 1 har de tre", () => {
   assert.match(STATIC, /<input[^>]*id="examfile"[^>]*accept="[^"]*\.html/);
   assert.ok(!STATIC.includes('id="compute"'));
   const { ev, el } = fresh();
@@ -26,23 +26,20 @@ test("examinatorns ingång har en enda filruta, och kurssamordnarens har de tre"
   assert.equal(el("#drops").classList.contains("hidden"), false);
   assert.equal(el("#exambox").classList.contains("hidden"), true);
 });
-test("när filen är vald visas valet, inte resultaten", async () => {
+test("när filen är vald visas steg 2 direkt, med samma siffror som råfilerna ger", async () => {
   const { ev, el } = fresh();
   ev("setPrep(false)");
-  await ev("loadExaminerFile(FILE, 'tenta-till-examinator.html')");
-  assert.equal(ev("state.step"), "choose");
+  await ev("loadExaminerFile(FILE, 'analysfil.html')");
+  assert.equal(ev("state.step"), "triage");
   assert.equal(fingerprint(ev, "state.json"), fingerprint(ev, "parseJSON([dirty])"));
-  assert.equal(el("#stepchoice").classList.contains("hidden"), false);
-  assert.equal(el("#results").classList.contains("hidden"), true);
-  assert.match(STATIC, /id="step-triage"[^>]*>[\s\S]*?problemfrågor/i);
-  assert.match(STATIC, /id="step-report"[^>]*>[\s\S]*?hela rapporten/i);
+  assert.equal(el("#results").classList.contains("hidden"), false);
 });
-test("fel fil ger ett begripligt fel och inget val", async () => {
+test("fel fil ger ett begripligt fel och inga resultat", async () => {
   const { ev, el } = fresh();
   ev("setPrep(false)");
   await ev("loadExaminerFile('<html><body>något annat</body></html>', 'annan.html')");
-  assert.match(el("#log").textContent, /inte en fil från kurssamordnaren/);
-  assert.notEqual(ev("state.step"), "choose");
+  assert.match(el("#log").textContent, /inte en analysfil/);
+  assert.equal(ev("state.step"), null);
 });
 test("problemfrågor före betygssättning: en egen vy med bara flervalsfrågorna att se över", async () => {
   const { ev, el } = fresh();
@@ -52,7 +49,6 @@ test("problemfrågor före betygssättning: en egen vy med bara flervalsfrågorn
   assert.equal(ev("state.view"), "pre-mcq");
   assert.equal(ev("state.mode"), "action");
   assert.equal(el("#results").classList.contains("hidden"), false);
-  assert.equal(el("#stepchoice").classList.contains("hidden"), true);
   const tabs = el("#viewtabs").innerHTML;
   assert.ok(!tabs.includes("Slutrapport") && !tabs.includes("Totalrapport"));
   assert.equal(el("#exp-html").classList.contains("hidden"), true);          // export till temagrupper hör till hela rapporten
@@ -67,9 +63,8 @@ test("hela rapporten: en sida efter rättning, med export", async () => {
   const tabs = el("#viewtabs").innerHTML;
   assert.ok(tabs.includes("Hela rapporten") && !tabs.includes("reptab") && !tabs.includes("Preliminär"));
   for (const id of ["#exp-html", "#exp-xlsx", "#exp-overview"]) assert.equal(el(id).classList.contains("hidden"), false, id);
-  ev("setStep('choose')");
-  assert.equal(el("#stepchoice").classList.contains("hidden"), false);
-  assert.equal(el("#results").classList.contains("hidden"), true);
+  ev("setStep('triage')");
+  assert.equal(ev("state.view"), "pre-mcq");
 });
 test("hela rapporten kräver färdig rättning", async () => {
   const { ev, el } = fresh();
@@ -78,15 +73,14 @@ test("hela rapporten kräver färdig rättning", async () => {
   assert.equal(el("#step-report").disabled, true);
   assert.match(el("#step-report-note").textContent, /färdig rättning/);
   ev("setStep('report')");
-  assert.equal(ev("state.step"), "choose");
+  assert.equal(ev("state.step"), "triage");
 });
-test("en fil som öppnas med dubbelklick hamnar också i valet", async () => {
+test("en fil som öppnas med dubbelklick hamnar i steg 2", async () => {
   const { ev } = fresh();
   const page = runHtml(ev("FILE"));
   await page.ev("state.embeddedReady");
-  assert.equal(page.ev("state.step"), "choose");
-  assert.equal(page.el("#stepchoice").classList.contains("hidden"), false);
-  assert.equal(page.el("#results").classList.contains("hidden"), true);
+  assert.equal(page.ev("state.step"), "triage");
+  assert.equal(page.el("#results").classList.contains("hidden"), false);
 });
 test("verktyget har ingen inbyggd exempeltenta", () => {
   const src = fs.readFileSync(INDEX, "utf8");
@@ -106,10 +100,9 @@ test("ingen godkäntstatistik i vyerna eller i temarapporten", async () => {
   assert.equal(page.el("#passmetric").innerHTML, "");
   assert.ok(!/-gränsen/.test(page.el("#cards").innerHTML + page.el("#fileline").textContent));
 });
-test("kurssamordnarens ingång visar aldrig valet eller resultaten", () => {
+test("steg 1 visar aldrig resultaten", () => {
   const { ev, el } = fresh();
   ev("setPrep(false); loadSynthetic(); setStep('report'); setPrep(true);");
-  assert.equal(el("#stepchoice").classList.contains("hidden"), true);
   assert.equal(el("#results").classList.contains("hidden"), true);
 });
 

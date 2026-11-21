@@ -90,13 +90,13 @@ test("uppmaningar till examinatorn syns inte för temarapportens läsare", () =>
   assert.match(ev("card(Object.assign({}, VIEW[0], {n: 12, advice: undefined}))"), /bedöm utifrån/);
   assert.match(ev("card(Object.assign({}, VIEW[0], {unmatched: 3, advice: undefined}))"), /kontrollera att rätt PDF/);
 });
-test("från kurssamordnarens ingång tillbaka till examinatorns: valet visas igen", () => {
+test("från steg 1 tillbaka till steg 2 eller 3: resultaten visas igen", () => {
   const { ev, el } = fresh();
   ev("setPrep(true)");
   assert.equal(el("#results").classList.contains("hidden"), true);
   ev("setPrep(false)");
-  assert.equal(el("#stepchoice").classList.contains("hidden"), false);
-  assert.equal(ev("state.step"), "choose");
+  assert.equal(el("#results").classList.contains("hidden"), false);
+  assert.ok(["triage", "report"].includes(ev("state.step")));
 });
 test("examinatorns fil sparas utan att länken dras in direkt", async () => {
   const { ev, downloads, urlEvents } = fresh();
@@ -114,24 +114,18 @@ test("adressen väljer ingång", () => {
   const { ev } = fresh();
   assert.equal(ev("roleFromHash('#samordnare')"), "prep");
   assert.equal(ev("roleFromHash('#kurssamordnare')"), "prep");
-  assert.equal(ev("roleFromHash('#examinator')"), "exam");
+  assert.equal(ev("roleFromHash('#examinator')"), "triage");
   assert.equal(ev("roleFromHash('')"), null);
   assert.equal(ev("roleFromHash('#card-12')"), null);
   assert.equal(ev("roleFromHash('#SAMORDNARE')"), "prep");
-});
-test("sidan har två flikar för ingångarna och ingen gömd länk", () => {
-  const html = fs.readFileSync(INDEX, "utf8");
-  assert.match(html, /id="role-exam"[^>]*>Examinator</);
-  assert.match(html, /id="role-prep"[^>]*>Kurssamordnare</);
-  assert.ok(!html.includes('id="prep-open"') && !html.includes('id="prep-close"'));
 });
 test("flikarna följer läget", () => {
   const { ev, el } = fresh();
   ev("setPrep(true)");
   assert.equal(el("#role-prep").classList.contains("on"), true);
-  assert.equal(el("#role-exam").classList.contains("on"), false);
+  assert.equal(el("#step-triage").classList.contains("on"), false);
   ev("setPrep(false)");
-  assert.equal(el("#role-exam").classList.contains("on"), true);
+  assert.equal(el("#step-triage").classList.contains("on"), true);
   assert.equal(el("#role-prep").classList.contains("on"), false);
 });
 test("rutan för resultat finns bara hos kurssamordnaren och talar till hen", () => {

@@ -25,7 +25,7 @@ test("samma ord för samma sak i hela verktyget", () => {
 test("sidhuvudet säger inte att verktyget bara gäller flervalsfrågor", () => {
   assert.ok(!/<h1>[^<]*MCQ-analys/.test(STATIC));
 });
-test("kurssamordnaren ser inga inställningar, och får veta vad PDF och taggfil ger", () => {
+test("steg 1 har inga inställningar, och säger vad PDF och taggfil ger", () => {
   const { ev, el } = loadApp();
   ev("setPrep(true)");
   assert.equal(el("#settings-open").classList.contains("hidden"), true);
@@ -35,13 +35,13 @@ test("kurssamordnaren ser inga inställningar, och får veta vad PDF och taggfil
   assert.equal(el("#settings-open").classList.contains("hidden"), false);
   assert.match(STATIC, /id="prep-note"[^>]*>[^<]*<b>[^<]*<\/b>[\s\S]*?två gånger[\s\S]*?nya filer från Inspera/);
   assert.throws(() => ev("prepReceipt({jsonObjs:[buildPackage({jsonObjs:[demoToInspera(DEMO_DATA.DEMO)], pdfMcqs:null, tagRows:null})], pdfMcqs:null, tagRows:null})"),
-    /redan en fil till examinatorn/);
+    /redan en analysfil/);
 });
-test("examinatorn uppmanas aldrig att ladda upp en PDF", () => {
+test("i steg 2 och 3 uppmanas ingen att ladda upp en PDF", () => {
   const { ev, el } = loadApp();
   ev("setPrep(false); loadSynthetic(); state.pdfMcqs = null; setStep('report');");
   const note = el("#pdfnote").innerHTML;
-  assert.match(note, /kurssamordnaren/);
+  assert.match(note, /ny analysfil[\s\S]*steg 1/);
   assert.ok(!/Ladda upp/.test(note));
 });
 test("vyn före betygssättning talar om flervalsdelen, och säger varför", () => {

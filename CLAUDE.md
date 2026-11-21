@@ -63,13 +63,15 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
   `scoreCard`), blandade och sorterade av `pageItems`. Lägg inte tillbaka flikar per frågetyp.
   Tabellen över alla frågor är exporten Översiktstabell (`overviewPayload`, `overviewHtml`,
   `exportOverview`), en fristående sida utan skript. Diskriminering = punkt-biseriell / item–total.
-- **Två ingångar** högst upp i filpanelen: Kurssamordnare (landningsstället) och Examinator.
-  Adressen följer valet (`#samordnare`, `#examinator`). De tre filrutorna för Insperas filer
-  finns bara hos kurssamordnaren. Examinatorn har en enda filruta för kurssamordnarens fil
-  (`extractEmbedded`, `loadExaminerFile`) – lägg inte tillbaka en råfilsväg där.
-- **Examinatorns flöde är två steg** (`state.step`, `setStep`): först valet, sedan antingen
-  `triage` (bara Preliminär MCQ, utan exporter) eller `report` (Hela
-  rapporten med export). Vyerna väljs aldrig fritt.
+- **Tre steg i stället för roller** (Kajsas beslut 21 nov 2026): 1 Förbered filer (`state.prep`,
+  `setPrep`), 2 Hitta problemfrågor (`state.step==="triage"`) och 3 Skapa rapporter (`"report"`).
+  Stegraden (`#role-prep`, `#step-triage`, `#step-report`, `renderStepBar`, `goStep`) ligger utanför
+  filpanelen och syns alltid. Adressen följer steget (`#forbered`, `#problemfragor`, `#rapporter`;
+  de äldre `#samordnare` och `#examinator` fungerar). Texterna säger aldrig vem som gör vad, utom
+  i hjälpen där Linköpings uppdelning nämns som exempel. Filen mellan steg 1 och de andra heter
+  analysfilen (`analysfil_<stämpel>.html`, `extractEmbedded`, `loadExaminerFile`) och är enda vägen:
+  de tre filrutorna för Insperas filer finns bara i steg 1 – lägg inte tillbaka en råfilsväg.
+  Inget mellansteg: `setStep("choose")` visar det steg som är valt (`state.want`).
 - **Ingen godkäntstatistik i vyerna eller i temarapporten** (Kajsas beslut 20 nov 2026). Den
   ska bli en egen export. `passMetric` finns kvar för det, men ritas inte.
 - **Examinatorns fil** (`buildExaminerFile`): kurssamordnaren sparar hela verktyget med

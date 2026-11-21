@@ -10,6 +10,7 @@ mcq_analys_v*.html
 mcq-resultat_*.html
 # Examinatorns fil innehåller en rad per student – får ALDRIG checkas in. Rapporter hör inte heller hemma här.
 tenta-till-examinator_*.html
+analysfil_*.html
 temarapport_*.html
 oversiktstabell_*.html
 problemfragor_*.html

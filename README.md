@@ -20,29 +20,30 @@ Hela verktyget är **en enda fil**, `index.html`. Du behöver inte installera n�
 
 ---
 
-## För kurssamordnare: förbered tentan åt examinatorn
+## Tre steg
 
-Verktyget öppnar i kurssamordnarens läge.
+Verktyget används i tre steg, som väljs i raden överst. Vem som gör vilket steg bestämmer ni
+själva. I Linköping gör kurssamordnaren steg 1 och examinatorn steg 2 och 3.
+
+**1 Förbered filer.** Sidan öppnar här.
 
 1. Släpp resultatfilerna (JSON) från Inspera, tentans PDF och taggfilen om den finns.
-2. Kontrollera kvittot (tentans namn och antal kandidater) och klicka **Spara examinatorns fil**.
-3. Skicka filen till examinatorn. Gör samma sak en gång till när tentan är rättad.
+2. Kontrollera kvittot (tentans namn och antal studenter) och klicka **Spara analysfilen**.
+3. Gör samma sak en gång till när tentan är rättad, med nya filer från Inspera.
 
-Filen innehåller verktyget och bara den data det behöver. Fritextsvar, rättarnamn, tider,
-extratid, betyg och alla id tas bort, och kandidatnumren ersätts av löpnummer. Filen är
-minimerad, inte anonym, och ska behandlas som tentamaterial.
+Analysfilen innehåller verktyget och bara den data det behöver. Studenternas skrivna svar,
+rättarnamn, tider, extratid och alla id tas bort, och kandidatnumren ersätts av löpnummer.
+Insperas slutbetyg och totalpoäng följer med, så att rättningen kan kontrolleras. Filen är
+minimerad, inte anonym, och ska behandlas som tentamaterial. Skicka den aldrig vidare till
+temagrupperna.
 
-## För examinatorer
+**2 Hitta problemfrågor.** Välj analysfilen, eller öppna den med ett dubbelklick. Här står de
+flervalsfrågor som statistiken pekar ut före betygssättningen. Går att göra innan essäfrågorna
+är rättade. **Problemfrågor** sparar en sida till betygskollegiet.
 
-Välj fliken **Examinator** och välj filen från kurssamordnaren (eller öppna filen med ett
-dubbelklick). Sedan finns två vägar.
-
-- **Hitta problemfrågor före betygssättning.** Flervalsfrågor som kan behöva rättas i facit
-  eller exkluderas. Går att göra innan essäfrågorna är rättade.
-- **Se hela rapporten.** Alla frågor efter rättningen, med export till temagrupperna
-  (Temarapport) och till Excel.
-
-Skicka aldrig själva filen från kurssamordnaren vidare.
+**3 Skapa rapporter.** Alla frågor efter rättningen. Härifrån skapas Temarapporten (interaktiv
+eller som PDF, för hela tentan eller för det filter som är valt), översiktstabellen och
+tentamensstatistiken.
 
 ## För temagrupper: temarapporten
 
