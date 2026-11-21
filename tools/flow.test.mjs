@@ -105,7 +105,7 @@ test("ingen godkäntstatistik i vyerna eller i temarapporten", async () => {
   assert.equal(ev("temaEmbed().passSnapshot"), null);
   const page = runHtml(ev("buildTemaReport(temaEmbed())"));
   assert.equal(page.el("#passmetric").innerHTML, "");
-  assert.ok(!/-gränsen/.test(page.el("#cards").innerHTML + page.el("#summary").innerHTML));
+  assert.ok(!/-gränsen/.test(page.el("#cards").innerHTML + page.el("#fileline").textContent));
 });
 test("kurssamordnarens ingång visar aldrig valet eller resultaten", () => {
   const { ev, el } = fresh();

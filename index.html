@@ -31,6 +31,20 @@
   header p{margin:0;color:var(--muted);font-size:14px;max-width:760px}
   .titlerow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:2px}
   .titlerow h1{margin:0}
+  /* Smal rad överst när en fil är vald: namnet, tentan och filen, Byt fil, Inställningar och Hjälp. */
+  .fileline{flex:1 1 260px;min-width:0;font-size:13px;color:var(--muted)}
+  .fileline b{color:var(--ink);font-weight:600}
+  body.compact header{margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  body.compact .titlerow h1{font-size:19px}
+  body.compact .h1sub,body.compact .devpill,body.compact header .subtitle,body.compact header .intro{display:none}
+  #warnings > div:not(:empty){margin:0 0 10px}
+  .viewhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:6px 0 4px}
+  .viewhead #viewtabs{flex:1 1 auto}
+  .viewhead .steptitle{margin:0}
+  .viewhead .stepback{margin:0}
+  #modehint{display:block;margin:0 0 12px;max-width:80ch}
+  #results.premode #controlband{background:none;border:0;padding:0;-webkit-backdrop-filter:none;backdrop-filter:none}
+  footer .devnote{margin-top:8px}
   .devpill{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);
     background:var(--accent-soft);border:1px solid var(--accent);padding:3px 10px;border-radius:999px;white-space:nowrap}
   header .subtitle{margin:2px 0 9px;color:var(--ink);font-size:14.5px;font-weight:500;max-width:760px}
@@ -251,9 +265,6 @@
   #prep-receipt .warn{color:#8a3b12}
   #prep-note{margin-top:12px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:#faf6ea;font-size:13px;max-width:78ch}
   .computehint{font-size:13px;color:var(--muted)}
-  .uploadmini{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .uploadmini .minicheck{color:var(--accent);font-weight:700;font-size:16px}
-  .uploadmini #minisummary{font-size:13.5px;color:var(--ink);font-family:"IBM Plex Mono",monospace}
   .btn-ghost{font:inherit;font-size:13px;font-weight:600;padding:7px 16px;border:1px solid var(--line);
     background:#fff;color:var(--accent);border-radius:8px;cursor:pointer;transition:.12s;margin-left:auto}
   .btn-ghost:hover{border-color:var(--accent);background:var(--accent-soft)}
@@ -433,16 +444,17 @@
 <div class="wrap">
   <header>
     <div class="titlerow">
-      <h1>Frågeluppen — frågeanalys för Inspera-tentor</h1>
+      <h1>Frågeluppen<span class="h1sub"> — frågeanalys för Inspera-tentor</span></h1>
       <span class="devpill">Under utveckling</span>
+      <span id="fileline" class="fileline"></span>
+      <button id="reopen" class="linkbtn hidden" type="button">Byt fil</button>
       <button class="helpbtn" id="helpOpen" type="button">? Hjälp</button>
       <button class="linkbtn" id="settings-open" type="button">Inställningar</button>
     </div>
     <div id="settings" class="hidden"></div>
     <div id="th-custom" class="hidden"></div>
     <p class="subtitle">Visar hur tentans frågor fungerade: svarsfördelning, andel rätt och diskriminering, alltså hur väl varje fråga skiljer studenter med höga totalpoäng från studenter med låga.</p>
-    <p>Kurssamordnaren skapar en fil ur Insperas resultat. Examinatorn väljer filen, hittar problemfrågor före betygssättningen och skapar efter rättningen en Temarapport till temagrupperna. Allt körs lokalt i din webbläsare; inga data laddas upp.</p>
-    <p class="devnote">Verktyget utvecklas fortfarande och kan innehålla fel – dubbelkolla viktiga slutsatser. Hittar du en bugg eller har förslag, hör av dig till <b>Kajsa Igelström</b>.</p>
+    <p class="intro">Kurssamordnaren skapar en fil ur Insperas resultat. Examinatorn väljer filen, hittar problemfrågor före betygssättningen och skapar efter rättningen en Temarapport till temagrupperna. Allt körs lokalt i din webbläsare; inga data laddas upp.</p>
   </header>
 
   <div id="helpModal" class="modal hidden">
@@ -507,12 +519,9 @@
     <div id="prep-receipt" class="hidden"></div>
     <div id="prep-note" class="hidden">Du sparar <b>en fil som examinatorn öppnar med ett dubbelklick</b>. Gör det två gånger per tenta: direkt efter tentan, så att examinatorn kan hitta problemfrågor före betygssättningen, och en gång till när allt är rättat, då med nya filer från Inspera. Filen är minimerad, inte anonym. Varje rad är en students poängmönster och kan på en liten omtenta kännas igen av den som vet vilka som skrev. Behandla filen som tentamaterial och dela den bara med examinatorn. Den innehåller också tentans frågor.</div>
     </div>
-    <div id="uploadmini" class="uploadmini hidden">
-      <span class="minicheck">✓</span>
-      <span id="minisummary"></span>
-      <button id="reopen" class="btn-ghost">Välj en annan fil</button>
-    </div>
     <div id="log"></div>
+  </div>
+  <div id="warnings">
     <div id="examwarn"></div>
     <div id="qa"></div>
     <div id="pdfnote"></div>
@@ -528,15 +537,13 @@
   </div>
 
   <div id="results" class="hidden">
-    <button id="step-back" class="linkbtn stepback" type="button">← Tillbaka till valet</button>
-    <div id="viewtabs"></div>
-    <div class="modebar">
-      <span class="modelabel">Visningsläge</span>
+    <div class="viewhead">
+      <button id="step-back" class="linkbtn stepback" type="button" title="Tillbaka till valet">← Tillbaka</button>
+      <div id="viewtabs"></div>
       <div class="modeseg" id="modeseg"></div>
-      <span class="modehint" id="modehint"></span>
     </div>
+    <div class="modehint" id="modehint"></div>
     <div id="viewstub" class="viewstub hidden"></div>
-    <div class="panel summary" id="summary"></div>
     <div class="nnote" id="nnote"></div>
     <div id="passmetric"></div>
 
@@ -578,6 +585,7 @@
   <footer>
     Procent och rätt svar kommer från JSON-filerna. Frågetext, alla alternativ och alternativ som ingen valde
     hämtas från PDF:en. Inga data lämnar din dator.
+    <div class="devnote">Verktyget utvecklas fortfarande och kan innehålla fel – dubbelkolla viktiga slutsatser. Hittar du en bugg eller har förslag, hör av dig till <b>Kajsa Igelström</b>.</div>
     <div class="credit" id="credit"></div>
   </footer>
 </div>
@@ -655,17 +663,14 @@ function wireSettings(withPass, onChange){
 }
 /* Vyn före betygssättning: bara det som statistiken pekar ut, eller alla flervalsfrågor reducerat (Kajsa 21 nov 2026). */
 function isPre(){ return typeof EMBED==="undefined" && typeof activeView==="function" && activeView().id==="pre-mcq"; }
-function modeHint(m){ return m==="ask"
-  ? "Kort med mätvärden. Där svaren följer ett mönster står en eller två frågor att ställa sig."
-  : m==="ask-explain"
-  ? "Som Rapport, och dessutom en förklaring av måttet bakom varje fråga."
-  : m==="action"
-  ? "Frågor som statistiken pekar ut: tecken på fel i facit, eller mycket svåra frågor som inte skiljer mellan studenter."
-  : (m==="edu" && isPre())
-  ? "Alla flervalsfrågor med mätvärden, för överblick över svårighet och diskriminering. Sortera för att hitta det du söker."
-  : m==="simple"
-  ? "Förenklad vy: bara korten med mätvärden – tolkningar och tips är dolda."
-  : "Visar alla frågor med tolkningar och tips."; }
+function modeHint(m){
+  const pre=" Diskrimineringen räknas mot poängen på flervalsdelen, eftersom essäfrågorna inte är rättade än.";
+  return m==="ask" ? "Hur varje fråga fungerade. Där svaren följer ett mönster står en eller två frågor att ställa sig."
+    : m==="ask-explain" ? "Som Rapport, och dessutom en förklaring av måttet bakom varje fråga."
+    : m==="action" ? "Frågor som statistiken pekar ut: tecken på fel i facit, eller mycket svåra frågor som inte skiljer mellan studenter." + pre
+    : m==="simple" ? "Bara korten med mätvärden. Tolkningar och tips är dolda. Diskrimineringen räknas mot poängen på hela tentan."
+    : isPre() ? "Alla flervalsfrågor med mätvärden, för överblick över svårighet och diskriminering." + pre
+    : "Alla frågor efter rättningen, med tolkningar och tips. Diskrimineringen räknas mot poängen på hela tentan."; }
 
 /* ---------- vy-registry (toppnivå: väljer analys, kriterium och omfång) ----------
    Varje vy är ren konfiguration; render() läser aktiv vy och kör computeDiscrimination med
@@ -725,8 +730,7 @@ function renderViewTabs(){
     (list.length>1 ? `<div class="reptabs">` +
       list.map(v=>`<button class="reptab ${v.id===state.view?'on':''}" data-view="${v.id}">`+
         `<span class="phase">${v.phase}</span>${v.label}${v.built?'':' ·'}</button>`).join("") + `</div>`
-      : `<div class="steptitle">${state.step==="triage" ? "Problemfrågor före betygssättning" : esc(cur.label)}</div>`) +
-    `<div class="rephint">${cur.hint}</div>`;
+      : `<div class="steptitle">${state.step==="triage" ? "Problemfrågor före betygssättning" : esc(cur.label)}</div>`);
   host.querySelectorAll(".reptab").forEach(b=>b.addEventListener("click",()=>{
     if(b.dataset.view===state.view) return;
     state.view=b.dataset.view; render();
@@ -1257,12 +1261,20 @@ function minimizeInspera(obj, offset){
    (varje rad är en students poängmönster) och hanteras som tentamaterial. */
 const PKG_FORMAT = "frageluppen-tentapaket";
 const PKG_VERSION = 1;
+/* Tentans namn: det som resultatfilernas titlar har gemensamt från början (en fil per ort har ortens namn sist). */
+function commonTitle(titles){
+  const t=(titles||[]).filter(Boolean); if(!t.length) return null;
+  const w=t.map(x=>String(x).trim().split(/\s+/)); let n=0;
+  while(n<w[0].length && w.every(a=>a[n]===w[0][n])) n++;
+  const c=w[0].slice(0,n).join(" ");
+  return c.length>=6 ? c : t[0];
+}
 function buildPackage({jsonObjs, pdfMcqs, tagRows}){
   const titles = jsonObjs.map(o=>o && o.ext_inspera_assessmentRunTitle).filter(Boolean);
   const pdfName = (pdfMcqs && pdfMcqs.examName) || null;
   return { format:PKG_FORMAT, formatVersion:PKG_VERSION, toolVersion:VERSION,
     created:new Date().toISOString().slice(0,10),
-    examName: titles[0] || null,
+    examName: commonTitle(titles),
     examWarning: examMismatch(pdfName, titles) || null,
     data: (()=>{ let off=0;                                   // löpnumren löper över alla filer (en fil per ort)
       return jsonObjs.map(o=>{ const m=minimizeInspera(o, off); off+=m.ext_inspera_candidates.length; return m; }); })(),
@@ -1329,7 +1341,7 @@ function prepReceipt({jsonObjs, pdfMcqs, tagRows}){
   let n=0; for(const d of jsonObjs){ const l=(d && (d.ext_inspera_candidates || d.candidates)) || []; n+=l.length; }
   if(!n) throw new Error("Hittar inga studenter i resultatfilen. Är det rätt fil från Inspera?");
   const titles = jsonObjs.map(o=>o && o.ext_inspera_assessmentRunTitle).filter(Boolean);
-  return { examName:titles[0]||null, candCount:n, mcqPdf: pdfMcqs ? pdfMcqs.length : null,
+  return { examName:commonTitle(titles), candCount:n, mcqPdf: pdfMcqs ? pdfMcqs.length : null,
            hasTags: !!(tagRows && tagRows.length), warning: examMismatch(pdfMcqs && pdfMcqs.examName, titles) || null };
 }
 
@@ -2358,17 +2370,8 @@ function render(){
   const nClean  = scored.filter(v=>!has1(v)&&!has2(v)&&(!showExe || !isExemplary(v))).length;
   const nEss = state.scored.filter(e=>e.typ==="text").length, nMul = state.scored.filter(e=>e.typ==="multi").length;
   const nExclAll = nExcl + state.scored.filter(e=>e.excluded).length;
-  $("#summary").innerHTML =
-    stat(state.json.candCount,"studenter","","s-muted") +
-    stat(view.length,"MCQ-frågor","","s-muted") +
-    (nEss?stat(nEss,"essäfrågor","","s-muted"):"") +
-    (nMul?stat(nMul,"flersvarsfrågor","","s-muted"):"") +
-    (nExclAll?stat(nExclAll,"exkluderade","Dragna ur poängsättningen – visas kvar men bidrar inte till total, diskriminering eller godkäntgränsen."):"") +
-    (state.smallN||!showExe?"":stat(nExe,"stark diskriminering","Skiljer starka från svaga väl (hög item–total-korrelation) utan automatiska flaggor. Diskriminering är evidens, inte bevis – bekräfta att frågan testar rätt sak innan du återanvänder den.")) +
-    ((state.smallN||isPre())?"":stat(nClean,"inga automatiska flaggor","Inga flaggor från de automatiska kontrollerna (statistik, distraktorer, vanliga ledtrådar). Inget kvalitetsintyg – innehåll, måluppfyllelse och subtilare ledtrådar syns inte här.")) +
-    (isPre()?"":stat(nTips,"tips")) +
-    (isPre()?"":stat(nAction,"att se över","",nAction>0?"s-act-on":"s-act-off")) +
-    ((state.tags && !isPre())?stat(state.tags.tagCols.map(c=>c.name).join(" · "),"taggkolumner","","s-muted"):"");
+  results.classList.toggle("premode", isPre());
+  renderFileLine();
   $("#nnote").innerHTML = state.smallN
     ? `<div class="advnote">Litet underlag: ${esc(state.json.candCount)} studenter. Andel rätt och svarsfördelning visas, men diskriminering (r<sub>pb</sub>) och automatiska omdömen om svårighet och distraktorer kräver fler svar (riktmärke n ≥ 30). Tolka enskilda procenttal försiktigt – ett svar väger ${Math.round(100/Math.max(1,state.json.candCount))} procentenheter.</div>`
     : "";
@@ -2403,8 +2406,9 @@ function render(){
     } else note.innerHTML="";
   }
   if(activeView().showPassMetric){ renderPassMetric(); } else { $("#passmetric").innerHTML=""; }
+  const modeCount = m => !isPre() ? "" : ` · ${m.id==="action" ? nAction : view.length}`;   // före betygssättning: vad ett klick ger
   $("#modeseg").innerHTML = activeView().modes.map(m=>
-    `<button class="modebtn ${m.id===state.mode?'on':''}" data-mode="${esc(m.id)}">${esc(m.label)}</button>`).join("");
+    `<button class="modebtn ${m.id===state.mode?'on':''}" data-mode="${esc(m.id)}">${esc(m.label)}${modeCount(m)}</button>`).join("");
   $("#modehint").textContent = modeHint(state.mode);
   refreshLists();
   buildTagbar();
@@ -3135,15 +3139,9 @@ function xExportRender(){
   const view=state.vm.view, sc=state.scored;
   const scored=view.filter(v=>!isExcluded(v.seq));
   const nExcl=(view.length-scored.length) + sc.filter(e=>e.excluded).length;
-  const nEss=sc.filter(e=>e.typ==="text").length, nMul=sc.filter(e=>e.typ==="multi").length;
-  const showExe=!!spec.showExemplary;
-  const nExe=showExe?scored.filter(isForebild).length:0;
-  $("#summary").innerHTML = stat(EMBED.candCount,"studenter","","s-muted")
-    + (view.length?stat(view.length,"MCQ-frågor","","s-muted"):"")
-    + (nEss?stat(nEss,"essäfrågor","","s-muted"):"") + (nMul?stat(nMul,"flersvarsfrågor","","s-muted"):"")
-    + (nExcl?stat(nExcl,"exkluderade","Dragna ur poängsättningen – visas kvar men bidrar inte till total eller diskriminering."):"")
-    + (state.smallN||!showExe||!view.length?"":stat(nExe,"förebilder","Medelsvåra, skiljer väl och utan fynd i formkontrollen."))
-    + (state.tags?stat(state.tags.tagCols.map(c=>c.name).join(" · "),"taggkolumner","","s-muted"):"");
+  { const fl=$("#fileline");
+    if(fl) fl.textContent = fileLineText("", EMBED.candCount,
+      {single:view.length, text:sc.filter(e=>e.typ==="text").length, multi:sc.filter(e=>e.typ==="multi").length}, nExcl, ""); }
   $("#nnote").innerHTML = state.smallN ? '<div class="advnote">Litet underlag: '+EMBED.candCount+' studenter. Tolka enskilda procenttal försiktigt.</div>' : "";
   const modes=(spec.modes&&spec.modes.length)?spec.modes:[{id:"edu",label:"Alla frågor"}];
   if(!modes.some(m=>m.id===state.mode)) state.mode=modes[0].id;
@@ -3504,7 +3502,7 @@ function temaFns(){
              scoreQuestions,scorePatterns,scoredVisible,scoreCard,activePatternRows,filterText,overviewHtml,exportOverview,
              lathundKontrollInit,splitStem,formFindings,formFor,renderForm,isForebild,
              subsetEmbed,selVisible,renderSelBar,selRedraw,selAllVisible,selClear,saveSubset,
-             xExportTabs,xExportRender,xExportRows,xExportCSV,xLoadXLSX,xExportXLSX,xExportPrint,openHelp,closeHelp,wireHelp,xExportInit];
+             fileLineText,xExportTabs,xExportRender,xExportRows,xExportCSV,xLoadXLSX,xExportXLSX,xExportPrint,openHelp,closeHelp,wireHelp,xExportInit];
 }
 function temaConsts(){
   return `const MIN_N_DIST=${MIN_N_DIST};const TH_DEFAULT=${JSON.stringify(TH_DEFAULT)};const TH_RANGE=${JSON.stringify(TH_RANGE)};const TH_LABEL=${JSON.stringify(TH_LABEL)};const PSY=${JSON.stringify(PSY)};`
@@ -3531,14 +3529,14 @@ function buildTemaReport(EMBED){
   const fonts = `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>`
     + `<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">`;
   const body = `<div style="max-width:1100px;margin:0 auto;padding:24px 20px 60px">
-    <header style="margin:6px 0 14px">
-      <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
-        <h1 style="font-family:Fraunces,Georgia,serif;font-weight:600;font-size:26px;margin:0 0 4px">Temarapport</h1>
-        <button class="helpbtn" id="helpOpen" type="button">? Hjälp</button>
+    <header style="margin:0 0 12px">
+      <div class="titlerow" style="padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:10px">
+        <h1 style="font-family:Fraunces,Georgia,serif;font-weight:600;font-size:19px;margin:0">Temarapport</h1>
+        <span id="subsetline"></span>
+        <span id="fileline" class="fileline"></span>
         <button class="linkbtn" id="settings-open" type="button">Inställningar</button>
+        <button class="helpbtn" id="helpOpen" type="button">? Hjälp</button>
       </div>
-      <div id="subsetline"></div>
-      <p style="color:var(--muted);font-size:13px;margin:0;max-width:70ch">Så fungerade tentans frågor. Filtrera på tema, bocka för frågor och spara en egen sida att ge vidare. Rapporten innehåller bara sammanräknade resultat, aldrig enskilda studenters svar.</p>
       <div id="levelnote" class="levelnote">Statistiken visar hur frågorna fungerade i den här studentgruppen. Den säger inget om huruvida en fråga ligger på rätt nivå i förhållande till kursplanen.</div>
       <div id="settings" class="hidden"></div>
       <div id="th-custom" class="hidden"></div>
@@ -3548,12 +3546,11 @@ function buildTemaReport(EMBED){
       <h2>Hjälp — Temarapporten</h2><div id="helpBody"></div>
     </div></div>
     <div id="results">
-      <div id="viewtabs"></div>
       <div id="printhead"></div>
-      <div class="modebar"><span class="modelabel">Visningsläge</span>
+      <div class="viewhead">
+        <div class="modehint" id="modehint" style="flex:1 1 300px;margin:0"></div>
         <div class="modeseg" id="modeseg"></div>
-        <span class="modehint" id="modehint"></span></div>
-      <div class="panel summary" id="summary"></div>
+      </div>
       <div class="nnote" id="nnote"></div>
       <div id="passmetric"></div>
       <div id="controlband">
@@ -3696,6 +3693,8 @@ async function tryRun(){
     const ownPdf = state.pdfMcqs;
     const R = resolveInputs(objs, {pdfMcqs:ownPdf, tagRows:ownTagRows});   // tentapaket eller råfiler
     state.json = parseJSON(R.jsonObjs);
+    { const pk=objs.find(isPackage);
+      state.examName = (pk && pk.examName) || commonTitle(objs.map(o=>o && o.ext_inspera_assessmentRunTitle)) || ""; }
     state.synthMcqs = null;   // JSON-lägets kortunderlag byggs om från nya datan vid behov
     state.fromPackage = R.fromPackage;
     if(R.fromPackage){
@@ -3768,22 +3767,36 @@ async function saveExaminerFile(){
     log("Filen är sparad. Skicka den till examinatorn, som öppnar den med ett dubbelklick.");
   }catch(e){ log("Fel: "+e.message); console.error(e); }
 }
-function uploadSummary(){
-  const parts=[ (state.fromPackage && state.json) ? `kurssamordnarens fil (${state.json.candCount} studenter)`
-                  : state.jsonFiles.length+" JSON-fil"+(state.jsonFiles.length===1?"":"er"),
-                state.pdfMcqs ? `tentans PDF med ${state.pdfMcqs.length} flervalsfrågor` : "utan tentans PDF" ];
-  if(state.tagsFile) parts.push("taggar: "+state.tagsFile.name);
-  else if(state.tagsFromPackage) parts.push("taggar ur filen");
-  return parts.join("   ·   ");
+/* Raden överst när en fil är vald: tentan, antal studenter och frågor (för att se att filen lästs rätt), och i
+   hela rapporten exkluderade frågor och maxpoäng. Ersätter filrutan, statusraden och sifferrutan. */
+function fileLineText(name, nStud, counts, nExcl, maxText){
+  const nq=counts.single+counts.text+counts.multi;
+  const kinds=[]; if(counts.single) kinds.push(`${counts.single} MCQ`); if(counts.text) kinds.push(`${counts.text} essä`); if(counts.multi) kinds.push(`${counts.multi} flersvar`);
+  const parts=[]; if(name) parts.push(name);
+  parts.push(`${nStud} studenter`, `${nq} ${nq===1?"fråga":"frågor"}${kinds.length?": "+kinds.join(", "):""}`);
+  if(nExcl) parts.push(`${nExcl} exkluderad${nExcl===1?"":"e"}${maxText?", "+maxText:""}`);
+  return parts.join(" · ");
+}
+function renderFileLine(){
+  const el=$("#fileline"); if(!el) return;
+  const J=state.json;
+  if(!J || !J.qMeta || !document.body.classList.contains("compact")){ el.textContent=""; return; }
+  const counts={single:0,text:0,multi:0}; J.qMeta.forEach(m=>{ counts[m.type==="single"?"single":m.type==="multi"?"multi":"text"]++; });
+  const nExcl=J.qMeta.filter(m=>isExcluded(m.num)).length, f=x=>String(+x.toFixed(1)).replace(".",",");
+  el.textContent = fileLineText(state.examName, J.candCount, counts, nExcl,
+    state.step==="report" ? `maxpoäng ${f(reducedMax(J))} av ${f(J.maxTotal)}` : "");
 }
 function collapseUpload(){
-  $("#uploadfull").classList.add("hidden");
-  $("#uploadmini").classList.remove("hidden");
-  $("#minisummary").textContent = uploadSummary();
+  $("#uploadfull").classList.add("hidden"); $("#uploadpanel").classList.add("hidden");
+  document.body.classList.add("compact");
+  { const r=$("#reopen"); if(r) r.classList.remove("hidden"); }
+  renderFileLine();
 }
 function expandUpload(){
-  $("#uploadmini").classList.add("hidden");
-  $("#uploadfull").classList.remove("hidden");
+  $("#uploadfull").classList.remove("hidden"); $("#uploadpanel").classList.remove("hidden");
+  document.body.classList.remove("compact");
+  { const r=$("#reopen"); if(r) r.classList.add("hidden"); }
+  renderFileLine();
 }
 $("#pdf").addEventListener("change", async e=>{
   const f=e.target.files[0]; if(!f) return;

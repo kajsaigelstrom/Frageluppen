@@ -72,12 +72,12 @@ test("den exporterade sidan går att köra och ritar kort utan åtgärder", () =
   const cards = page.el("#cards").innerHTML;
   assert.ok(cards.includes("Att fråga sig"));
   assert.doesNotMatch(cards, ACTION_WORDS);
-  assert.doesNotMatch(page.el("#summary").innerHTML, /att åtgärda|tips|automatiska flaggor/);
-  assert.ok(page.el("#summary").innerHTML.includes("studenter"));
+  assert.doesNotMatch(page.el("#fileline").textContent, /att åtgärda|tips|automatiska flaggor/);
+  assert.ok(page.el("#fileline").textContent.includes("studenter"));
   const tabs = page.el("#viewtabs").innerHTML;
-  assert.ok(!tabs.includes("reptab") && tabs.includes("Välj frågetyp i filtret"));
+  assert.ok(!tabs.includes("reptab"));
   assert.ok(!tabs.includes("Preliminär"));
-  assert.ok(!/andel rätt/.test(page.el("#summary").innerHTML));        // ingen medelandel rätt (Kajsa 21 nov 2026)
+  assert.ok(!/andel rätt/.test(page.el("#fileline").textContent));        // ingen medelandel rätt (Kajsa 21 nov 2026)
   assert.match(page.el("#goodlist").innerHTML, /fungerar som förebild|^$/);   // sedan formkontrollen: förebilder i stället för enbart diskriminering
 });
 test("översiktstabellen ur den exporterade sidan är fri från åtgärdsord", () => {

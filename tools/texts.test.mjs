@@ -51,7 +51,7 @@ test("examinatorn uppmanas aldrig att ladda upp en PDF", () => {
 test("vyn före betygssättning talar om flervalsdelen, och säger varför", () => {
   const { ev, el } = loadApp();
   ev("setPrep(false); loadSynthetic(); setStep('triage');");
-  const hint = el("#viewtabs").innerHTML;
+  const hint = el("#modehint").textContent;
   assert.match(hint, /poängen på flervalsdelen/);
   assert.match(hint, /essäfrågorna inte är rättade/);
   assert.ok(!/fritext|trasiga/.test(hint));
@@ -77,6 +77,6 @@ test("temarapportens hjälp talar till mottagaren", () => {
 test("temarapporten räknar studenter, inte kandidater", () => {
   const { html } = tema();
   const page = runHtml(html);
-  assert.match(page.el("#summary").innerHTML, /studenter/);
-  assert.ok(!/kandidat/i.test(page.el("#summary").innerHTML + page.el("#cards").innerHTML));
+  assert.match(page.el("#fileline").textContent, /studenter/);
+  assert.ok(!/kandidat/i.test(page.el("#fileline").textContent + page.el("#cards").innerHTML));
 });

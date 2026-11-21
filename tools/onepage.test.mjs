@@ -113,5 +113,5 @@ test("knappen Översiktstabell är kopplad, i appen och i temarapporten", () => 
 });
 test("hela rapporten visar ingen medelandel rätt", () => {
   const { el } = app();
-  assert.ok(!/genomsnittlig/.test(el("#summary").innerHTML));
+  assert.ok(!/genomsnittlig/.test(el("#fileline").textContent + el("#cards").innerHTML));
 });

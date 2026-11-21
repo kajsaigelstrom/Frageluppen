@@ -53,10 +53,11 @@ test("inget filter i vyn, bara sök och sortering, och filter från rapporten f�
   a.ev("setStep('choose'); setStep('report');");
   assert.match(a.el("#tagbar").innerHTML, /Svårighet/);
 });
-test("sammanfattningen före betygssättning räknar bara det som hör dit", () => {
-  const { el } = tri();
-  const s = el("#summary").innerHTML;
-  assert.match(s, /studenter/); assert.match(s, /MCQ-frågor/);          // för att se att filen lästs rätt
+test("raden överst före betygssättning räknar bara det som hör dit", () => {
+  const { ev, el } = tri();
+  ev("collapseUpload(); render();");
+  const s = el("#fileline").textContent;
+  assert.match(s, /studenter/); assert.match(s, /MCQ/);                  // för att se att filen lästs rätt
   assert.ok(!/tips|automatiska flaggor|att se över|andel rätt|taggkolumner/.test(s));
   assert.ok(!/Sökrutan/.test(el("#modehint").textContent));
 });
@@ -64,7 +65,7 @@ test("ingen lista som upprepar korten, i något av lägena", () => {
   const { ev, el } = tri();
   for (const m of ["action", "edu"]) {
     ev(`state.mode = '${m}'; render();`);
-    assert.ok(!/actionrow|fråga\(or\) att se över/.test(el("#summary").innerHTML + el("#cards").innerHTML), m);
+    assert.ok(!/actionrow|fråga\(or\) att se över/.test(el("#fileline").textContent + el("#cards").innerHTML), m);
   }
   assert.equal(ev("typeof buildActionList"), "undefined");
 });

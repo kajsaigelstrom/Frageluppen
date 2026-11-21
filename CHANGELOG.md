@@ -18,6 +18,14 @@ inte dokumenterad här.
   följer resten av tentan, frågan "Stämmer facit och poängregeln?" (för essäfrågor gäller
   bedömningsmallen). Mönsterraderna säger "MCQ-frågor" och "essäfrågor" så att de inte blandas
   ihop. Excel och CSV ur temarapporten har en rad per synlig fråga med kolumnen Typ.
+- **Ny layout i alla tre vyerna.** När en fil är vald blir sidhuvudet en smal rad: namnet,
+  tentan med antal studenter och frågor (i hela rapporten också exkluderade frågor och
+  maxpoäng), Byt fil, Inställningar och Hjälp. Den ersätter det stora sidhuvudet, filrutan,
+  statusraden och sifferrutan. Varningar står på en egen rad under, bara när de finns. Vyns rubrik
+  och lägesknapparna står på samma rad, med en enda förklaring under, och före betygssättning
+  visar knapparna antal ("Att se över · 3"). Temarapporten har samma skelett. Tentans namn är
+  det som resultatfilerna har gemensamt, inte den första ortens. Raden om att verktyget är under
+  utveckling står i sidfoten.
 - **Vyn före betygssättning är renodlad.** Den öppnar på frågorna **att se över**, alltså dem som
   statistiken pekar ut (tecken på fel i facit, eller mycket svåra frågor som inte skiljer mellan
   studenter), plus exkluderade frågor så att en exkludering går att ångra. **Alla flervalsfrågor**
