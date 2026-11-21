@@ -11,7 +11,7 @@ test("temarapporten är en sida med frågorna efter rättning", () => {
   assert.deepEqual(evj("temaEmbed().views.map(v=>v.layout)"), ["all"]);
   assert.equal(evj("temaEmbed().kind"), "tema");
   assert.equal(evj("temaEmbed().subset"), null);
-  assert.deepEqual(evj("temaEmbed().views[0].modes.map(m=>m.id)"), ["ask", "ask-explain"]);
+  assert.deepEqual(evj("temaEmbed().views[0].modes.map(m=>m.id)"), ["ask"]);
   assert.equal(evj("temaEmbed().mode"), "ask");
 });
 test("temarapporten bär gränserna", () => {
@@ -33,12 +33,10 @@ test("kortet i läget ask visar frågor men inga åtgärder", () => {
   assert.doesNotMatch(html, ACTION_WORDS);
   assert.doesNotMatch(html, /Mer om psykometriken|card-exclude/);
 });
-test("inget kort i temalägena innehåller åtgärdsord", () => {
+test("inget kort i temarapporten innehåller åtgärdsord, inte heller i utfällningarna", () => {
   const { ev } = fresh();
-  for (const mode of ["ask", "ask-explain"]) {
-    ev(`state.mode = '${mode}'`);
-    assert.doesNotMatch(ev("VIEW.map(card).join('')"), ACTION_WORDS, mode);
-  }
+  ev("state.mode = 'ask'");
+  assert.doesNotMatch(ev("VIEW.map(card).join('')"), ACTION_WORDS);
 });
 test("kort utan mönster har ingen ruta", () => {
   const { ev } = fresh();
@@ -46,11 +44,11 @@ test("kort utan mönster har ingen ruta", () => {
   assert.ok(!ev("card(vOk)").includes("Att fråga sig"));
   assert.ok(!ev("card(vOk)").includes("askbox"));
 });
-test("läget ask-explain visar förklaring men ingen åtgärd", () => {
+test("utfällningen Mer om måttet har förklaringen men ingen åtgärd", () => {
   const { ev } = fresh();
-  ev("state.mode = 'ask-explain'; globalThis.vD = VIEW.find(v => advice(v).l1.some(a => a.psy === 'dist-pos'));");
+  ev("state.mode = 'ask'; globalThis.vD = VIEW.find(v => advice(v).l1.some(a => a.psy === 'dist-pos'));");
   const html = ev("card(vD)");
-  assert.ok(html.includes("Varje svarsalternativ får ett eget r"));
+  assert.match(html, /<details class="askmore"[^>]*><summary>Mer om måttet<\/summary><div class="askpsy">Varje svarsalternativ får ett eget r/);
   assert.doesNotMatch(html, ACTION_WORDS);
 });
 test("ofärdig rättning ger ingen temarapport", () => {
@@ -78,7 +76,6 @@ test("den exporterade sidan går att köra och ritar kort utan åtgärder", () =
   assert.ok(!tabs.includes("reptab"));
   assert.ok(!tabs.includes("Preliminär"));
   assert.ok(!/andel rätt/.test(page.el("#fileline").textContent));        // ingen medelandel rätt (Kajsa 21 nov 2026)
-  assert.match(page.el("#goodlist").innerHTML, /fungerar som förebild|^$/);   // sedan formkontrollen: förebilder i stället för enbart diskriminering
 });
 test("översiktstabellen ur den exporterade sidan är fri från åtgärdsord", () => {
   const { ev } = fresh();
@@ -98,13 +95,6 @@ test("gränser kan ändras i den exporterade sidan", () => {
   page.ev("xExportRender()");
   assert.ok(count() > before);
   assert.ok(!page.ev("settingsHtml(false)").includes("Godkäntgräns"));
-});
-test("Excel-raderna i temarapporten har frågor, inte flaggor", () => {
-  const { ev } = fresh();
-  const page = runHtml(ev("buildTemaReport(temaEmbed())"));
-  const head = page.evj("xExportRows().aoa[0]");
-  assert.ok(head.includes("Att fråga sig")); assert.ok(!head.includes("Flaggor"));
-  assert.doesNotMatch(JSON.stringify(page.evj("xExportRows().aoa")), /undefined/);
 });
 test("exkluderad fråga visas med orsak i temarapporten", () => {
   const { ev } = fresh();

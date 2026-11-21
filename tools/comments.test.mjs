@@ -47,23 +47,23 @@ test("Problemfrågor finns bara före betygssättning och är en fristående sid
   const ids = [...doc.matchAll(/id="card-([^"]+)"/g)].map(m => m[1]);
   assert.deepEqual(ids.sort(), flagged.concat([plain, excl]).sort());        // utpekade, kommenterade och exkluderade
   assert.ok(!ids.includes(none));
-  assert.match(doc, /Kommentar från examinatorn[\s\S]*Fråga från en student, värd att diskutera\./);
+  assert.match(doc, /class="cmthead">Kommentar<[\s\S]*Fråga från en student, värd att diskutera\./);
+  assert.ok(!/Kommentar från/.test(doc));                                  // det står inte vem som skrev
   assert.match(doc, /Exkluderad ur tentan/);
   assert.match(doc, /poängen på flervalsdelen/);
   assert.match(doc, new RegExp(`${a.ev("state.json.candCount")} studenter`));
   assert.ok(!/<script|<textarea|<select|card-exclude|card-reinclude|card-comment|Gäller bara här/.test(doc));
   assert.equal(a.ev("!!state.exporting"), false);
 });
-test("kommentaren följer med till temarapporten, läsbar men inte ändringsbar", () => {
+test("kommentaren följer med till temarapporten", () => {
   const a = at("report");
   const mcq = a.ev("String(state.vm.view[0].seq)"), ess = a.ev("state.scored[0].seq");
   a.ev(`state.comments.set('${mcq}', 'Se över distraktor C.'); state.comments.set('${ess}', 'Mallen gav få mellanpoäng.'); render();`);
   assert.deepEqual(a.evj("temaEmbed().comments").map(c => c[0]).sort(), [mcq, ess].sort());
   const page = runHtml(a.ev("buildTemaReport(temaEmbed())"));
   const html = page.el("#cards").innerHTML;
-  assert.match(html, /Kommentar från examinatorn[\s\S]*Se över distraktor C\./);
+  assert.match(html, /Se över distraktor C\./);
   assert.match(html, /Mallen gav få mellanpoäng\./);
-  assert.ok(!/<textarea|card-comment/.test(html));
   const sub = page.evj(`subsetEmbed(EMBED, [${JSON.stringify(mcq)}], state.th).comments`);
   assert.deepEqual(sub, [[mcq, "Se över distraktor C."]]);                    // en ovald frågas kommentar följer inte med
 });

@@ -99,12 +99,11 @@ test("valda filter står på en rad och kan tas bort ett i taget", () => {
   assert.equal(page.ev("filtersActive()"), false);
   assert.doesNotMatch(page.el("#tagbar").innerHTML, /class="filtsel"/);
 });
-test("mönster, urval och Excel följer filtret", () => {
+test("mönster och urval följer filtret", () => {
   const { page } = tema();
   page.ev("toggleFacet('disk','mgod')");
   const n = page.ev("selVisible().length");
   assert.ok(n > 0 && n < page.ev("EMBED.views[0].view.length + EMBED.views[0].scored.length"));
-  assert.equal(page.evj("xExportRows().aoa").length - 1, n);
   const pat = page.evj("patternSummary(currentView({ignorePattern:true}))");
   assert.ok(pat.every(r => r.seqs.length <= n));
   page.ev("selAllVisible()");
@@ -134,12 +133,4 @@ test("frågetyperna heter MCQ, Flersvar och Essä i översiktstabellen", () => {
   page.ev("exportOverview()");
   const t = page.downloads[page.downloads.length - 1].parts.join("");
   assert.ok(t.includes(">Essä<") && t.includes(">MCQ<") && !t.includes(">Fritext<"));
-});
-test("listan över förebilder följer filtret", () => {
-  const { ev, el, page } = tema();
-  const nFb = page.ev("EMBED.views[0].view.filter(isForebild).length");
-  assert.ok(nFb > 0);
-  assert.match(page.el("#goodlist").innerHTML, new RegExp(`${nFb} fråga\\(or\\) som fungerar som förebild`));
-  page.ev("toggleFacet('disk','lag')");                                  // förebilder skiljer väl, så ingen är kvar
-  assert.equal(page.el("#goodlist").innerHTML, "");
 });

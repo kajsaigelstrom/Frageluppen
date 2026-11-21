@@ -38,9 +38,14 @@
   body.compact .titlerow h1{font-size:19px}
   body.compact .h1sub,body.compact .devpill,body.compact header .subtitle,body.compact header .intro{display:none}
   #warnings > div:not(:empty){margin:0 0 10px}
+  .modeseg:empty{display:none}
+  .askmore{margin-top:6px;font-size:12.5px} .askmore summary{cursor:pointer;color:var(--muted)}
   .cmtrow{margin-top:8px}
   .cmtedit{margin-top:10px} .cmtedit label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
   .cmtedit textarea{width:100%;font:inherit;font-size:13.5px;padding:7px 9px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);resize:vertical}
+  .cmtprint{display:none;white-space:pre-wrap;font-size:13.5px}
+  @media print{ .card-cmt,.card-comment,.cmtrow,.cmtedit label{display:none!important} .cmtprint{display:block;margin-top:10px;padding:9px 12px;border-left:3px solid var(--accent)}
+    .cmtprint:empty{display:none} .cmtprint::before{content:"Kommentar";display:block;font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:3px} }
   .cmtshow{margin-top:10px;padding:9px 12px;border-left:3px solid var(--accent);background:rgba(0,0,0,.025)}
   .cmthead{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:3px}
   .cmttext{font-size:13.5px;white-space:pre-wrap}
@@ -222,7 +227,7 @@
   #selbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}
   .selsave{border-color:var(--accent)!important;color:var(--accent)!important;font-weight:600}
   .subsettag{display:inline-block;margin:6px 0 2px;padding:3px 10px;border-radius:999px;background:var(--accent);color:#fff;font-size:12.5px;font-weight:600}
-  @media print{ .selwrap,.selbox,#selbar,#settings-open,#settings{display:none!important} }
+  @media print{ .selwrap,.selbox,#selbar,#dlctrls,#settings-open,#settings,#helpOpen,.exports{display:none!important} }
   .levelnote{margin:12px 0 0;padding:9px 13px;border-left:3px solid var(--accent);background:var(--card);font-size:13px;max-width:78ch}
   .askbox{margin-top:12px;padding:11px 14px;border:1px solid var(--line);border-radius:8px;background:#fbfaf6}
   .askhead{font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
@@ -310,7 +315,7 @@
   #controlband #dlctrls{display:flex;align-items:center;gap:8px;margin-left:auto}
   #printhead{display:none}
   @media print{
-    #controlband,.modebar,#dlctrls,#clearfilter,.reptabs,.rephint,#goodlist,.legend{display:none !important}
+    #controlband,.modebar,#dlctrls,#clearfilter,.reptabs,.rephint,.legend{display:none !important}
     #printhead{display:block;font:600 15px/1.4 'IBM Plex Sans',sans-serif;margin:0 0 12px;color:var(--ink)}
     body{background:#fff;margin:10mm}
     .q,tr,.ftcard{break-inside:avoid}
@@ -558,7 +563,8 @@
         <input type="text" inputmode="decimal" id="g-pct" size="3"> % <span id="g-pts"></span></label>
       <div class="exports" id="exports">
         <button class="expbtn" id="exp-problems" title="Sida till betygskollegiet: frågorna att se över, exkluderade frågor och dina kommentarer. Bara sammanräknade resultat.">Problemfrågor</button>
-        <button class="expbtn" id="exp-html" title="Rapport till temagrupperna: frågor i stället för åtgärder, bara sammanräknade resultat.">Temarapport</button>
+        <button class="expbtn" id="exp-html" title="Interaktiv rapport till temagrupperna: frågor i stället för åtgärder, bara sammanräknade resultat. Med ett filter valt innehåller den bara de frågor som syns.">Temarapport</button>
+        <button class="expbtn" id="exp-temapdf" title="Samma rapport som PDF: öppnas i ett eget fönster och går till utskrift, där du väljer Spara som PDF. Följer filtret.">Temarapport (PDF)</button>
         <button class="expbtn" id="exp-overview" title="Tabell med en rad per fråga, alla frågetyper, att skriva ut eller skicka vidare. Följer filtret.">Översiktstabell</button>
         <button class="expbtn" id="exp-xlsx" title="Excel med samma flikar som kurssamordnarnas mall: sammanfattning, resultat per student och uppgift, och resultat per tema. En rad per student, med löpnummer.">Tentamensstatistik</button>
         <button class="expbtn" id="exp-charts" title="Sida att skriva ut: poängfördelningen och slutpoäng per student och studieort, med G-gränsen utritad.">Diagram</button>
@@ -586,7 +592,6 @@
       </div>
       <div class="tagbar" id="tagbar"></div>
     </div>
-    <div id="goodlist"></div>
     <div id="count"></div>
     <div class="legend">
       <span class="sw"><i style="background:var(--correct-bar)"></i>Rätt svar</span>
@@ -682,7 +687,6 @@ function isPre(){ return typeof EMBED==="undefined" && typeof activeView==="func
 function modeHint(m){
   const pre=" Diskrimineringen räknas mot poängen på flervalsdelen, eftersom essäfrågorna inte är rättade än.";
   return m==="ask" ? "Hur varje fråga fungerade. Där svaren följer ett mönster står en eller två frågor att ställa sig."
-    : m==="ask-explain" ? "Som Rapport, och dessutom en förklaring av måttet bakom varje fråga."
     : m==="action" ? "Frågor som statistiken pekar ut: tecken på fel i facit, eller mycket svåra frågor som inte skiljer mellan studenter." + pre
     : m==="simple" ? "Bara korten med mätvärden. Tolkningar och råd är dolda. Diskrimineringen räknas mot poängen på hela tentan."
     : isPre() ? "Alla flervalsfrågor med mätvärden, för överblick över svårighet och diskriminering." + pre
@@ -841,9 +845,14 @@ filtret. Essä- och flersvarsfrågor exkluderas med knappen på sitt kort, preci
 flervalsfrågorna. Härifrån skapas <b>Temarapporten</b> till temagrupperna, <b>Översiktstabellen</b>
 (en rad per fråga, att skriva ut eller skicka vidare) och <b>Tentamensstatistiken</b>: en Excel-fil
 med samma flikar som kurssamordnarnas mall, och <b>Diagram</b> med poängfördelningen. Kräver färdig rättning.</p>
+<p><b>Temarapporten följer filtret.</b> Med ett filter valt, till exempel ett tema, innehåller
+rapporten bara de frågor som syns, och den säger vilket filter det var. Så skapas en rapport per tema.
+<b>Temarapport</b> ger den interaktiva sidan, och <b>Temarapport (PDF)</b> öppnar samma rapport för
+utskrift, där du väljer Spara som PDF.</p>
 <p><b>Kommentarer.</b> Med <b>Lägg till kommentar</b> på ett kort skriver du en fråga eller synpunkt
-till kollegorna. Den följer med i Problemfrågor och i Temarapporten. Kommentarerna finns bara så länge
-filen är öppen, så skapa exporten innan du stänger.</p>
+till kollegorna. Den följer med i Problemfrågor och i Temarapporten, där mottagaren kan lägga till
+egna. Det står inte vem som skrev. Kommentarerna finns bara så länge filen är öppen, så skapa
+exporten innan du stänger.</p>
 <p><b>Problemfrågor</b> finns före betygssättning och är en sida till betygskollegiet: frågorna att se
 över, exkluderade frågor och dina kommentarer.</p>
 <p>Godkäntstatistik visas inte i vyerna.</p>
@@ -908,11 +917,13 @@ const EXCL_REASONS = ["Tekniskt fel","Låg kvalitet","Annan orsak"];
 function commentHtml(seq){
   seq=String(seq);
   const t=(state.comments && state.comments.get(seq)) || "";
-  const editable=(typeof EMBED==="undefined") && !state.exporting;
-  if(!editable) return t ? `<div class="cmtshow"><div class="cmthead">Kommentar från examinatorn</div><div class="cmttext">${esc(t)}</div></div>` : "";
+  // Problemfrågor är en färdig sida: där står kommentaren som text. Annars går den att skriva, i verktyget och i temarapporten.
+  if(state.exporting) return t ? `<div class="cmtshow"><div class="cmthead">Kommentar</div><div class="cmttext">${esc(t)}</div></div>` : "";
   if(!t && state.commentOpen!==seq) return `<div class="cmtrow"><button type="button" class="card-comment linkbtn" data-qnum="${esc(seq)}">Lägg till kommentar</button></div>`;
-  return `<div class="cmtedit"><label>Kommentar till kollegorna (följer med i Problemfrågor och i Temarapporten)</label>`
-    + `<textarea class="card-cmt" data-qnum="${esc(seq)}" rows="2">${esc(t)}</textarea></div>`;
+  const where = isTemaPage() ? "följer med när du sparar en sida eller skriver ut" : "följer med i Problemfrågor och i Temarapporten";
+  // .cmtprint är det som skrivs ut: en textruta klipper texten i utskrift.
+  return `<div class="cmtedit"><label>Kommentar (${where})</label>`
+    + `<textarea class="card-cmt" data-qnum="${esc(seq)}" rows="2">${esc(t)}</textarea><div class="cmtprint">${esc(t)}</div></div>`;
 }
 /* Problemfrågor: fristående sida utan skript till betygskollegiet, som underlag för beslut före betygssättning.
    Frågorna som statistiken pekar ut, exkluderade frågor och frågor med kommentar. Bara sammanräknade tal. */
@@ -2425,6 +2436,7 @@ function render(){
     const tri = state.step==="triage", hx=$("#exp-xlsx"), ho=$("#exp-overview");
     { const hpq=$("#exp-problems"); if(hpq) hpq.classList.toggle("hidden", !tri); }
     { const hc=$("#exp-charts"); if(hc) hc.classList.toggle("hidden", tri); }
+    { const ht=$("#exp-temapdf"); if(ht){ ht.classList.toggle("hidden", tri); ht.disabled=!(state.json && state.json.fullyGraded); } }
     { const gc=$("#gctl"); if(gc) gc.classList.toggle("hidden", tri); }
     if(eh) eh.classList.toggle("hidden", tri); if(hx) hx.classList.toggle("hidden", tri); if(ho) ho.classList.toggle("hidden", tri); }
   const results=$("#results"); results.classList.remove("hidden");
@@ -2510,12 +2522,7 @@ function availableModeIds(){
   if(typeof activeView==="function") return activeView().modes.map(m=>m.id);
   return (typeof EMBED!=="undefined" && EMBED && EMBED.modes) ? EMBED.modes.map(m=>m.id) : ["edu"];
 }
-function refreshLists(){
-  const showExe = (typeof activeView==="function") ? activeView().showExemplary
-                : (typeof EMBED!=="undefined" && EMBED ? EMBED.showExemplary : true);
-  // Förebildslistan finns bara i temarapporten. I appen väljs starkt diskriminerande frågor i filtret.
-  if(showExe && isTemaPage()) buildGoodList(); else { const g=$("#goodlist"); if(g) g.innerHTML=""; }
-}
+function refreshLists(){ }     // listorna ovanför korten är borttagna; kvar som krok för omritning
 /* ---------- G-gränsmetrik: andel studenter som nått 65 % av hela tentans poäng ----------
    65 %-gränsen avrundas NEDÅT till heltal poäng; varje students poäng avrundas UPPÅT.
    Godkänd = ceil(studentpoäng) ≥ floor(0,65 × inkluderad maxpoäng). Frågor kan exkluderas. */
@@ -2697,18 +2704,6 @@ function jumpToCard(seq){
   window.scrollTo({top:y, behavior:"smooth"});
   el.classList.add("flash"); setTimeout(()=>{ if(el) el.classList.remove("flash"); }, 1500);
 }
-function buildGoodList(){
-  const el=$("#goodlist"); if(!el) return;
-  const items=currentView({allModes:true, ignorePattern:true}).filter(v=>isForebild(v) && !isExcluded(v.seq)).sort((a,b)=>b.rpb-a.rpb);   // följer filterraden
-  if(!items.length){ el.innerHTML=""; return; }
-  el.innerHTML = `<div class="goodbox"><div class="goodhead">${items.length} fråga(or) som fungerar som förebild</div>`
-    + `<div class="goodnote">Medelsvåra (50–85 % rätt), skilde tydligt mellan studenter med höga och låga totalpoäng, och utan fynd i formkontrollen ur MCQ-lathunden.</div>`
-    + items.map(v=>`<button class="goodrow" data-seq="${esc(String(v.seq))}"><span class="acode">${esc(v.code)}</span>
-        <span class="greason">r<sub>pb</sub> +${v.rpb.toFixed(2)}</span>
-        <span class="apc">${v.pcorr.toFixed(0)} % rätt</span></button>`).join("")
-    + `</div>`;
-  el.querySelectorAll(".goodrow").forEach(b=>b.addEventListener("click",()=>jumpToCard(b.dataset.seq)));
-}
 function stat(b,s,t,cls){ return `<div class="stat${cls?` ${cls}`:""}"${t?` title="${esc(t)}"`:""}><b class="nums">${esc(b)}</b><span>${esc(s)}</span></div>`; }
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
@@ -2887,7 +2882,7 @@ function pageItems(opts){
   return m.concat(s).sort(cmp);
 }
 function drawCards(){
-  if(state.mode==="ask" || state.mode==="ask-explain") renderPatterns();   // räknas om före korten: kan nollställa ett mönsterfilter som inte längre finns
+  if(state.mode==="ask") renderPatterns();   // räknas om före korten: kan nollställa ett mönsterfilter som inte längre finns
   const items=pageItems();
   const all=state.vm.view.length + (state.scored||[]).length;
   const activeSummary=Object.keys(state.activeTags).map(col=>`${col}: ${[...state.activeTags[col]].join(", ")}`).join(" · ");
@@ -2917,7 +2912,7 @@ function unmapReason(v){
 }
 function card(v){
   const simple = state.mode==="simple";   // Bara mätvärden: inga råd eller tolkningar
-  const askMode = state.mode==="ask" || state.mode==="ask-explain";   // temarapporten: frågor, aldrig åtgärder
+  const askMode = state.mode==="ask";   // temarapporten: frågor, aldrig åtgärder
   const excluded = isExcluded(v.seq);
   const isApp = (typeof EMBED==="undefined") && !state.exporting;   // temarapport och export: inga ändringskontroller, bara markering
   const exReason = exclReason(v.seq);
@@ -3031,7 +3026,7 @@ function card(v){
         + qs.map(q=>{ const fs=forms[q.key]||[];
             return `<div class="askq">${esc(q.text)}${(q.fact && !fs.length)?`<div class="askfact">${esc(q.fact)}</div>`:""}`
               + fs.map(f=>renderForm(f,"askform")).join("")
-              + ((state.mode==="ask-explain" && PSY[q.psy]) ? `<div class="askpsy">${esc(PSY[q.psy])}</div>` : "") + `</div>`; }).join("") : "")
+              + (PSY[q.psy] ? (k=>`<details class="askmore" data-k="${esc(k)}"${(state.open && state.open.has(k))?" open":""}><summary>Mer om måttet</summary><div class="askpsy">${esc(PSY[q.psy])}</div></details>`)(`psy:${v.seq}:${q.key}`) : "") + `</div>`; }).join("") : "")
       + (expl.length ? `<div class="askhead${qs.length?" askhead2":""}">Möjlig förklaring i frågans form</div>` + expl.join("") : "")
       + `</div>` : "";
     if(isForebild(v)) advHtml += `<div class="forebild">✓ Fungerar som förebild: medelsvår, skiljer väl mellan studenter med höga och låga totalpoäng, och utan fynd i formkontrollen.</div>`;
@@ -3255,65 +3250,10 @@ function xExportRender(){
   $("#nnote").innerHTML = state.smallN ? '<div class="advnote">Litet underlag: '+EMBED.candCount+' studenter. Tolka enskilda procenttal försiktigt.</div>' : "";
   const modes=(spec.modes&&spec.modes.length)?spec.modes:[{id:"edu",label:"Alla frågor"}];
   if(!modes.some(m=>m.id===state.mode)) state.mode=modes[0].id;
-  $("#modeseg").innerHTML=modes.map(m=>`<button class="modebtn ${m.id===state.mode?'on':''}" data-mode="${esc(m.id)}">${esc(m.label)}</button>`).join("");
+  $("#modeseg").innerHTML = modes.length>1 ? modes.map(m=>`<button class="modebtn ${m.id===state.mode?'on':''}" data-mode="${esc(m.id)}">${esc(m.label)}</button>`).join("") : "";
   $("#modehint").textContent=modeHint(state.mode);
   $("#passmetric").innerHTML="";
   refreshLists(); buildTagbar(); drawCards();
-}
-/* Gemensam radkälla för CSV/Excel: rubrik + en rad per fråga som syns, alla frågetyper.
-   Endast aggregat – samma urval som visas på skärmen, inga kandidatdata. */
-function xExportRows(){
-  const tagNames = state.tags ? state.tags.tagCols.map(c=>c.name) : [];
-  const aoa=[["#","Fråga","Typ","Max","Andel rätt eller medel av max (%)","Diskriminering (r)","Tolkning","Starkaste distraktor (%)","Att fråga sig",...tagNames]];
-  pageItems({allModes:true}).forEach(it=>{
-    const x=it.x;
-    if(it.k==="mcq"){
-      const info=thInfo(neutralInfo(rpbInfo(x), x.rpb), x.rpb);
-      aoa.push([x.seq, x.title||x.code||"", "MCQ", x.pts||"", +x.pcorr.toFixed(1), (x.rpb==null?"":+x.rpb.toFixed(2)), info.label||"",
-        +x.topDist.toFixed(0), cardQuestions(x).map(q=>q.text).join(" | "), ...(x.tagVals||[])]);
-    } else {
-      aoa.push([x.num, x.title||String(x.num), x.typ==="multi"?"Flersvar":"Essä", x.max, +x.pct.toFixed(1), (x.r==null?"":+x.r.toFixed(2)),
-        thInfo(x.info,x.r).label||"", "", scoreQuestions(x).map(q=>q.text).join(" | "), ...(x.tagVals||[])]);
-    }
-  });
-  return {aoa, base:`temarapport_${new Date().toISOString().slice(0,10)}`, sheet:"Frågor"};
-}
-/* Ladda ner som CSV – inget bibliotek, fungerar offline. BOM + semikolon → svenska Excel öppnar
-   åäö och kolumner korrekt direkt. Används även som reserv när Excel-stödet inte kan laddas. */
-function xExportCSV(){
-  const {aoa, base}=xExportRows();
-  const SEP=";", cell=v=>{ v=(v==null?"":String(v)); return /[";\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
-  const csv="\uFEFF"+aoa.map(r=>r.map(cell).join(SEP)).join("\r\n");
-  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a"); a.href=url; a.download=base+".csv";
-  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),2000);
-}
-/* Hämta SheetJS från CDN vid behov (samma version som appen). ok(XLSX) vid framgång, annars fail(). */
-function xLoadXLSX(ok, fail){
-  if(typeof XLSX!=="undefined" && XLSX && XLSX.utils) return ok(XLSX);
-  if(window.XLSX && window.XLSX.utils) return ok(window.XLSX);
-  const s=document.createElement("script");
-  s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
-  s.onload=()=> (window.XLSX && window.XLSX.utils) ? ok(window.XLSX) : fail();
-  s.onerror=fail;
-  document.head.appendChild(s);
-}
-/* Ladda ner som riktig .xlsx (kräver internet för att hämta biblioteket). Faller automatiskt
-   tillbaka på CSV om biblioteket inte kan laddas (t.ex. offline i betygskollegiet). */
-function xExportXLSX(){
-  const {aoa, base, sheet}=xExportRows();
-  const btn=$("#dlxlsx"); const lbl=btn?btn.textContent:"";
-  if(btn){ btn.disabled=true; btn.textContent="Laddar …"; }
-  const restore=()=>{ if(btn){ btn.disabled=false; btn.textContent=lbl; } };
-  xLoadXLSX(X=>{
-    try{
-      const wb=X.utils.book_new();
-      X.utils.book_append_sheet(wb, X.utils.aoa_to_sheet(aoa), sheet);
-      X.writeFile(wb, base+".xlsx");
-    }catch(e){ xExportCSV(); }
-    restore();
-  }, ()=>{ restore(); alert("Kunde inte ladda Excel-stödet (kräver internet). Laddar ner som CSV i stället."); xExportCSV(); });
 }
 /* Skriv ut / spara som PDF via webbläsarens utskrift – inget bibliotek, fungerar offline.
    Skriver ut den aktiva vyn som den visas (efter filter). */
@@ -3327,8 +3267,6 @@ function xExportInit(){
   $("#search").addEventListener("input", applyFilters);
   $("#sort").addEventListener("change", applyFilters);
   const cb=$("#clearfilter"); if(cb) cb.addEventListener("click", clearFilters);
-  const dc=$("#dlcsv"); if(dc) dc.addEventListener("click", xExportCSV);
-  const dx=$("#dlxlsx"); if(dx) dx.addEventListener("click", xExportXLSX);
   const dp=$("#dlprint"); if(dp) dp.addEventListener("click", xExportPrint);
   const dov=$("#dloverview"); if(dov) dov.addEventListener("click", exportOverview);
   const seg=$("#modeseg");
@@ -3341,13 +3279,22 @@ function xExportInit(){
   });
   wireSettings(false, ()=>{ xExportRender(); });
   renderThCustom(false);
-  { const sl=$("#subsetline"); if(sl) sl.innerHTML = EMBED.subset ? `<span class="subsettag">Urval: ${EMBED.subset.n} av ${EMBED.subset.of} frågor</span>` : ""; }
+  { const sl=$("#subsetline"); if(sl) sl.innerHTML = EMBED.subset ? `<span class="subsettag">Urval: ${EMBED.subset.n} av ${EMBED.subset.of} frågor${EMBED.subset.label?` · ${esc(EMBED.subset.label)}`:""}</span>` : ""; }
   document.addEventListener("change", e=>{
     const b=e.target && e.target.closest && e.target.closest(".selbox"); if(!b) return;
     if(b.checked) state.sel.add(String(b.dataset.seq)); else state.sel.delete(String(b.dataset.seq));
     renderSelBar();
   });
   document.addEventListener("click", e=>{ const pb=e.target && e.target.closest && e.target.closest(".patbtn"); if(pb) togglePattern(pb.dataset.key); });
+  // Kommentarer: vem som helst med rapporten kan skriva, och texten följer med när sidan sparas eller skrivs ut.
+  document.addEventListener("click", e=>{ const cm=e.target && e.target.closest && e.target.closest(".card-comment"); if(cm){ state.commentOpen=String(cm.dataset.qnum); drawCards(); } });
+  document.addEventListener("input", e=>{ const ta=e.target && e.target.closest && e.target.closest(".card-cmt"); if(!ta) return;
+    const q=String(ta.dataset.qnum), t=String(ta.value||"");
+    if(t.trim()) state.comments.set(q, t.trim()); else state.comments.delete(q);
+    const pr=ta.parentNode && ta.parentNode.querySelector && ta.parentNode.querySelector(".cmtprint"); if(pr) pr.textContent=t.trim(); });
+  // En öppnad utfällning står kvar öppen när korten ritas om, och följer därmed med i utskriften.
+  document.addEventListener("toggle", e=>{ const d=e.target; if(!d || !d.dataset || !d.dataset.k) return; if(d.open) state.open.add(d.dataset.k); else state.open.delete(d.dataset.k); }, true);
+  if(EMBED.autoPrint) setTimeout(()=>{ try{ window.print(); }catch(_){} }, 500);
   { const a=$("#sel-all"), c=$("#sel-clear"), sv=$("#sel-save");
     if(a) a.addEventListener("click", selAllVisible); if(c) c.addEventListener("click", selClear); if(sv) sv.addEventListener("click", saveSubset); }
   renderSelBar();
@@ -3411,7 +3358,14 @@ på en urvalssida gäller den urvalet.</p>
 en distraktor går att försvara, om det var tydligt vad som efterfrågades, eller om svaren visar
 en missuppfattning. De är frågor till den som skrev uppgiften, inte bedömningar. Kort utan
 sådana mönster har ingen ruta.</p>
-<p>Läget <b>Med förklaringar</b> visar dessutom vad måttet bakom varje fråga betyder.</p>
+<p>Under <b>Mer om måttet</b> på kortet står vad måttet bakom frågan betyder.</p>
+</div></details>
+<details class="helpsec"><summary>Kommentarer och utskrift</summary><div class="body">
+<p>Med <b>Lägg till kommentar</b> skriver du en fråga eller synpunkt på ett kort. Det står inte vem
+som skrev, så skriv det själv om det behövs. Kommentaren följer med när du sparar en sida med
+valda frågor och när du skriver ut.</p>
+<p><b>Skriv ut / PDF</b> skriver ut sidan som den visas: med filtret, kommentarerna och de
+utfällningar som är öppna. Välj Spara som PDF i utskriftsrutan för att få en fil.</p>
 </div></details>
 <details class="helpsec"><summary>Formkontrollen och förebilderna</summary><div class="body">
 <p>När en fråga har en svaghet i statistiken prövas den mot den mekaniska kontrollen ur
@@ -3475,7 +3429,7 @@ function temaEmbed(){
   const view=cardsFor(spec.criterion);
   state.disc=sd; state.optDisc=sod; state.vm=svm;   // återställ appens tillstånd
   const views=[{id:spec.id, label:spec.label, phase:spec.phase, layout:"all", criterion:spec.criterion,
-    modes:[{id:"ask",label:"Rapport"},{id:"ask-explain",label:"Med förklaringar"}],
+    modes:[{id:"ask",label:"Rapport"}],          // ett enda läge: förklaringen av måttet är en utfällning på kortet
     hint:"Hur varje fråga fungerade: flervalsfrågor (MCQ) med svarsfördelning, essä- och flersvarsfrågor med poängfördelning, och diskriminering mot hela tentans poäng. Välj frågetyp i filtret.",
     showExemplary:true, showFreetext:false, showPassMetric:false,
     view, scored:scoredItems(computeDiscrimination(J,{criterion:'whole',excluded:state.excluded}), true), total:overviewPayload()}];
@@ -3489,7 +3443,7 @@ function temaEmbed(){
 }
 /* Urval: en kopia av rapportens data med bara de valda frågorna. Helhetssiffror (godkäntandel, maxpoäng)
    följer inte med – de gäller inte urvalet. Vid urval ur ett urval behålls ursprungstentans antal frågor. */
-function subsetEmbed(embed, sel, th){
+function subsetEmbed(embed, sel, th, label){
   const S=new Set([...sel].map(String));
   const out=JSON.parse(JSON.stringify(embed));
   const found=new Set(); let cand=embed.candCount, origN=0;
@@ -3513,6 +3467,8 @@ function subsetEmbed(embed, sel, th){
   out.excluded = (out.excluded||[]).filter(e=>S.has(String(e[0])));
   out.comments = (out.comments||[]).filter(c=>S.has(String(c[0])));
   out.subset = { n:found.size, of: embed.subset ? embed.subset.of : origN };
+  if(label || (embed.subset && embed.subset.label)) out.subset.label = label || embed.subset.label;   // vilket filter urvalet kom ur
+  out.autoPrint = false;
   out.th = Object.assign({}, th||embed.th);
   out.viewIdx = 0; out.mode = "ask";
   return out;
@@ -3527,9 +3483,11 @@ function renderSelBar(){
 function selRedraw(){ drawCards(); renderSelBar(); }
 function selAllVisible(){ selVisible().forEach(x=>state.sel.add(x)); selRedraw(); }
 function selClear(){ state.sel.clear(); selRedraw(); }
+/* Rapportens data så som den är nu: med de kommentarer som skrivits sedan den öppnades. */
+function temaSource(){ return Object.assign({}, EMBED, {comments:[...state.comments.entries()].filter(c=>c[1]), autoPrint:false}); }
 function saveSubset(){
   if(!state.sel.size) return;
-  downloadText(`temarapport_urval_${stamp()}.html`, buildTemaReport(subsetEmbed(EMBED, state.sel, state.th)), "text/html;charset=utf-8");
+  downloadText(`temarapport_urval_${stamp()}.html`, buildTemaReport(subsetEmbed(temaSource(), state.sel, state.th)), "text/html;charset=utf-8");
 }
 /* ---------- Essä- och flersvarskorten ---------- */
 const SCORE_TEXT = {
@@ -3608,14 +3566,14 @@ function temaFns(){
   return [esc,norm,key,stat,codeSortKey,cmpArr,rpbSortVal,distColor,critLabel,isPre,commentHtml,modeHint,availableModeIds,refreshLists,
              isTemaPage,facetLabel,facetTitle,discBucket,mkFacets,facetsOfMcq,facetsOfScored,facetPass,anyFacet,toggleFacet,toggleTag,filterBase,filterGroups,tagPass,filtersActive,updateClearBtn,applyFilters,clearFilters,rpbInfo,isExcluded,exclReason,
              cueWords,cueHas,cueScan,advice,askQuestions,isExemplary,unmapReason,card,
-             currentView,pageItems,drawCards,jumpToCard,passMetric,renderPassMetric,buildGoodList,buildTagbar,
+             currentView,pageItems,drawCards,jumpToCard,passMetric,renderPassMetric,buildTagbar,
              setThreshold,thresholdsCustom,resetThresholds,thFmt,thresholdsText,settingsHtml,renderThCustom,wireSettings,thInfo,neutralInfo,
              temaFns,temaConsts,buildTemaReport,downloadText,stamp,
              cardQuestions,patternSummary,renderPatterns,togglePattern,
              scoreQuestions,scorePatterns,scoredVisible,scoreCard,activePatternRows,filterText,overviewHtml,exportOverview,
              lathundKontrollInit,splitStem,formFindings,formFor,renderForm,isForebild,
              subsetEmbed,selVisible,renderSelBar,selRedraw,selAllVisible,selClear,saveSubset,
-             fileLineText,xExportTabs,xExportRender,xExportRows,xExportCSV,xLoadXLSX,xExportXLSX,xExportPrint,openHelp,closeHelp,wireHelp,xExportInit];
+             fileLineText,temaSource,xExportTabs,xExportRender,xExportPrint,openHelp,closeHelp,wireHelp,xExportInit];
 }
 function temaConsts(){
   return `const MIN_N_DIST=${MIN_N_DIST};const TH_DEFAULT=${JSON.stringify(TH_DEFAULT)};const TH_RANGE=${JSON.stringify(TH_RANGE)};const TH_LABEL=${JSON.stringify(TH_LABEL)};const PSY=${JSON.stringify(PSY)};`
@@ -3632,7 +3590,7 @@ function buildTemaReport(EMBED){
   const wrapper = `const EMBED=${JSON.stringify(EMBED)};`
     + `const $=s=>document.querySelector(s);`
     + `const state={vm:{view:[]},json:{candCount:EMBED.candCount},smallN:EMBED.smallN,tags:EMBED.tags,activeTags:{},facets:{},`
-    + `mode:EMBED.mode,viewIdx:EMBED.viewIdx,scored:[],passSnapshot:EMBED.passSnapshot,excluded:new Map(EMBED.excluded||[]),comments:new Map(EMBED.comments||[]),th:Object.assign({},TH_DEFAULT,EMBED.th||{}),sel:new Set()};`
+    + `mode:EMBED.mode,viewIdx:EMBED.viewIdx,scored:[],passSnapshot:EMBED.passSnapshot,excluded:new Map(EMBED.excluded||[]),comments:new Map(EMBED.comments||[]),open:new Set(),commentOpen:null,th:Object.assign({},TH_DEFAULT,EMBED.th||{}),sel:new Set()};`
     + `const activeView=()=>EMBED.views[state.viewIdx];`
     + `lathundKontrollInit();xExportInit();`;
   let js = `"use strict";\n${consts}\n${FNS.map(f=>f.toString()).join("\n")}\n${wrapper}`;
@@ -3663,6 +3621,15 @@ function buildTemaReport(EMBED){
       <div class="viewhead">
         <div class="modehint" id="modehint" style="flex:1 1 300px;margin:0"></div>
         <div class="modeseg" id="modeseg"></div>
+        <div id="selbar" class="exports">
+          <button id="sel-all" class="btn-ghost" type="button" title="Bocka för alla frågor som visas just nu. Filtrera på tema först för att välja ett helt tema.">Markera alla visade</button>
+          <button id="sel-clear" class="btn-ghost hidden" type="button">Avmarkera alla</button>
+          <button id="sel-save" class="btn-ghost selsave hidden" type="button" title="Sparar en ny fristående sida med bara de valda frågorna och kommentarerna, att ge vidare.">Spara sida med valda frågor (0)</button>
+        </div>
+        <div id="dlctrls" class="exports">
+          <button id="dlprint" class="btn-ghost" title="Skriv ut eller spara som PDF, så som sidan visas: med filter, kommentarer och öppnade utfällningar.">Skriv ut / PDF</button>
+          <button id="dloverview" class="btn-ghost" title="Sparar en tabell med en rad per fråga, att skriva ut eller skicka vidare. Följer filtret.">Översiktstabell</button>
+        </div>
       </div>
       <div class="nnote" id="nnote"></div>
       <div id="passmetric"></div>
@@ -3681,22 +3648,9 @@ function buildTemaReport(EMBED){
             <option value="tag">Tema, sedan frågans namn</option>
           </select>
         </div>
-        <div id="dlctrls">
-          <button id="dlxlsx" class="btn-ghost" title="Ladda ner de filtrerade frågorna som Excel (.xlsx). Hämtar Excel-stödet via internet; faller tillbaka på CSV offline.">Excel (.xlsx)</button>
-          <button id="dlcsv" class="btn-ghost" title="Ladda ner de filtrerade frågorna som CSV (öppnas i Excel, fungerar offline)">CSV</button>
-          <button id="dlprint" class="btn-ghost" title="Skriv ut eller spara sidan som PDF, så som den visas">Skriv ut / PDF</button>
-          <button id="dloverview" class="btn-ghost" title="Sparar en tabell med en rad per fråga, att skriva ut eller skicka vidare. Följer filtret.">Översiktstabell</button>
-        </div>
-        <div id="selbar">
-          <span class="lbl">Urval</span>
-          <button id="sel-all" class="btn-ghost" type="button" title="Bocka för alla frågor som visas just nu. Filtrera på tema först för att välja ett helt tema.">Markera alla visade</button>
-          <button id="sel-clear" class="btn-ghost hidden" type="button">Avmarkera alla</button>
-          <button id="sel-save" class="btn-ghost selsave hidden" type="button" title="Sparar en ny fristående sida med bara de valda frågorna, att ge vidare.">Spara sida med valda frågor (0)</button>
-        </div>
         <div class="tagbar" id="tagbar"></div>
       </div>
       <div id="patterns"></div>
-      <div id="goodlist"></div>
       <div id="count"></div>
       <div class="legend">
         <span class="sw"><i style="background:var(--correct-bar)"></i>Rätt svar</span>
@@ -3724,10 +3678,25 @@ function downloadText(name, text, type){
 }
 /* Temarapporten: den delbara rapporten till temagrupperna. Bara vyerna efter rättning, frågor i stället
    för åtgärder, bara aggregat. Ersätter den tidigare interaktiva exporten (v3.26.0). */
+/* Rapporten följer examinatorns filter: med ett filter valt innehåller den bara de frågor som syns, och säger vilket
+   filter det var. Så skapas till exempel en rapport per tema. */
+function temaEmbedFiltered(){
+  const embed=temaEmbed(); if(!embed) return null;
+  if(!filtersActive()) return embed;
+  return subsetEmbed(embed, pageItems().map(it=>it.seq), state.th, filterText());
+}
 function exportInteractive(){
-  const embed=temaEmbed();
+  const embed=temaEmbedFiltered();
   if(!embed){ alert("Temarapporten kräver färdig rättning."); return; }
   downloadText(`temarapport_${stamp()}.html`, buildTemaReport(embed), "text/html;charset=utf-8");
+}
+/* Samma rapport som PDF: den öppnas i ett eget fönster och går direkt till utskrift, där "Spara som PDF" väljs. */
+function exportTemaPdf(){
+  const embed=temaEmbedFiltered();
+  if(!embed){ alert("Temarapporten kräver färdig rättning."); return; }
+  const w=window.open("","_blank");
+  if(!w){ alert("Tillåt popup-fönster för att skapa PDF:en."); return; }
+  w.document.open(); w.document.write(buildTemaReport(Object.assign({}, embed, {autoPrint:true}))); w.document.close();
 }
 
 /* ---------- file wiring ---------- */
@@ -3913,6 +3882,7 @@ $("#exp-xlsx").addEventListener("click", ()=>{ if(state.json) exportXlsx(); });
 $("#exp-overview").addEventListener("click", ()=>{ if(state.json) exportOverview(); });
 $("#exp-problems").addEventListener("click", ()=>{ if(state.vm) exportProblems(); });
 $("#exp-charts").addEventListener("click", ()=>{ if(state.json) exportCharts(); });
+$("#exp-temapdf").addEventListener("click", ()=>{ if(state.vm) exportTemaPdf(); });
 $("#g-pct").addEventListener("change", e=>{ setThreshold("pass", e.target.value); renderGLimit(); renderGradeNote(); });   // ogiltigt värde: fältet återgår
 $("#exp-html").addEventListener("click", ()=>{ if(state.vm) exportInteractive(); });
 $("#modeseg").addEventListener("click", e=>{

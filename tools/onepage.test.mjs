@@ -77,14 +77,6 @@ test("urval över frågetyperna ger en sida med samma typer", () => {
   assert.equal(sub.views[0].total.rows.length, 2);
   assert.deepEqual(sub.subset, { n: 2, of: page.ev("EMBED.views[0].total.rows.length") });
 });
-test("Excel och CSV ur temarapporten har en rad per synlig fråga, alla typer", () => {
-  const { ev, page } = tema();
-  const rows = page.evj("xExportRows().aoa");
-  assert.equal(rows.length - 1, page.ev("selVisible().length"));
-  assert.ok(rows[0].includes("Typ"));
-  const types = new Set(rows.slice(1).map(r => r[rows[0].indexOf("Typ")]));
-  assert.deepEqual([...types].sort(), ["Essä", "Flersvar", "MCQ"]);
-});
 test("översiktstabellen är en egen export, följer filtret och innehåller bara sammanräknade tal", () => {
   const a = app();
   a.ev("exportOverview()");

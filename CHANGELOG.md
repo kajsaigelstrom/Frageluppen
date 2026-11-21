@@ -18,6 +18,14 @@ inte dokumenterad här.
   följer resten av tentan, frågan "Stämmer facit och poängregeln?" (för essäfrågor gäller
   bedömningsmallen). Mönsterraderna säger "MCQ-frågor" och "essäfrågor" så att de inte blandas
   ihop. Excel och CSV ur temarapporten har en rad per synlig fråga med kolumnen Typ.
+- **Temarapporten är renodlad.** Den följer examinatorns filter: med till exempel ett tema valt
+  innehåller rapporten bara de frågorna och säger vilket filter det var. Den skapas som interaktiv
+  sida (**Temarapport**) eller för utskrift (**Temarapport (PDF)**). Kommentarer kan skrivas även i
+  temarapporten och följer med när en sida sparas eller skrivs ut; det står inte vem som skrev.
+  Förklaringen av måttet är en utfällning på kortet (**Mer om måttet**) i stället för ett eget
+  läge, och en öppnad utfällning följer med i utskriften. Urvalet och exporterna står på raden
+  överst. Förebildslistan ovanför korten är borta (förebilderna finns i filtret och på kortet),
+  liksom Excel och CSV (kvar är Översiktstabell och Skriv ut / PDF).
 - **Kontroll mot Insperas egen uträkning.** Insperas slutbetyg och totalpoäng per student följer
   nu med i filen till examinatorn (datumet för betyget gör det inte). I hela rapporten jämför
   verktyget sin totalpoäng och sitt betyg med Insperas, student för student, och varnar med antal

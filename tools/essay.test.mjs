@@ -74,7 +74,6 @@ test("essäkorten i den exporterade rapporten", () => {
   assert.equal((page.el("#cards").innerHTML.match(/ftcard/g) || []).length, n);
   assert.ok(page.el("#cards").innerHTML.includes('class="selbox"'));
   assert.ok(!page.el("#cards").innerHTML.includes('card-exclude'));            // bara examinatorn exkluderar
-  assert.equal(page.el("#goodlist").innerHTML, "");                            // ingen förebild bland essäfrågorna
   assert.equal(page.ev("selVisible().length"), n);
   // sök på frågenummer
   const first = page.ev("String(EMBED.views[0].scored.find(e => e.typ === 'text').num)");
@@ -103,16 +102,6 @@ test("urval: valda essäfrågor följer med, och ovalda gör det inte", () => {
   assert.equal((child.el("#cards").innerHTML.match(/ftcard/g) || []).length, 2);
   const grand = runHtml(child.ev("buildTemaReport(subsetEmbed(EMBED, [EMBED.views[0].scored[0].seq], state.th))"));
   assert.match(grand.el("#subsetline").innerHTML, /Urval: 1 av \d+ frågor/);
-});
-test("Excel-raderna för essäfrågorna", () => {
-  const { ev } = fresh();
-  const page = runHtml(ev("buildTemaReport(E)"));
-  onlyType(page, "text");
-  const aoa = page.evj("xExportRows().aoa");
-  assert.deepEqual(aoa[0].slice(0, 7), ["#", "Fråga", "Typ", "Max", "Andel rätt eller medel av max (%)", "Diskriminering (r)", "Tolkning"]);
-  assert.equal(aoa.length - 1, page.ev("EMBED.views[0].scored.filter(e => e.typ === 'text').length"));
-  assert.ok(aoa.slice(1).every(r => r[2] === "Essä"));
-  assert.doesNotMatch(JSON.stringify(aoa), /undefined/);
 });
 test("en tenta utan essäfrågor har inga essäkort och ingen Essä i filtret", () => {
   const { ev } = fresh();

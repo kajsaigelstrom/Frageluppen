@@ -11,8 +11,8 @@ test("hopp till ett bortfiltrerat kort lämnar aldrig temarapportens läge", () 
   page.ev("document.getElementById = () => null; jumpToCard(String(EMBED.views[0].view[0].seq));");
   assert.equal(page.ev("state.mode"), "ask");
   assert.doesNotMatch(page.el("#cards").innerHTML, ACTION);
-  page.ev("state.mode = 'ask-explain'; jumpToCard('finns-inte');");
-  assert.notEqual(page.ev("state.mode"), "edu");
+  page.ev("jumpToCard('finns-inte');");
+  assert.equal(page.ev("state.mode"), "ask");
 });
 test("godkäntgränsen i en temarapport kan inte återställas av läsaren", () => {
   const { ev } = fresh();
@@ -81,7 +81,7 @@ test("en ny körning tar bort en gammal varning om fel filpar", async () => {
 test("uppmaningar till examinatorn syns inte för temarapportens läsare", () => {
   const { ev } = fresh();
   const page = runHtml(ev("buildTemaReport(temaEmbed())"));
-  assert.doesNotMatch(page.el("#goodlist").innerHTML, /Bekräfta|återanvänder/);
+  assert.doesNotMatch(page.el("#cards").innerHTML, /Bekräfta att det beror|återanvänder/);
   ev("state.mode = 'ask'");
   assert.doesNotMatch(ev("card(Object.assign({}, VIEW[0], {n: 12, advice: undefined}))"), /bedöm utifrån/);
   assert.match(ev("card(Object.assign({}, VIEW[0], {n: 12, advice: undefined}))"), /För få svar \(n=12\)/);
