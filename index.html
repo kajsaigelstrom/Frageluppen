@@ -540,7 +540,7 @@
     <div class="steptitle">Vad vill du göra?</div>
     <div class="stepgrid">
       <button id="step-triage" class="stepbtn" type="button"><b>Hitta problemfrågor före betygssättning</b><span>Flervalsfrågor som kan behöva rättas i facit eller exkluderas. Går att göra innan essäfrågorna är rättade.</span></button>
-      <button id="step-report" class="stepbtn" type="button"><b>Se hela rapporten</b><span>Alla frågor efter rättningen: flervalsfrågor, essäfrågor och flersvarsfrågor. Härifrån skapas Temarapporten till temagrupperna, översiktstabellen och exporten till Excel.</span></button>
+      <button id="step-report" class="stepbtn" type="button"><b>Se hela rapporten</b><span>Alla frågor efter rättningen: flervalsfrågor, essäfrågor och flersvarsfrågor. Härifrån skapas Temarapporten till temagrupperna, översiktstabellen och tentamensstatistiken.</span></button>
     </div>
     <div id="step-report-note" class="stepnote"></div>
   </div>
@@ -554,7 +554,8 @@
         <button class="expbtn" id="exp-problems" title="Sida till betygskollegiet: frågorna att se över, exkluderade frågor och dina kommentarer. Bara sammanräknade resultat.">Problemfrågor</button>
         <button class="expbtn" id="exp-html" title="Rapport till temagrupperna: frågor i stället för åtgärder, bara sammanräknade resultat.">Temarapport</button>
         <button class="expbtn" id="exp-overview" title="Tabell med en rad per fråga, alla frågetyper, att skriva ut eller skicka vidare. Följer filtret.">Översiktstabell</button>
-        <button class="expbtn" id="exp-xlsx" title="Arbetsbok med alla frågor och poäng per student. Examinatorns eget underlag.">Excel</button>
+        <button class="expbtn" id="exp-xlsx" title="Excel med samma flikar som kurssamordnarnas mall: sammanfattning, resultat per student och uppgift, och resultat per tema. En rad per student, med löpnummer.">Tentamensstatistik</button>
+        <button class="expbtn" id="exp-charts" title="Sida att skriva ut: poängfördelningen och slutpoäng per student och studieort, med G-gränsen utritad.">Diagram</button>
       </div>
     </div>
     <div class="modehint" id="modehint"></div>
@@ -831,7 +832,13 @@ rättningen, och verktyget räknar frågan som exkluderad utan att du behöver g
 essäfrågor och flersvarsfrågor, med diskriminering mot hela tentans poäng. Frågetyp väljs i
 filtret. Essä- och flersvarsfrågor exkluderas med knappen på sitt kort, precis som
 flervalsfrågorna. Härifrån skapas <b>Temarapporten</b> till temagrupperna, <b>Översiktstabellen</b>
-(en rad per fråga, att skriva ut eller skicka vidare) och exporten till Excel. Kräver färdig rättning.</p>
+(en rad per fråga, att skriva ut eller skicka vidare) och <b>Tentamensstatistiken</b>: en Excel-fil
+med samma flikar som kurssamordnarnas mall, och <b>Diagram</b> med poängfördelningen. Kräver färdig rättning.</p>
+<p><b>Kommentarer.</b> Med <b>Lägg till kommentar</b> på ett kort skriver du en fråga eller synpunkt
+till kollegorna. Den följer med i Problemfrågor och i Temarapporten. Kommentarerna finns bara så länge
+filen är öppen, så skapa exporten innan du stänger.</p>
+<p><b>Problemfrågor</b> finns före betygssättning och är en sida till betygskollegiet: frågorna att se
+över, exkluderade frågor och dina kommentarer.</p>
 <p>Godkäntstatistik visas inte i vyerna.</p>
 </div></details>
 <details class="helpsec"><summary>Filtrera</summary><div class="body">
@@ -1323,12 +1330,21 @@ function commonTitle(titles){
   const c=w[0].slice(0,n).join(" ");
   return c.length>=6 ? c : t[0];
 }
+/* Studieort per resultatfil: det som skiljer filens namn från de andras, utan löpande nummer.
+   En ensam fil har inget att jämföras med och får ingen ort. */
+function ortNames(titles){
+  const t=(titles||[]).map(x=>String(x||"").trim().split(/\s+/).filter(Boolean)); if(!t.length) return [];
+  let n=0; while(t.length>1 && n<t[0].length && t.every(a=>a[n]===t[0][n])) n++;
+  if(t.length===1) return [""];
+  return t.map((a,i)=>a.slice(n).filter(w=>!/^\d+$/.test(w)).join(" ") || `Ort ${i+1}`);
+}
 function buildPackage({jsonObjs, pdfMcqs, tagRows}){
   const titles = jsonObjs.map(o=>o && o.ext_inspera_assessmentRunTitle).filter(Boolean);
   const pdfName = (pdfMcqs && pdfMcqs.examName) || null;
   return { format:PKG_FORMAT, formatVersion:PKG_VERSION, toolVersion:VERSION,
     created:new Date().toISOString().slice(0,10),
     examName: commonTitle(titles),
+    orter: ortNames(jsonObjs.map(o=>o && o.ext_inspera_assessmentRunTitle)),   // en per resultatfil, i samma ordning som data
     examWarning: examMismatch(pdfName, titles) || null,
     data: (()=>{ let off=0;                                   // löpnumren löper över alla filer (en fil per ort)
       return jsonObjs.map(o=>{ const m=minimizeInspera(o, off); off+=m.ext_inspera_candidates.length; return m; }); })(),
@@ -1400,11 +1416,11 @@ function prepReceipt({jsonObjs, pdfMcqs, tagRows}){
 }
 
 function parseJSON(jsonObjs){
-  const cands=[];
-  for(const d of jsonObjs){
+  const cands=[], candFile=[];
+  jsonObjs.forEach((d,fi)=>{
     const list = d.ext_inspera_candidates || d.candidates || [];
-    for(const c of list){ const r=c.result||c; if(r && r.ext_inspera_questions) cands.push(r); }
-  }
+    for(const c of list){ const r=c.result||c; if(r && r.ext_inspera_questions){ cands.push(r); candFile.push(fi); } }
+  });
   if(!cands.length) throw new Error("Hittar inga studenter i resultatfilen.");
   const order = cands[0].ext_inspera_questions.map(q=>q.ext_inspera_questionNumber);
   const agg={};
@@ -1501,7 +1517,7 @@ function parseJSON(jsonObjs){
   const zeroWeight=[], partialZero=[];
   for(const qn of order){ const w=agg[qn].w0||0; if(!w) continue;
     if(w===cands.length) zeroWeight.push(String(qn)); else partialZero.push({num:String(qn), n:w}); }
-  const J={candCount:cands.length, agg, mcqSeqs, qMeta, qTitle:titleOf, cohortScores, ungradedPts, fullyGraded, maxTotal, mcqSlot:mcqSlotByCand, candMeta, zeroWeight, partialZero};
+  const J={candCount:cands.length, agg, mcqSeqs, qMeta, qTitle:titleOf, cohortScores, ungradedPts, fullyGraded, maxTotal, mcqSlot:mcqSlotByCand, candMeta, zeroWeight, partialZero, candFile};
   // Steg 1: diskriminering frikopplad till computeDiscrimination. 'mcq'-kriteriet reproducerar
   // tidigare inline-r_pb exakt (verifierat mot riktig data). Vyerna väljer kriterium per vy.
   J.discMcq = computeDiscrimination(J, {criterion:'mcq'});
@@ -2396,6 +2412,7 @@ function render(){
     // Vyn för problemfrågor har inga exporter. Temarapport, översiktstabell och Excel hör till hela rapporten.
     const tri = state.step==="triage", hx=$("#exp-xlsx"), ho=$("#exp-overview");
     { const hpq=$("#exp-problems"); if(hpq) hpq.classList.toggle("hidden", !tri); }
+    { const hc=$("#exp-charts"); if(hc) hc.classList.toggle("hidden", tri); }
     if(eh) eh.classList.toggle("hidden", tri); if(hx) hx.classList.toggle("hidden", tri); if(ho) ho.classList.toggle("hidden", tri); }
   const results=$("#results"); results.classList.remove("hidden");
   results.classList.remove("stubmode","totalmode");
@@ -3048,86 +3065,105 @@ function card(v){
   </div>`;
 }
 
-function exportXlsx(opts){
-  if(!state.json){ return; }
-  opts=opts||{};
-  const J=state.json, N=J.candCount;
-  const idx={}; J.qMeta.forEach((m,i)=>idx[m.num]=i);
-  // Diskriminering mot HELA tentans poäng (reducerad om frågor exkluderats) – item–total / punkt-biseriell.
-  const disc = computeDiscrimination(J, {criterion:"whole", excluded:state.excluded});
-  const tagCols = state.tags ? state.tags.tagCols.map(c=>c.name) : [];
-  const TYPE={single:"MCQ", multi:"Flersvar", text:"Essä"};
-
-  // Standard: hela tentan. Anropas exportXlsx({tagFiltered:true})
-  // begränsas arbetsboken till de frågor som matchar aktivt tema-/taggfilter – samma urval som
-  // visas i totaltabellen. Utan aktivt filter ger det fortfarande hela tentan (tagPass = sant).
-  let keep = J.qMeta.map((m,i)=>i);
-  if(opts.tagFiltered && typeof lookupTagVals==="function")
-    keep = keep.filter(i=>{ const m=J.qMeta[i]; return tagPass(lookupTagVals(m.title, m.num)); });
-  const keptMax = keep.reduce((s,i)=>s+J.qMeta[i].max,0);
-
-  // --- Flik 1: Frågeöversikt (en rad per fråga, alla typer, taggar) ---
-  const Q = keep.map(i=>{
-    const m=J.qMeta[i], a=J.agg[m.num], r=disc[m.num];
-    const scores=J.cohortScores.map(row=>row[i]);
-    const mean=N?scores.reduce((s,v)=>s+v,0)/N:0;
-    const info = m.type==="single" ? rpbInfo({n:a?a.n:0, ncorr:a?a.ncorr:0, rpb:r}) : polyInfo(scores, r, m.max);
-    const row={
-      "Nr":m.num, "Kod":m.title||"", "Typ":TYPE[m.type]||m.type, "Max":m.max,
-      "Exkluderad": isExcluded(m.num) ? (exclReason(m.num)||"Ja") : "",
-      "n (svar)": m.type==="single" ? (a?a.n:0) : N,
-      "Andel rätt (%)": (m.type==="single" && a && a.n) ? +(a.ncorr/a.n*100).toFixed(1) : "",
-      "Medelpoäng": +mean.toFixed(2),
-      "Medel (% av max)": m.max ? +(mean/m.max*100).toFixed(1) : "",
-      "r (item–total, hela tentan)": (r==null) ? "" : +r.toFixed(3),
-      "r tolkning": info.label || ""
-    };
-    const tv = lookupTagVals(m.title, m.num);
-    tagCols.forEach((nm,ci)=> row[nm]=tv[ci]||"");
-    return row;
-  });
-
-  // --- Flik 2: Studentöversikt (totalpoäng + tre frågekategorier) ---
-  // MCQ = single-best (typ 'single'); SEQ = konstruerade svar/fritext (typ 'text');
-  // Flerval = fler-svarsfrågor (typ 'multi'). Exkluderade frågor räknas inte in i poäng/kategorier.
-  const inc = keep.filter(i=>!isExcluded(J.qMeta[i].num));
-  const incMax = inc.reduce((s,i)=>s+J.qMeta[i].max,0);
-  const idxOf = t => inc.filter(i=>J.qMeta[i].type===t);
-  const maxOf = ids => ids.reduce((s,i)=>s+J.qMeta[i].max,0);
-  const mcqIdx=idxOf("single"), seqIdx=idxOf("text"), fleIdx=idxOf("multi");
-  const mcqMax=maxOf(mcqIdx), seqMax=maxOf(seqIdx), fleMax=maxOf(fleIdx);
-  const sumOf=(row,ids)=>ids.reduce((s,i)=>s+row[i],0);
-  const pct=(p,mx)=> mx ? +(p/mx*100).toFixed(1) : "";
-  const S = J.cohortScores.map((row,k)=>{
-    const tot=sumOf(row,inc);
-    const mcq=sumOf(row,mcqIdx), seq=sumOf(row,seqIdx), fle=sumOf(row,fleIdx);
-    return {
-      "Kandidat": (J.candMeta && J.candMeta[k] ? J.candMeta[k].id : k+1),
-      "Totalpoäng": +tot.toFixed(2),
-      "Total (% av max)": incMax ? +(tot/incMax*100).toFixed(1) : "",
-      "MCQ-poäng": +mcq.toFixed(2),   "MCQ (%)": pct(mcq,mcqMax),
-      "SEQ-poäng": +seq.toFixed(2),   "SEQ (%)": pct(seq,seqMax),
-      "Flerval-poäng": +fle.toFixed(2), "Flerval (%)": pct(fle,fleMax)
-    };
-  });
-
-  // --- Flik 3: Rådata (student × frågenummer) ---
-  // Råpoäng per fråga bevaras (även exkluderade, märkta i rubriken); Totalpoäng = reducerad summa.
-  const header = ["Kandidat", ...keep.map(i=>isExcluded(J.qMeta[i].num)?`${J.qMeta[i].num} (exkl.)`:J.qMeta[i].num), "Totalpoäng"];
-  const matrix = [header];
-  J.cohortScores.forEach((row,k)=>{
-    matrix.push([ (J.candMeta && J.candMeta[k] ? J.candMeta[k].id : k+1),
-                  ...keep.map(i=>+(+row[i]).toFixed(2)),
-                  +sumOf(row,inc).toFixed(2) ]);
-  });
-
+/* ---------- Tentamensstatistik ----------
+   Liknar den Excel-mall kurssamordnarna fyller i för hand (flikarna Sammanfattning, Resultat per sektion och
+   Resultat per fall), så att den känns igen. Bara statistik: löpnummer i stället för Insperas id. Exkluderade
+   frågor räknas inte och har ingen kolumn. G-gränsen följer passMetric: gränsen nedåt, studentens poäng uppåt. */
+function statsData(){
+  const J=state.json; if(!J || !J.qMeta || !J.cohortScores) return null;
+  const keep=[], excluded=[];
+  J.qMeta.forEach((m,i)=>{ if(isExcluded(m.num)) excluded.push({num:m.num, title:m.title||"", reason:exclReason(m.num)}); else keep.push(i); });
+  const tema=i=>{ const tv=lookupTagVals(J.qMeta[i].title, J.qMeta[i].num)||[]; return tv[0]||""; };
+  const N=J.cohortScores.length;
+  const questions=keep.map(i=>{ const m=J.qMeta[i]; const mean=N?J.cohortScores.reduce((s,r)=>s+r[i],0)/N:0;
+    return {num:m.num, title:m.title||"", max:m.max, mean, tema:tema(i)}; });
+  const max=questions.reduce((s,q)=>s+q.max,0), gThr=Math.floor(state.th.pass/100*max + 1e-9);
+  const orter=state.orter||[];
+  const students=J.cohortScores.map((row,k)=>{ const scores=keep.map(i=>+(+row[i]).toFixed(2)), total=scores.reduce((s,v)=>s+v,0);
+    return {nr:k+1, ort:orter[(J.candFile||[])[k]]||"", scores, total:+total.toFixed(2), g:Math.ceil(total-1e-9)>=gThr}; });
+  const names=[...new Set(questions.map(q=>q.tema).filter(Boolean))];
+  const themes=names.map(t=>{ const qs=questions.filter(q=>q.tema===t);
+    return {name:t, nums:qs.map(q=>q.num), max:qs.reduce((s,q)=>s+q.max,0), mean:qs.reduce((s,q)=>s+q.mean,0)}; });
+  return {exam:state.examName||"", max:+max.toFixed(2), gThr, passPct:state.th.pass, questions, students, themes, excluded,
+          orter:[...new Set(students.map(x=>x.ort).filter(Boolean))]};
+}
+/* "nr 1-7, 10-18" av en lista frågenummer. */
+function numRanges(nums){
+  const a=nums.map(Number).filter(x=>!isNaN(x)).sort((x,y)=>x-y), out=[]; let i=0;
+  while(i<a.length){ let j=i; while(j+1<a.length && a[j+1]===a[j]+1) j++; out.push(i===j?`${a[i]}`:`${a[i]}-${a[j]}`); i=j+1; }
+  return out.length ? "nr "+out.join(", ") : "";
+}
+function xlCol(i){ let s=""; i++; while(i>0){ const r=(i-1)%26; s=String.fromCharCode(65+r)+s; i=Math.floor((i-1)/26); } return s; }
+/* Flikarna som rader av celler. En cell är ett värde eller {v, f} med formel, så att G-gränsen går att ändra i Excel. */
+function statsSheets(d){
+  const n=d.students.length, nq=d.questions.length, r2=x=>+(+x).toFixed(2);
+  const totC=xlCol(3+nq), betC=xlCol(4+nq), last=n+1, G="Sammanfattning!$B$3";
+  const res=[["Antal deltagare","Studieort","Deltagare",...d.questions.map(q=>`Q ${q.num}`),"Slutpoäng","Betyg"]];
+  d.students.forEach((st,k)=>res.push([k+1, st.ort, st.nr, ...st.scores, st.total,
+    {v:st.g?"G":"U", f:`IF(ROUNDUP(${totC}${k+2},0)>=${G},"G","U")`}]));
+  res.push(["","Maxpoäng per sektion","",...d.questions.map(q=>q.max), d.max]);
+  res.push(["","Medel per sektion","",...d.questions.map(q=>r2(q.mean)), r2(d.questions.reduce((s,q)=>s+q.mean,0))]);
+  res.push(["","Medlet som procent av maxpoäng","",...d.questions.map(q=>q.max?r2(q.mean/q.max*100):""), d.max?r2(d.questions.reduce((s,q)=>s+q.mean,0)/d.max*100):""]);
+  res.push(["","Fall/tema/ämne","",...d.questions.map(q=>q.tema)]);
+  const bet=`'Resultat per sektion'!$${betC}$2:$${betC}$${last}`, ortR=`'Resultat per sektion'!$B$2:$B$${last}`;
+  const nG=d.students.filter(x=>x.g).length, pc=(a,b)=>b?r2(a/b*100):"";
+  const sum=[["Tentamen", d.exam],["Maxpoäng", d.max],["G-gräns (poäng)", d.gThr, `${d.passPct} % av maxpoängen, avrundat nedåt. Studentens poäng avrundas uppåt. Ändra här så räknas betygen om.`],
+    ["Medelpoäng", n?r2(d.students.reduce((s,x)=>s+x.total,0)/n):""],["Bästa resultat", n?Math.max(...d.students.map(x=>x.total)):""],
+    ["Antal tentander", n],["Antal anmälda", "", "Fylls i för hand."],
+    ["Antal G", {v:nG, f:`COUNTIF(${bet},"G")`}, pc(nG,n), "% av tentanderna"],["Antal U", {v:n-nG, f:`COUNTIF(${bet},"U")`}, pc(n-nG,n), "% av tentanderna"],
+    ["Registrerade innevarande termin: antal G och U", "", "Fylls i för hand. Uppgiften finns inte i Inspera."],
+    ["Registrerade tidigare terminer: antal G och U", "", "Fylls i för hand. Uppgiften finns inte i Inspera."],[""]];
+  d.orter.forEach(o=>{ const xs=d.students.filter(x=>x.ort===o), g=xs.filter(x=>x.g).length;
+    sum.push([o],["Antal tentander", xs.length],
+      ["Antal G", {v:g, f:`COUNTIFS(${bet},"G",${ortR},"${o.replace(/"/g,'""')}")`}, pc(g,xs.length), "%"],
+      ["Antal U", {v:xs.length-g, f:`COUNTIFS(${bet},"U",${ortR},"${o.replace(/"/g,'""')}")`}, pc(xs.length-g,xs.length), "%"],[""]); });
+  if(d.excluded.length) sum.push(["Exkluderade frågor (räknas inte)", d.excluded.map(x=>`${x.num}${x.title?` (${x.title})`:""}${x.reason?`: ${x.reason}`:""}`).join("; ")]);
+  const fall=[["Fall/Tema/Ämne",...d.themes.map(t=>t.name)],["Uppgift",...d.themes.map(t=>numRanges(t.nums))],["Maxpoäng",...d.themes.map(t=>r2(t.max))],
+    ["Medelvärde",...d.themes.map(t=>r2(t.mean))],["Medel som procent av maxpoäng",...d.themes.map(t=>t.max?r2(t.mean/t.max*100):"")]];
+  return [{name:"Sammanfattning", aoa:sum},{name:"Resultat per sektion", aoa:res},{name:"Resultat per fall", aoa:fall}];
+}
+function exportXlsx(){
+  const d=statsData(); if(!d) return;
   const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(Q), "Frågeöversikt");
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(S), "Studentöversikt");
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(matrix), "Rådata");
-  const tagVals = (opts.tagFiltered && state.activeTags) ? Object.values(state.activeTags).reduce((a,s)=>a.concat([...s]),[]) : [];
-  const suffix = tagVals.length ? "_"+tagVals.join("-").replace(/[^0-9A-Za-zÅÄÖåäö_-]/g,"") : "";
-  XLSX.writeFile(wb, `mcq-analys${suffix}_${stamp()}.xlsx`);
+  for(const sh of statsSheets(d)){
+    const ws=XLSX.utils.aoa_to_sheet(sh.aoa.map(r=>r.map(c=>(c && typeof c==="object") ? c.v : c)));
+    sh.aoa.forEach((r,ri)=>r.forEach((c,ci)=>{ if(c && typeof c==="object" && c.f){ const ref=XLSX.utils.encode_cell({r:ri,c:ci}); if(ws[ref]) ws[ref].f=c.f; } }));
+    XLSX.utils.book_append_sheet(wb, ws, sh.name);
+  }
+  XLSX.writeFile(wb, `tentamensstatistik_${stamp()}.xlsx`);
+}
+/* Diagramsidan: poängfördelningen och poäng per student och ort, med G-gränsen utritad. Fristående, utan skript. */
+function statsChartsHtml(d){
+  const W=760, H=300, L=46, B=34, T=14, R=14, pw=W-L-R, ph=H-T-B;
+  const top=Math.max(d.max, 1), x=v=>L+v/top*pw, tot=d.students.map(s=>s.total);
+  const bw=top<=40?2:5, nb=Math.ceil((top+0.001)/bw), bins=Array(nb).fill(0);
+  tot.forEach(v=>{ bins[Math.min(nb-1, Math.floor(v/bw))]++; });
+  const bm=Math.max(1,...bins), y1=c=>T+ph-c/bm*ph;
+  const xt=[]; for(let v=0; v<=top; v+=(top<=40?5:10)) xt.push(v);
+  const axisX=xt.map(v=>`<line x1="${x(v).toFixed(1)}" y1="${T+ph}" x2="${x(v).toFixed(1)}" y2="${T+ph+4}" stroke="#888"/><text x="${x(v).toFixed(1)}" y="${T+ph+17}" text-anchor="middle" font-size="11" fill="#555">${v}</text>`).join("");
+  const gl=(y0,y2)=>`<line x1="${x(d.gThr).toFixed(1)}" y1="${y0}" x2="${x(d.gThr).toFixed(1)}" y2="${y2}" stroke="#b3261e" stroke-width="2"/><text x="${(x(d.gThr)-5).toFixed(1)}" y="${y0+11}" text-anchor="end" font-size="11" fill="#b3261e">G-gräns ${d.gThr} p</text>`;
+  const hist=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Poängfördelning"><line x1="${L}" y1="${T+ph}" x2="${W-R}" y2="${T+ph}" stroke="#888"/>`
+    + bins.map((c,i)=>c?`<rect x="${(x(i*bw)+1).toFixed(1)}" y="${y1(c).toFixed(1)}" width="${Math.max(1,x((i+1)*bw)-x(i*bw)-2).toFixed(1)}" height="${(T+ph-y1(c)).toFixed(1)}" fill="#3f7a63"/><text x="${((x(i*bw)+x((i+1)*bw))/2).toFixed(1)}" y="${(y1(c)-3).toFixed(1)}" text-anchor="middle" font-size="10" fill="#555">${c}</text>`:"").join("")
+    + axisX + `<text x="${L+pw/2}" y="${H-2}" text-anchor="middle" font-size="11" fill="#555">Slutpoäng (staplar om ${bw} poäng)</text>` + gl(T, T+ph) + `</svg>`;
+  const groups=d.orter.length ? d.orter : [""], rowH=46, H2=T+groups.length*rowH+B;
+  const strip=`<svg viewBox="0 0 ${W} ${H2}" width="100%" role="img" aria-label="Poäng per student och ort"><line x1="${L}" y1="${H2-B}" x2="${W-R}" y2="${H2-B}" stroke="#888"/>`
+    + groups.map((o,gi)=>{ const cy=T+gi*rowH+rowH/2;
+        return `<text x="4" y="${cy+4}" font-size="11" fill="#333">${esc(o||"Alla")}</text>`
+          + d.students.filter(s=>(s.ort||"")===o || groups.length===1).map((s,k)=>`<circle cx="${x(s.total).toFixed(1)}" cy="${(cy+((k*7)%19)-9).toFixed(1)}" r="3.2" fill="${s.g?"#3f7a63":"#b3261e"}" fill-opacity=".75"/>`).join(""); }).join("")
+    + xt.map(v=>`<text x="${x(v).toFixed(1)}" y="${H2-B+17}" text-anchor="middle" font-size="11" fill="#555">${v}</text>`).join("")
+    + `<text x="${L+pw/2}" y="${H2-2}" text-anchor="middle" font-size="11" fill="#555">Slutpoäng</text>` + gl(T, H2-B) + `</svg>`;
+  const nG=d.students.filter(s=>s.g).length, n=d.students.length;
+  return `<!DOCTYPE html><html lang="sv"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Poängfördelning</title><style>
+   body{font-family:Georgia,'Times New Roman',serif;color:#1c1b18;margin:28px;max-width:820px} h1{font-size:20px;margin:0 0 4px} h2{font-size:15px;margin:22px 0 6px}
+   .sub{color:#555;font-size:13px;margin:0 0 4px} .foot{color:#777;font-size:11.5px;margin-top:16px} @media print{body{margin:12mm}}
+  </style></head><body><h1>Poängfördelning</h1><p class="sub">${esc([d.exam, `${n} tentander`, `maxpoäng ${d.max}`, `G-gräns ${d.gThr} p (${d.passPct} %)`, `${nG} G och ${n-nG} U`, new Date().toLocaleDateString('sv-SE')].filter(Boolean).join(" · "))}</p>
+  ${d.excluded.length?`<p class="sub">Räknat utan exkluderade frågor: ${esc(d.excluded.map(x=>x.num).join(", "))}.</p>`:""}
+  <h2>Fördelning av slutpoäng</h2>${hist}<h2>Slutpoäng per student${d.orter.length?" och studieort":""}</h2>${strip}
+  <p class="foot">Varje punkt är en students slutpoäng. Grön punkt är G, röd är U. Gränsen är avrundad nedåt och studentens poäng uppåt.</p></body></html>`;
+}
+function exportCharts(){
+  const d=statsData(); if(!d) return;
+  downloadText(`tentamensstatistik_diagram_${stamp()}.html`, statsChartsHtml(d), "text/html;charset=utf-8");
 }
 function stamp(){ const d=new Date(); const p=n=>String(n).padStart(2,"0");
   return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`; }
@@ -3660,6 +3696,7 @@ async function tryRun(){
     (state.json.zeroWeight||[]).forEach(n=>{ if(!state.excluded.has(n)) state.excluded.set(n, INSPERA_REASON); });
     renderWeightNote();
     { const pk=objs.find(isPackage);
+      state.orter = pk ? (Array.isArray(pk.orter) ? pk.orter : []) : ortNames(objs.map(o=>o && o.ext_inspera_assessmentRunTitle));
       state.examName = (pk && pk.examName) || commonTitle(objs.map(o=>o && o.ext_inspera_assessmentRunTitle)) || ""; }
     state.synthMcqs = null;   // JSON-lägets kortunderlag byggs om från nya datan vid behov
     state.fromPackage = R.fromPackage;
@@ -3823,6 +3860,7 @@ $("#clearfilter").addEventListener("click", clearFilters);
 $("#exp-xlsx").addEventListener("click", ()=>{ if(state.json) exportXlsx(); });
 $("#exp-overview").addEventListener("click", ()=>{ if(state.json) exportOverview(); });
 $("#exp-problems").addEventListener("click", ()=>{ if(state.vm) exportProblems(); });
+$("#exp-charts").addEventListener("click", ()=>{ if(state.json) exportCharts(); });
 $("#exp-html").addEventListener("click", ()=>{ if(state.vm) exportInteractive(); });
 $("#modeseg").addEventListener("click", e=>{
   const b=e.target.closest(".modebtn"); if(!b || b.dataset.mode===state.mode) return;

@@ -18,6 +18,16 @@ inte dokumenterad här.
   följer resten av tentan, frågan "Stämmer facit och poängregeln?" (för essäfrågor gäller
   bedömningsmallen). Mönsterraderna säger "MCQ-frågor" och "essäfrågor" så att de inte blandas
   ihop. Excel och CSV ur temarapporten har en rad per synlig fråga med kolumnen Typ.
+- **Kommentarer på frågor.** Varje kort har "Lägg till kommentar". Kommentaren följer med till
+  betygskollegiet och till temagrupperna, där den står som "Kommentar från examinatorn" och inte
+  kan ändras. Kommentarerna finns bara så länge filen är öppen.
+- **Problemfrågor**, ny export före betygssättning: en fristående sida till betygskollegiet med
+  frågorna att se över, exkluderade frågor och frågor med kommentar.
+- **Tentamensstatistik** ersätter den gamla Excel-exporten. Arbetsboken har samma flikar som
+  kurssamordnarnas mall (Sammanfattning, Resultat per sektion, Resultat per fall), räknar utan
+  exkluderade frågor och har G-gränsen i en cell som går att ändra. **Diagram** ger en sida med
+  poängfördelningen och slutpoäng per student och studieort. Studieorten läses ur resultatfilernas
+  namn och följer med i filen till examinatorn. Studenterna har löpnummer, aldrig Insperas id.
 - **Hela rapporten är renodlad.** Lägena heter **Med råd** och **Bara mätvärden**. Listan över
   starkt diskriminerande frågor ovanför korten är borta; de väljs i stället med **Stark
   diskriminering** under Att titta på i filtret. Kort utan råd har ingen ruta, och det gröna
