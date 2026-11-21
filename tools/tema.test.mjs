@@ -77,7 +77,7 @@ test("den exporterade sidan går att köra och ritar kort utan åtgärder", () =
   const tabs = page.el("#viewtabs").innerHTML;
   assert.ok(!tabs.includes("reptab") && tabs.includes("Välj frågetyp i filtret"));
   assert.ok(!tabs.includes("Preliminär"));
-  assert.equal(page.el("#actionlist").innerHTML, "");
+  assert.ok(!/andel rätt/.test(page.el("#summary").innerHTML));        // ingen medelandel rätt (Kajsa 21 nov 2026)
   assert.match(page.el("#goodlist").innerHTML, /fungerar som förebild|^$/);   // sedan formkontrollen: förebilder i stället för enbart diskriminering
 });
 test("översiktstabellen ur den exporterade sidan är fri från åtgärdsord", () => {

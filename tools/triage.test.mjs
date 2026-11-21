@@ -60,17 +60,19 @@ test("sammanfattningen före betygssättning räknar bara det som hör dit", () 
   assert.ok(!/tips|automatiska flaggor|att se över|andel rätt|taggkolumner/.test(s));
   assert.ok(!/Sökrutan/.test(el("#modehint").textContent));
 });
-test("listan överst visas bara som register i läget med alla frågor", () => {
+test("ingen lista som upprepar korten, i något av lägena", () => {
   const { ev, el } = tri();
-  assert.equal(el("#actionlist").innerHTML, "");
-  ev("state.mode = 'edu'; refreshLists(); drawCards();");
-  assert.match(el("#actionlist").innerHTML, /fråga\(or\) att se över/);
+  for (const m of ["action", "edu"]) {
+    ev(`state.mode = '${m}'; render();`);
+    assert.ok(!/actionrow|fråga\(or\) att se över/.test(el("#summary").innerHTML + el("#cards").innerHTML), m);
+  }
+  assert.equal(ev("typeof buildActionList"), "undefined");
 });
 test("för få svar: vyn säger det och visar alla frågor", () => {
   const { ev, el } = tri();
   ev("state.json.candCount = 12; render();");
   assert.equal(ids(el("#cards").innerHTML).length, ev("state.vm.view.length"));
-  assert.match(el("#nnote").innerHTML + el("#actionlist").innerHTML, /[Ff]ör få svar|Litet underlag/);
+  assert.match(el("#nnote").innerHTML, /Litet underlag/);
 });
 test("ingen fråga utpekad: vyn säger det och pekar på läget med alla frågor", () => {
   const { ev, el } = tri();

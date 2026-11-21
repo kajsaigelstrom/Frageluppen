@@ -287,7 +287,7 @@
   #controlband #dlctrls{display:flex;align-items:center;gap:8px;margin-left:auto}
   #printhead{display:none}
   @media print{
-    #controlband,.modebar,#dlctrls,#clearfilter,.reptabs,.rephint,#actionlist,#goodlist,.legend{display:none !important}
+    #controlband,.modebar,#dlctrls,#clearfilter,.reptabs,.rephint,#goodlist,.legend{display:none !important}
     #printhead{display:block;font:600 15px/1.4 'IBM Plex Sans',sans-serif;margin:0 0 12px;color:var(--ink)}
     body{background:#fff;margin:10mm}
     .q,tr,.ftcard{break-inside:avoid}
@@ -325,7 +325,6 @@
   .tcode{font-weight:600;color:var(--ink)}
   .tdiff{font-family:"IBM Plex Mono",monospace;color:var(--ink)}
   /* action list */
-  #actionlist{margin:8px 0 4px}
   .actionhead{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin-bottom:7px}
   .actionempty{font-size:13px;color:var(--accent);background:#e9f1ec;border:1px solid #cfe3d7;border-radius:8px;padding:10px 14px}
   .actionrow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;
@@ -564,8 +563,6 @@
       </div>
       <div class="tagbar" id="tagbar"></div>
     </div>
-
-    <div id="actionlist"></div>
     <div id="goodlist"></div>
     <div id="count"></div>
     <div class="legend">
@@ -2352,7 +2349,6 @@ function render(){
   if(modeIds.length && !modeIds.includes(state.mode)) state.mode = modeIds[0];
   const scored = view.filter(v=>!isExcluded(v.seq));       // exkluderade frågor räknas inte i omdömena
   const nExcl = view.length - scored.length;
-  const meanPc = scored.length? scored.reduce((s,v)=>s+v.pcorr,0)/scored.length : 0;
   const has1=v=>v.advice.l1.length, has2=v=>v.advice.l2.length;
   const showExe = activeView().showExemplary;
   const nAction = scored.filter(has1).length;                              // att se över
@@ -2368,7 +2364,6 @@ function render(){
     (nEss?stat(nEss,"essäfrågor","","s-muted"):"") +
     (nMul?stat(nMul,"flersvarsfrågor","","s-muted"):"") +
     (nExclAll?stat(nExclAll,"exkluderade","Dragna ur poängsättningen – visas kvar men bidrar inte till total, diskriminering eller godkäntgränsen."):"") +
-    (isPre()?"":stat(meanPc.toFixed(1)+" %", state.scored.length ? "genomsnittlig andel rätt, MCQ" : "genomsnittlig andel rätt")) +
     (state.smallN||!showExe?"":stat(nExe,"stark diskriminering","Skiljer starka från svaga väl (hög item–total-korrelation) utan automatiska flaggor. Diskriminering är evidens, inte bevis – bekräfta att frågan testar rätt sak innan du återanvänder den.")) +
     ((state.smallN||isPre())?"":stat(nClean,"inga automatiska flaggor","Inga flaggor från de automatiska kontrollerna (statistik, distraktorer, vanliga ledtrådar). Inget kvalitetsintyg – innehåll, måluppfyllelse och subtilare ledtrådar syns inte här.")) +
     (isPre()?"":stat(nTips,"tips")) +
@@ -2422,9 +2417,6 @@ function availableModeIds(){
   return (typeof EMBED!=="undefined" && EMBED && EMBED.modes) ? EMBED.modes.map(m=>m.id) : ["edu"];
 }
 function refreshLists(){
-  const ids=availableModeIds();
-  // Listan är ett register över frågorna att se över. I läget som bara visar dem vore den en upprepning av korten.
-  if(ids.includes("action") && state.mode!=="action") buildActionList(); else { const a=$("#actionlist"); if(a) a.innerHTML=""; }
   const showExe = (typeof activeView==="function") ? activeView().showExemplary
                 : (typeof EMBED!=="undefined" && EMBED ? EMBED.showExemplary : true);
   if(showExe && state.mode!=="simple") buildGoodList(); else { const g=$("#goodlist"); if(g) g.innerHTML=""; }
@@ -2615,26 +2607,6 @@ function jumpToCard(seq){
   const y=el.getBoundingClientRect().top + window.scrollY - 70;   // marginal för fast verktygsrad
   window.scrollTo({top:y, behavior:"smooth"});
   el.classList.add("flash"); setTimeout(()=>{ if(el) el.classList.remove("flash"); }, 1500);
-}
-function buildActionList(){
-  const el=$("#actionlist");
-  const items=currentView({allModes:true, ignorePattern:true}).filter(v=>v.advice && v.advice.l1.length && !isExcluded(v.seq))   // följer filterraden
-    .sort((a,b)=>cmpArr(codeSortKey(a.code),codeSortKey(b.code)));
-  if(!items.length){
-    el.innerHTML = state.smallN
-      ? `<div class="actionnote">För få svar för att automatiskt peka ut frågor att se över. Granska fördelningarna och innehållet under Alla frågor.</div>`
-      : `<div class="actionempty">✓ Inga frågor att se över.</div>`;
-    return;
-  }
-  el.innerHTML = `<div class="actionhead">${items.length} fråga(or) att se över</div>`+
-    items.map(v=>{
-      const a=v.advice.l1[0];
-      return `<button class="actionrow ${a.cls}" data-seq="${esc(String(v.seq))}">
-        <span class="acode">${esc(v.code)}</span>
-        <span class="aaction">${esc(a.action)}</span>
-        <span class="apc">${v.pcorr.toFixed(0)} % rätt</span></button>`;
-    }).join("");
-  el.querySelectorAll(".actionrow").forEach(b=>b.addEventListener("click",()=>jumpToCard(b.dataset.seq)));
 }
 function buildGoodList(){
   const el=$("#goodlist"); if(!el) return;
@@ -3163,7 +3135,6 @@ function xExportRender(){
   const view=state.vm.view, sc=state.scored;
   const scored=view.filter(v=>!isExcluded(v.seq));
   const nExcl=(view.length-scored.length) + sc.filter(e=>e.excluded).length;
-  const meanPc=scored.length?scored.reduce((s,v)=>s+v.pcorr,0)/scored.length:0;
   const nEss=sc.filter(e=>e.typ==="text").length, nMul=sc.filter(e=>e.typ==="multi").length;
   const showExe=!!spec.showExemplary;
   const nExe=showExe?scored.filter(isForebild).length:0;
@@ -3171,7 +3142,6 @@ function xExportRender(){
     + (view.length?stat(view.length,"MCQ-frågor","","s-muted"):"")
     + (nEss?stat(nEss,"essäfrågor","","s-muted"):"") + (nMul?stat(nMul,"flersvarsfrågor","","s-muted"):"")
     + (nExcl?stat(nExcl,"exkluderade","Dragna ur poängsättningen – visas kvar men bidrar inte till total eller diskriminering."):"")
-    + (view.length?stat(meanPc.toFixed(1)+" %", sc.length?"genomsnittlig andel rätt, MCQ":"genomsnittlig andel rätt"):"")
     + (state.smallN||!showExe||!view.length?"":stat(nExe,"förebilder","Medelsvåra, skiljer väl och utan fynd i formkontrollen."))
     + (state.tags?stat(state.tags.tagCols.map(c=>c.name).join(" · "),"taggkolumner","","s-muted"):"");
   $("#nnote").innerHTML = state.smallN ? '<div class="advnote">Litet underlag: '+EMBED.candCount+' studenter. Tolka enskilda procenttal försiktigt.</div>' : "";
@@ -3527,7 +3497,7 @@ function temaFns(){
   return [esc,norm,key,stat,codeSortKey,cmpArr,rpbSortVal,distColor,critLabel,isPre,modeHint,availableModeIds,refreshLists,
              isTemaPage,facetLabel,facetTitle,discBucket,mkFacets,facetsOfMcq,facetsOfScored,facetPass,anyFacet,toggleFacet,toggleTag,filterBase,filterGroups,tagPass,filtersActive,updateClearBtn,applyFilters,clearFilters,rpbInfo,isExcluded,exclReason,
              cueWords,cueHas,cueScan,advice,askQuestions,isExemplary,exemplaryReason,unmapReason,card,
-             currentView,pageItems,drawCards,jumpToCard,passMetric,renderPassMetric,buildActionList,buildGoodList,buildTagbar,
+             currentView,pageItems,drawCards,jumpToCard,passMetric,renderPassMetric,buildGoodList,buildTagbar,
              setThreshold,thresholdsCustom,resetThresholds,thFmt,thresholdsText,settingsHtml,renderThCustom,wireSettings,thInfo,neutralInfo,
              temaFns,temaConsts,buildTemaReport,downloadText,stamp,
              cardQuestions,patternSummary,renderPatterns,togglePattern,
@@ -3616,7 +3586,6 @@ function buildTemaReport(EMBED){
         <div class="tagbar" id="tagbar"></div>
       </div>
       <div id="patterns"></div>
-      <div id="actionlist"></div>
       <div id="goodlist"></div>
       <div id="count"></div>
       <div class="legend">

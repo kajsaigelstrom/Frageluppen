@@ -25,6 +25,9 @@ inte dokumenterad här.
   över. Inget filter i vyn, bara sök och sortering, och sökrutan hittar vilken fråga som helst.
   Råden "till nästa gång" visas inte före betygssättning, varken på korten eller i examinatorns
   PDF. Pekar statistiken inte ut någon fråga står det, och vid för få svar visas alla frågor.
+  Rutan överst visar bara antal studenter och frågor, så att man ser att filen lästs rätt.
+  Listan som upprepade frågorna att se över ovanför korten är borttagen, liksom medelandelen
+  rätt i alla vyer och i temarapporten.
 - **Textgenomgång ur tre läsares perspektiv** (kurssamordnaren, examinatorn före och efter
   rättning, temagruppens representant). Samma sak heter nu samma sak: "att se över" (inte "att
   åtgärda"), "exkludera" (inte "utesluta"), "facit" (inte "nyckel"), "studenter" (inte
