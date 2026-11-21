@@ -73,3 +73,33 @@ test("knapparna heter Tentamensstatistik och Diagram, och finns bara i hela rapp
   a.ev("setStep('choose'); setStep('triage');");
   assert.equal(a.el("#exp-charts").classList.contains("hidden"), true);
 });
+test("G-gränsen i procent ändras direkt på rapportsidan och styr statistiken", async () => {
+  assert.match(STATIC, /class="viewhead"[\s\S]*id="g-pct"/);
+  const a = await two();
+  assert.equal(a.el("#g-pct").value, "65");
+  assert.equal(a.el("#gctl").classList.contains("hidden"), false);
+  const max = a.ev("statsData().max");
+  assert.match(a.el("#g-pts").textContent, new RegExp("= " + Math.floor(0.65 * max + 1e-9) + " p"));
+  const change = v => { a.el("#g-pct").value = v; (a.el("#g-pct").listeners.change || []).forEach(f => f({ target: a.el("#g-pct") })); };
+  change("70");
+  assert.equal(a.ev("state.th.pass"), 70);
+  assert.equal(a.ev("statsData().gThr"), Math.floor(0.70 * max + 1e-9));
+  assert.match(a.el("#g-pts").textContent, new RegExp("= " + Math.floor(0.70 * max + 1e-9) + " p"));
+  change("abc");                                                    // ogiltigt värde: gränsen står kvar
+  assert.equal(a.ev("state.th.pass"), 70);
+  assert.equal(a.el("#g-pct").value, "70");
+  a.ev("setStep('choose'); setStep('triage');");
+  assert.equal(a.el("#gctl").classList.contains("hidden"), true);
+});
+test("i arbetsboken är det procenten som bestämmer: poänggränsen och betygen räknas ur den", async () => {
+  const a = await two();
+  const sum = a.evj("statsSheets(statsData())[0].aoa");
+  const row = l => sum.findIndex(r => r[0] === l);
+  assert.equal(sum[row("G-gräns (%)")][1], 65);
+  assert.equal(row("G-gräns (poäng)"), row("G-gräns (%)") + 1);
+  const pts = sum[row("G-gräns (poäng)")][1];
+  assert.equal(pts.v, a.ev("statsData().gThr"));
+  assert.equal(pts.f, "ROUNDDOWN(B" + (row("G-gräns (%)") + 1) + "/100*B" + (row("Maxpoäng") + 1) + ",0)");
+  const nq = a.ev("state.json.qMeta.length");
+  assert.ok(a.evj("statsSheets(statsData())[1].aoa")[1][4 + nq].f.includes("Sammanfattning!$B$" + (row("G-gräns (poäng)") + 1)));
+});

@@ -25,7 +25,7 @@ inte dokumenterad här.
   frågorna att se över, exkluderade frågor och frågor med kommentar.
 - **Tentamensstatistik** ersätter den gamla Excel-exporten. Arbetsboken har samma flikar som
   kurssamordnarnas mall (Sammanfattning, Resultat per sektion, Resultat per fall), räknar utan
-  exkluderade frågor och har G-gränsen i en cell som går att ändra. **Diagram** ger en sida med
+  exkluderade frågor. G-gränsen anges i procent, ändras direkt på rapportsidan (65 % som standard) och står i en cell som går att ändra; poänggränsen och betygen räknas ur procenten. **Diagram** ger en sida med
   poängfördelningen och slutpoäng per student och studieort. Studieorten läses ur resultatfilernas
   namn och följer med i filen till examinatorn. Studenterna har löpnummer, aldrig Insperas id.
 - **Hela rapporten är renodlad.** Lägena heter **Med råd** och **Bara mätvärden**. Listan över

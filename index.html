@@ -48,6 +48,9 @@
   .viewhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:6px 0 4px}
   .viewhead #viewtabs{flex:1 1 auto}
   .viewhead .exports{display:flex;gap:6px;flex-wrap:wrap}
+  .gctl{font-size:13px;color:var(--muted);white-space:nowrap}
+  .gctl input{width:3.2em;font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);text-align:right}
+  #g-pts{color:var(--ink)}
   .viewhead .steptitle{margin:0}
   .viewhead .stepback{margin:0}
   #modehint{display:block;margin:0 0 12px;max-width:80ch}
@@ -550,6 +553,8 @@
       <button id="step-back" class="linkbtn stepback" type="button" title="Tillbaka till valet">← Tillbaka</button>
       <div id="viewtabs"></div>
       <div class="modeseg" id="modeseg"></div>
+      <label class="gctl" id="gctl" title="Gränsen för godkänt i procent av maxpoängen. Styr betygen i Tentamensstatistiken och linjen i Diagram. Poänggränsen avrundas nedåt, och studentens poäng uppåt.">G-gräns
+        <input type="text" inputmode="decimal" id="g-pct" size="3"> % <span id="g-pts"></span></label>
       <div class="exports" id="exports">
         <button class="expbtn" id="exp-problems" title="Sida till betygskollegiet: frågorna att se över, exkluderade frågor och dina kommentarer. Bara sammanräknade resultat.">Problemfrågor</button>
         <button class="expbtn" id="exp-html" title="Rapport till temagrupperna: frågor i stället för åtgärder, bara sammanräknade resultat.">Temarapport</button>
@@ -2413,6 +2418,7 @@ function render(){
     const tri = state.step==="triage", hx=$("#exp-xlsx"), ho=$("#exp-overview");
     { const hpq=$("#exp-problems"); if(hpq) hpq.classList.toggle("hidden", !tri); }
     { const hc=$("#exp-charts"); if(hc) hc.classList.toggle("hidden", tri); }
+    { const gc=$("#gctl"); if(gc) gc.classList.toggle("hidden", tri); }
     if(eh) eh.classList.toggle("hidden", tri); if(hx) hx.classList.toggle("hidden", tri); if(ho) ho.classList.toggle("hidden", tri); }
   const results=$("#results"); results.classList.remove("hidden");
   results.classList.remove("stubmode","totalmode");
@@ -2447,6 +2453,7 @@ function render(){
   const nExclAll = nExcl + state.scored.filter(e=>e.excluded).length;
   results.classList.toggle("premode", isPre());
   renderFileLine();
+  renderGLimit();
   $("#nnote").innerHTML = state.smallN
     ? `<div class="advnote">Litet underlag: ${esc(state.json.candCount)} studenter. Andel rätt och svarsfördelning visas, men diskriminering (r<sub>pb</sub>) och automatiska omdömen om svårighet och distraktorer kräver fler svar (riktmärke n ≥ 30). Tolka enskilda procenttal försiktigt – ett svar väger ${Math.round(100/Math.max(1,state.json.candCount))} procentenheter.</div>`
     : "";
@@ -3088,6 +3095,13 @@ function statsData(){
           orter:[...new Set(students.map(x=>x.ort).filter(Boolean))]};
 }
 /* "nr 1-7, 10-18" av en lista frågenummer. */
+/* G-gränsen på rapportsidan: procent av maxpoängen, och vad det blir i poäng utan exkluderade frågor. */
+function renderGLimit(){
+  const inp=$("#g-pct"), out=$("#g-pts"); if(!inp) return;
+  inp.value=thFmt("pass");
+  const d=(state.step==="report") ? statsData() : null;
+  if(out) out.textContent = d ? `= ${d.gThr} p` : "";
+}
 function numRanges(nums){
   const a=nums.map(Number).filter(x=>!isNaN(x)).sort((x,y)=>x-y), out=[]; let i=0;
   while(i<a.length){ let j=i; while(j+1<a.length && a[j+1]===a[j]+1) j++; out.push(i===j?`${a[i]}`:`${a[i]}-${a[j]}`); i=j+1; }
@@ -3097,7 +3111,7 @@ function xlCol(i){ let s=""; i++; while(i>0){ const r=(i-1)%26; s=String.fromCha
 /* Flikarna som rader av celler. En cell är ett värde eller {v, f} med formel, så att G-gränsen går att ändra i Excel. */
 function statsSheets(d){
   const n=d.students.length, nq=d.questions.length, r2=x=>+(+x).toFixed(2);
-  const totC=xlCol(3+nq), betC=xlCol(4+nq), last=n+1, G="Sammanfattning!$B$3";
+  const totC=xlCol(3+nq), betC=xlCol(4+nq), last=n+1, G="Sammanfattning!$B$4";   // poänggränsen, som räknas ur procenten
   const res=[["Antal deltagare","Studieort","Deltagare",...d.questions.map(q=>`Q ${q.num}`),"Slutpoäng","Betyg"]];
   d.students.forEach((st,k)=>res.push([k+1, st.ort, st.nr, ...st.scores, st.total,
     {v:st.g?"G":"U", f:`IF(ROUNDUP(${totC}${k+2},0)>=${G},"G","U")`}]));
@@ -3107,7 +3121,9 @@ function statsSheets(d){
   res.push(["","Fall/tema/ämne","",...d.questions.map(q=>q.tema)]);
   const bet=`'Resultat per sektion'!$${betC}$2:$${betC}$${last}`, ortR=`'Resultat per sektion'!$B$2:$B$${last}`;
   const nG=d.students.filter(x=>x.g).length, pc=(a,b)=>b?r2(a/b*100):"";
-  const sum=[["Tentamen", d.exam],["Maxpoäng", d.max],["G-gräns (poäng)", d.gThr, `${d.passPct} % av maxpoängen, avrundat nedåt. Studentens poäng avrundas uppåt. Ändra här så räknas betygen om.`],
+  const sum=[["Tentamen", d.exam],["Maxpoäng", d.max],
+    ["G-gräns (%)", d.passPct, "Procenten bestämmer. Ändra här så räknas poänggränsen och betygen om."],
+    ["G-gräns (poäng)", {v:d.gThr, f:"ROUNDDOWN(B3/100*B2,0)"}, "Avrundat nedåt. Studentens poäng avrundas uppåt."],
     ["Medelpoäng", n?r2(d.students.reduce((s,x)=>s+x.total,0)/n):""],["Bästa resultat", n?Math.max(...d.students.map(x=>x.total)):""],
     ["Antal tentander", n],["Antal anmälda", "", "Fylls i för hand."],
     ["Antal G", {v:nG, f:`COUNTIF(${bet},"G")`}, pc(nG,n), "% av tentanderna"],["Antal U", {v:n-nG, f:`COUNTIF(${bet},"U")`}, pc(n-nG,n), "% av tentanderna"],
@@ -3861,6 +3877,7 @@ $("#exp-xlsx").addEventListener("click", ()=>{ if(state.json) exportXlsx(); });
 $("#exp-overview").addEventListener("click", ()=>{ if(state.json) exportOverview(); });
 $("#exp-problems").addEventListener("click", ()=>{ if(state.vm) exportProblems(); });
 $("#exp-charts").addEventListener("click", ()=>{ if(state.json) exportCharts(); });
+$("#g-pct").addEventListener("change", e=>{ setThreshold("pass", e.target.value); renderGLimit(); });   // ogiltigt värde: fältet återgår
 $("#exp-html").addEventListener("click", ()=>{ if(state.vm) exportInteractive(); });
 $("#modeseg").addEventListener("click", e=>{
   const b=e.target.closest(".modebtn"); if(!b || b.dataset.mode===state.mode) return;
