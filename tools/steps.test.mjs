@@ -152,5 +152,20 @@ test("analysfilen är en ren datafil som väljs i verktyget: en enda väg in", a
   assert.equal(a.ev("state.step"), "triage");
   assert.ok(!/dubbelklick/i.test(STATIC + a.ev("HELP_HTML") + a.el("#log").textContent));
   assert.match(STATIC, /id="exambox"[\s\S]*?analysfil_….json/);
-  assert.match(STATIC, /id="prep-note"[^>]*>[\s\S]*?gå direkt vidare/);
+  assert.match(STATIC, /id="prep-note"[^>]*>[\s\S]*?Gå vidare till steg 2/);
+});
+
+test("steg 1 har knappen Gå vidare till steg 2 bredvid spara-knappen", async () => {
+  assert.match(STATIC, /id="prep-next"[^>]*>Gå vidare till steg 2<\/button>\s*<button id="prep-save"/);
+  const a = fresh();
+  await a.ev("refreshPrep()");
+  assert.equal(a.el("#prep-next").disabled, true);                   // inga filer valda än
+  a.ev("prepSynthetic()"); await a.ev("refreshPrep()");
+  assert.equal(a.el("#prep-next").disabled, false);
+  assert.equal(a.el("#prep-next").classList.contains("hidden"), false);
+  await (a.el("#prep-next").listeners.click || [])[0]({});
+  assert.equal(a.ev("state.step"), "triage");
+  assert.equal(a.downloads.length, 0);
+  assert.equal(a.el("#prep-next").classList.contains("hidden"), true);   // knappen hör till steg 1
+  assert.match(STATIC, /id="prep-note"[^>]*>[\s\S]*?Gå vidare till steg 2[\s\S]*?ligger kvar/);
 });

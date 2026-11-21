@@ -28,8 +28,8 @@ själva. I Linköping gör kurssamordnaren steg 1 och examinatorn steg 2 och 3.
 **1 Förbered filer.** Sidan öppnar här.
 
 1. Släpp resultatfilerna (JSON) från Inspera, tentans PDF och taggfilen om den finns.
-2. Kontrollera kvittot (tentans namn och antal studenter). Gå sedan direkt vidare till steg 2
-   eller 3 i raden överst, eller klicka **Spara analysfilen** om någon annan ska göra de stegen.
+2. Kontrollera kvittot (tentans namn och antal studenter). Klicka sedan **Gå vidare till steg 2**,
+   eller **Spara analysfilen** om någon annan ska göra steg 2 och 3.
 3. Gör samma sak en gång till när tentan är rättad, med nya filer från Inspera.
 
 Analysfilen innehåller verktyget och bara den data det behöver. Studenternas skrivna svar,

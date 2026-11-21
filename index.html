@@ -533,11 +533,12 @@
       </div>
     </div>
     <div class="computebar">
-      <button id="prep-save" class="btn-primary hidden" type="button" disabled>Spara analysfilen</button>
+      <button id="prep-next" class="btn-primary hidden" type="button" disabled title="Gör analysen med filerna du har valt här. De ligger kvar om du går tillbaka.">Gå vidare till steg 2</button>
+      <button id="prep-save" class="btn-ghost hidden" type="button" disabled title="Sparar en fil som någon annan väljer i steg 2 och 3.">Spara analysfilen</button>
       <span class="computehint" id="computehint"></span>
     </div>
     <div id="prep-receipt" class="hidden"></div>
-    <div id="prep-note" class="hidden">Du kan <b>gå direkt vidare</b> till steg 2 eller 3 i raden överst, med filerna du har valt här. Ska någon annan göra de stegen sparar du <b>analysfilen</b>, som hen väljer i steg 2 och 3. Gör det två gånger per tenta: direkt efter tentan, så att problemfrågor kan hittas före betygssättningen, och en gång till när allt är rättat, då med nya filer från Inspera. Filen är minimerad, inte anonym. Varje rad är en students poängmönster och kan på en liten omtenta kännas igen av den som vet vilka som skrev. Behandla filen som tentamaterial och dela den bara med den som ska göra steg 2 och 3. Den innehåller också tentans frågor.</div>
+    <div id="prep-note" class="hidden">Med <b>Gå vidare till steg 2</b> fortsätter du själv, direkt. Filerna du har valt här ligger kvar om du går tillbaka. Ska någon annan göra steg 2 och 3 sparar du <b>analysfilen</b>, som hen väljer där. Gör det två gånger per tenta: direkt efter tentan, så att problemfrågor kan hittas före betygssättningen, och en gång till när allt är rättat, då med nya filer från Inspera. Filen är minimerad, inte anonym. Varje rad är en students poängmönster och kan på en liten omtenta kännas igen av den som vet vilka som skrev. Behandla filen som tentamaterial och dela den bara med den som ska göra steg 2 och 3. Den innehåller också tentans frågor.</div>
     </div>
     <div id="log"></div>
   </div>
@@ -792,7 +793,7 @@ function renderStepBar(){
   const cur = state.prep ? "prep" : (state.step || state.want || "triage");
   [["#role-prep","prep"],["#step-triage","triage"],["#step-report","report"]].forEach(([sel,k])=>{ const b=$(sel); if(b) b.classList.toggle("on", cur===k); });
   const h=$("#rolehint");
-  if(h) h.textContent = state.prep ? "Släpp Insperas filer. Gå sedan vidare, eller spara analysfilen åt någon annan." : (state.json ? "" : "Välj analysfilen från steg 1.");
+  if(h) h.textContent = state.prep ? "Släpp Insperas filer. Gå sedan vidare till steg 2, eller spara analysfilen åt någon annan." : (state.json ? "" : "Välj analysfilen från steg 1.");
   try{ if(typeof history!=="undefined" && history.replaceState) history.replaceState(null, "", cur==="prep" ? "#forbered" : cur==="report" ? "#rapporter" : "#problemfragor"); }catch(_){}
 }
 /* Gå till steg 2 eller 3. Finns en fil öppen visas steget direkt, annars ber sidan om analysfilen. */
@@ -911,7 +912,7 @@ tider, extratid och alla id tas bort, och kandidatnumren ersätts av löpnummer.
 och totalpoäng följer med, så att rättningen kan kontrolleras i steg 3. Inga resultat visas i
 steg 1. Utan tentans PDF saknas frågetexterna, och utan taggfil filtret på tema.</p>
 <p><b>2 Hitta problemfrågor</b> och <b>3 Skapa rapporter</b> börjar med att analysfilen väljs.
-Den som har gjort steg 1 kan i stället gå direkt vidare i raden överst, utan att spara filen.</p>
+Den som har gjort steg 1 går i stället direkt vidare med knappen <b>Gå vidare till steg 2</b>, utan att spara filen.</p>
 <p>Vem som gör vilket steg bestämmer ni själva. I Linköping gör kurssamordnaren steg 1, eftersom
 det är hen som hämtar filerna ur Inspera, och examinatorn steg 2 och 3.</p>
 <p>Analysfilen är minimerad, inte anonym: varje rad är en students poängmönster. Behandla den som
@@ -3763,7 +3764,7 @@ function refreshCompute(){
 function setPrep(on){
   state.prep=!!on;
   const tog=(sel,hide)=>{ const e=$(sel); if(e) e.classList.toggle("hidden", hide); };
-  tog("#prephead",!on); tog("#prep-save",!on); tog("#prep-receipt",!on); tog("#prep-note",!on);
+  tog("#prephead",!on); tog("#prep-save",!on); tog("#prep-next",!on); tog("#prep-receipt",!on); tog("#prep-note",!on);
   tog("#drops",!on); tog("#exambox",on);
   tog("#settings-open",!!on); if(on){ tog("#settings",true); }      // gränserna gäller analysen, som inte syns i steg 1
   if(on){ $("#results").classList.add("hidden"); expandUpload(); log(""); }
@@ -3789,7 +3790,8 @@ async function prepInputs(){
 async function refreshPrep(){
   const box=$("#prep-receipt"), b=$("#prep-save"); if(!state.prep || !box || !b) return;
   const ready = (state.prepFiles || state.jsonFiles).some(f=>typeof f.text==="function");
-  b.disabled=!ready;
+  const nx=$("#prep-next");
+  b.disabled=!ready; if(nx) nx.disabled=!ready;
   if(!ready){ box.innerHTML=""; return; }
   try{
     const k=prepReceipt(await prepInputs());
@@ -3798,7 +3800,7 @@ async function refreshPrep(){
       + (k.mcqPdf!=null ? `${k.mcqPdf} flervalsfrågor lästa ur PDF:en` : "ingen PDF") + " · "
       + (k.hasTags ? "taggfilen är med" : "ingen taggfil")
       + (k.warning ? `<br><span class="warn">⚠ ${esc(k.warning)}</span>` : "");
-  }catch(e){ b.disabled=true; box.innerHTML=`<span class="warn">⚠ ${esc(e.message)}</span>`; }
+  }catch(e){ b.disabled=true; if(nx) nx.disabled=true; box.innerHTML=`<span class="warn">⚠ ${esc(e.message)}</span>`; }
 }
 async function saveExaminerFile(){
   try{
@@ -3866,6 +3868,7 @@ $("#step-triage").addEventListener("click", ()=>{ goStep("triage"); });
 $("#step-report").addEventListener("click", ()=>{ goStep("report"); });
 $("#role-prep").addEventListener("click", ()=>{ if(!state.prep) setPrep(true); });
 $("#prep-save").addEventListener("click", saveExaminerFile);
+$("#prep-next").addEventListener("click", ()=>goStep("triage"));
 $("#reopen").addEventListener("click", expandUpload);
 {
   const emb=readEmbedded();
