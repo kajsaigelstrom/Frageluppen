@@ -29,7 +29,7 @@ if (diff.length) { ok = false; console.log("AVVIKER: " + diff.join(", ")); } els
 // 2. inget läcker
 const pkgText = ev("JSON.stringify(PKG)");
 const leaks = [];
-const KEYS = ["gradingTeacher", "extraTimeMins", "incidentTimeMins", "startTime", "endTime", "finalGrade", "sourcedId",
+const KEYS = ["gradingTeacher", "extraTimeMins", "incidentTimeMins", "startTime", "endTime", "finalGradeDate", "sourcedId",
   "interactionAlternative", "userAssessment", "questionId", "questionContentItemId", "durationSeconds",
   "dateLastModified", "lineItem", "attendance", "assessmentRunExternalId"];
 for (const k of KEYS) if (pkgText.includes(k)) leaks.push("fältnamn " + k);

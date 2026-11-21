@@ -2,7 +2,7 @@
 // setupDirty(ev) lägger globalen `dirty` i sandboxen: demotentan i Inspera-format, påklistrad med
 // alla slags känsliga fält som en riktig export innehåller (påhittade värden).
 export const SENSITIVE = ["RATTARE_X","gradingTeacher","FRITEXT_HEMLIG","extraTimeMins","startTime","endTime",
-  "finalGrade","sourcedId","K-777","interactionAlternative","nyttFalt","lineItem","incidentTimeMins",
+  "finalGradeDate","sourcedId","K-777","interactionAlternative","nyttFalt","lineItem","incidentTimeMins",
   "userAssessment","questionId","durationSeconds","dateLastModified"];
 
 export function setupDirty(ev) {

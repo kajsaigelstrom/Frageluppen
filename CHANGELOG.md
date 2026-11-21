@@ -18,6 +18,11 @@ inte dokumenterad här.
   följer resten av tentan, frågan "Stämmer facit och poängregeln?" (för essäfrågor gäller
   bedömningsmallen). Mönsterraderna säger "MCQ-frågor" och "essäfrågor" så att de inte blandas
   ihop. Excel och CSV ur temarapporten har en rad per synlig fråga med kolumnen Typ.
+- **Kontroll mot Insperas egen uträkning.** Insperas slutbetyg och totalpoäng per student följer
+  nu med i filen till examinatorn (datumet för betyget gör det inte). I hela rapporten jämför
+  verktyget sin totalpoäng och sitt betyg med Insperas, student för student, och varnar med antal
+  när de skiljer sig. Varningen räknas om när en fråga exkluderas eller G-gränsen ändras.
+  Tentamensstatistiken har Insperas slutpoäng och betyg bredvid verktygets.
 - **Kommentarer på frågor.** Varje kort har "Lägg till kommentar". Kommentaren följer med till
   betygskollegiet och till temagrupperna, där den står som "Kommentar från examinatorn" och inte
   kan ändras. Kommentarerna finns bara så länge filen är öppen.

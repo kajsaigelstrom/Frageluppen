@@ -99,7 +99,7 @@
 
   #log{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);white-space:pre-wrap;margin-top:12px;min-height:18px}
   #qa.bad,#examwarn.bad{color:var(--warn)}
-  #weightnote .bad{color:var(--warn);border:1px solid var(--warn);border-radius:8px;padding:9px 12px;font-size:13px;line-height:1.5;margin-bottom:8px}
+  #weightnote .bad,#gradenote .bad{color:var(--warn);border:1px solid var(--warn);border-radius:8px;padding:9px 12px;font-size:13px;line-height:1.5;margin-bottom:8px}
 
   .summary{display:flex;flex-wrap:wrap;gap:26px;align-items:baseline}
   .summary .stat{display:flex;flex-direction:column}
@@ -488,7 +488,7 @@
     <div id="uploadfull">
     <div id="prephead" class="prephead hidden">
       <h2>Förbered tentan</h2>
-      <p>Släpp filerna från Inspera och spara en fil till examinatorn. Studenternas skrivna svar, rättarnamn, tider, extratid, betyg och alla id tas bort, och kandidatnumren ersätts av löpnummer. Inga resultat visas här.</p>
+      <p>Släpp filerna från Inspera och spara en fil till examinatorn. Studenternas skrivna svar, rättarnamn, tider, extratid och alla id tas bort, och kandidatnumren ersätts av löpnummer. Insperas slutbetyg och totalpoäng följer med, så att examinatorn kan kontrollera rättningen. Inga resultat visas här.</p>
     </div>
     <div id="exambox" class="drop exambox hidden">
       <label>Filen från kurssamordnaren</label>
@@ -534,6 +534,7 @@
   </div>
   <div id="warnings">
     <div id="weightnote"></div>
+    <div id="gradenote"></div>
     <div id="examwarn"></div>
     <div id="qa"></div>
     <div id="pdfnote"></div>
@@ -776,6 +777,7 @@ function setStep(step){
   if(!state.json) step=null;
   if(step==="report" && !state.json.fullyGraded) step="choose";
   state.step=step||null;
+  if(step!=="report"){ const gn=$("#gradenote"); if(gn) gn.innerHTML=""; }
   if(step!=="triage" && step!=="report"){
     if(res) res.classList.add("hidden");
     if(sc) sc.classList.toggle("hidden", step!=="choose");
@@ -878,8 +880,9 @@ En länk som slutar på <code>#examinator</code> öppnar examinatorns ingång di
 <p><b>Kurssamordnaren</b> släpper resultatfilerna från Inspera, tentans PDF och taggfilen om den
 finns, och sparar <b>en fil till examinatorn</b>. Det görs två gånger per tenta: direkt efter
 tentan, och en gång till när allt är rättat, då med nya filer från Inspera. Studenternas skrivna
-svar, rättarnamn, tider, extratid, betyg och alla id tas bort, och kandidatnumren ersätts av
-löpnummer. Inga resultat visas för kurssamordnaren. Utan tentans PDF får examinatorn inga
+svar, rättarnamn, tider, extratid och alla id tas bort, och kandidatnumren ersätts av
+löpnummer. Insperas slutbetyg och totalpoäng följer med, och verktyget varnar examinatorn när de
+skiljer sig från dess egen uträkning. Inga resultat visas för kurssamordnaren. Utan tentans PDF får examinatorn inga
 frågetexter, och utan taggfil inget filter på tema.</p>
 <p><b>Examinatorn</b> väljer filen i ingången Examinator, eller öppnar den med ett dubbelklick,
 och väljer sedan vad hen vill göra.</p>
@@ -1305,6 +1308,8 @@ function minimizeInspera(obj, offset){
     const r = (c && c.result) || c || {};
     const qs = Array.isArray(r.ext_inspera_questions) ? r.ext_inspera_questions : null;
     const res = { ext_inspera_candidateId: String((offset||0)+i+1) };
+    // Insperas slutbetyg och totalpoäng följer med (Kajsa 21 nov 2026), så att uträkningen här kan kontrolleras mot dem.
+    for(const k of ["ext_inspera_finalGrade","ext_inspera_totalScore"]) if(r[k]!==undefined && r[k]!==null) res[k]=r[k];
     if(qs) res.ext_inspera_questions = qs.map(q=>{
       const o={};
       for(const k of ["ext_inspera_maxQuestionScore","ext_inspera_questionNumber","ext_inspera_questionTitle","ext_inspera_autoScore","ext_inspera_questionWeight"])
@@ -1522,7 +1527,9 @@ function parseJSON(jsonObjs){
   const zeroWeight=[], partialZero=[];
   for(const qn of order){ const w=agg[qn].w0||0; if(!w) continue;
     if(w===cands.length) zeroWeight.push(String(qn)); else partialZero.push({num:String(qn), n:w}); }
-  const J={candCount:cands.length, agg, mcqSeqs, qMeta, qTitle:titleOf, cohortScores, ungradedPts, fullyGraded, maxTotal, mcqSlot:mcqSlotByCand, candMeta, zeroWeight, partialZero, candFile};
+  const J={candCount:cands.length, agg, mcqSeqs, qMeta, qTitle:titleOf, cohortScores, ungradedPts, fullyGraded, maxTotal, mcqSlot:mcqSlotByCand, candMeta, zeroWeight, partialZero, candFile,
+    insp: cands.map(c=>({grade:(typeof c.ext_inspera_finalGrade==="string" ? c.ext_inspera_finalGrade : ""),
+                         total:(typeof c.ext_inspera_totalScore==="number" ? c.ext_inspera_totalScore : null)}))};
   // Steg 1: diskriminering frikopplad till computeDiscrimination. 'mcq'-kriteriet reproducerar
   // tidigare inline-r_pb exakt (verifierat mot riktig data). Vyerna väljer kriterium per vy.
   J.discMcq = computeDiscrimination(J, {criterion:'mcq'});
@@ -2454,6 +2461,7 @@ function render(){
   results.classList.toggle("premode", isPre());
   renderFileLine();
   renderGLimit();
+  renderGradeNote();
   $("#nnote").innerHTML = state.smallN
     ? `<div class="advnote">Litet underlag: ${esc(state.json.candCount)} studenter. Andel rätt och svarsfördelning visas, men diskriminering (r<sub>pb</sub>) och automatiska omdömen om svårighet och distraktorer kräver fler svar (riktmärke n ≥ 30). Tolka enskilda procenttal försiktigt – ett svar väger ${Math.round(100/Math.max(1,state.json.candCount))} procentenheter.</div>`
     : "";
@@ -3087,7 +3095,9 @@ function statsData(){
   const max=questions.reduce((s,q)=>s+q.max,0), gThr=Math.floor(state.th.pass/100*max + 1e-9);
   const orter=state.orter||[];
   const students=J.cohortScores.map((row,k)=>{ const scores=keep.map(i=>+(+row[i]).toFixed(2)), total=scores.reduce((s,v)=>s+v,0);
-    return {nr:k+1, ort:orter[(J.candFile||[])[k]]||"", scores, total:+total.toFixed(2), g:Math.ceil(total-1e-9)>=gThr}; });
+    const x=(J.insp||[])[k]||{};
+    return {nr:k+1, ort:orter[(J.candFile||[])[k]]||"", scores, total:+total.toFixed(2), g:Math.ceil(total-1e-9)>=gThr,
+            inspTotal:(x.total===null||x.total===undefined)?"":x.total, inspGrade:x.grade||""}; });
   const names=[...new Set(questions.map(q=>q.tema).filter(Boolean))];
   const themes=names.map(t=>{ const qs=questions.filter(q=>q.tema===t);
     return {name:t, nums:qs.map(q=>q.num), max:qs.reduce((s,q)=>s+q.max,0), mean:qs.reduce((s,q)=>s+q.mean,0)}; });
@@ -3095,6 +3105,29 @@ function statsData(){
           orter:[...new Set(students.map(x=>x.ort).filter(Boolean))]};
 }
 /* "nr 1-7, 10-18" av en lista frågenummer. */
+/* Jämför verktygets uträkning med Insperas egen totalpoäng och slutbetyg, student för student. Skillnader betyder
+   att något räknas olika: en fråga som är exkluderad på ena stället men inte det andra, en annan G-gräns, eller
+   ett fel i rättningen. Bara antal redovisas, aldrig vilka studenter. null = uppgifterna saknas i filen. */
+function gradeCheck(){
+  const J=state.json, d=statsData();
+  if(!J || !d || !J.fullyGraded || !Array.isArray(J.insp)) return null;
+  const hasT=J.insp.some(x=>x.total!==null), hasG=J.insp.some(x=>x.grade);
+  if(!hasT && !hasG) return null;
+  let totalDiff=0, gradeDiff=0, inspG=0, inspU=0;
+  d.students.forEach((st,k)=>{ const x=J.insp[k]||{};
+    if(x.total!==null && x.total!==undefined && Math.abs(x.total-st.total)>0.011) totalDiff++;
+    if(x.grade){ const pass = x.grade.toUpperCase()!=="U"; if(pass) inspG++; else inspU++; if(pass!==st.g) gradeDiff++; } });
+  return {n:d.students.length, totalDiff, gradeDiff, toolG:d.students.filter(x=>x.g).length, inspG, inspU, hasT, hasG, gThr:d.gThr, passPct:d.passPct};
+}
+function renderGradeNote(){
+  const el=$("#gradenote"); if(!el) return;
+  const c=(state.step==="report") ? gradeCheck() : null;
+  if(!c || (!c.totalDiff && !c.gradeDiff)){ el.innerHTML=""; return; }
+  const parts=[];
+  if(c.totalDiff) parts.push(`Totalpoängen skiljer sig från Insperas för ${c.totalDiff} av ${c.n} studenter. Det händer när en fråga räknas på ena stället men inte på det andra, till exempel en fråga som är exkluderad här men inte nedviktad i Inspera, eller tvärtom.`);
+  if(c.gradeDiff) parts.push(`Betyget skiljer sig från Insperas för ${c.gradeDiff} av ${c.n} studenter: här blir det ${c.toolG} G med G-gräns ${c.passPct} % (${c.gThr} p), i Inspera står ${c.inspG} G.`);
+  el.innerHTML = `<div class="bad">⚠ ${parts.join(" ")}</div>`;
+}
 /* G-gränsen på rapportsidan: procent av maxpoängen, och vad det blir i poäng utan exkluderade frågor. */
 function renderGLimit(){
   const inp=$("#g-pct"), out=$("#g-pts"); if(!inp) return;
@@ -3112,9 +3145,10 @@ function xlCol(i){ let s=""; i++; while(i>0){ const r=(i-1)%26; s=String.fromCha
 function statsSheets(d){
   const n=d.students.length, nq=d.questions.length, r2=x=>+(+x).toFixed(2);
   const totC=xlCol(3+nq), betC=xlCol(4+nq), last=n+1, G="Sammanfattning!$B$4";   // poänggränsen, som räknas ur procenten
-  const res=[["Antal deltagare","Studieort","Deltagare",...d.questions.map(q=>`Q ${q.num}`),"Slutpoäng","Betyg"]];
+  const insp=d.students.some(x=>x.inspGrade || x.inspTotal!=="");     // äldre filer saknar Insperas uppgifter
+  const res=[["Antal deltagare","Studieort","Deltagare",...d.questions.map(q=>`Q ${q.num}`),"Slutpoäng","Betyg",...(insp?["Slutpoäng i Inspera","Betyg i Inspera"]:[])]];
   d.students.forEach((st,k)=>res.push([k+1, st.ort, st.nr, ...st.scores, st.total,
-    {v:st.g?"G":"U", f:`IF(ROUNDUP(${totC}${k+2},0)>=${G},"G","U")`}]));
+    {v:st.g?"G":"U", f:`IF(ROUNDUP(${totC}${k+2},0)>=${G},"G","U")`}, ...(insp?[st.inspTotal, st.inspGrade]:[])]));
   res.push(["","Maxpoäng per sektion","",...d.questions.map(q=>q.max), d.max]);
   res.push(["","Medel per sektion","",...d.questions.map(q=>r2(q.mean)), r2(d.questions.reduce((s,q)=>s+q.mean,0))]);
   res.push(["","Medlet som procent av maxpoäng","",...d.questions.map(q=>q.max?r2(q.mean/q.max*100):""), d.max?r2(d.questions.reduce((s,q)=>s+q.mean,0)/d.max*100):""]);
@@ -3127,6 +3161,8 @@ function statsSheets(d){
     ["Medelpoäng", n?r2(d.students.reduce((s,x)=>s+x.total,0)/n):""],["Bästa resultat", n?Math.max(...d.students.map(x=>x.total)):""],
     ["Antal tentander", n],["Antal anmälda", "", "Fylls i för hand."],
     ["Antal G", {v:nG, f:`COUNTIF(${bet},"G")`}, pc(nG,n), "% av tentanderna"],["Antal U", {v:n-nG, f:`COUNTIF(${bet},"U")`}, pc(n-nG,n), "% av tentanderna"],
+    ...(insp ? [["Antal G enligt Inspera", d.students.filter(x=>x.inspGrade && x.inspGrade.toUpperCase()!=="U").length, "", "Slutbetyget som står i Inspera, för jämförelse."],
+                 ["Antal U enligt Inspera", d.students.filter(x=>x.inspGrade && x.inspGrade.toUpperCase()==="U").length]] : []),
     ["Registrerade innevarande termin: antal G och U", "", "Fylls i för hand. Uppgiften finns inte i Inspera."],
     ["Registrerade tidigare terminer: antal G och U", "", "Fylls i för hand. Uppgiften finns inte i Inspera."],[""]];
   d.orter.forEach(o=>{ const xs=d.students.filter(x=>x.ort===o), g=xs.filter(x=>x.g).length;
@@ -3877,7 +3913,7 @@ $("#exp-xlsx").addEventListener("click", ()=>{ if(state.json) exportXlsx(); });
 $("#exp-overview").addEventListener("click", ()=>{ if(state.json) exportOverview(); });
 $("#exp-problems").addEventListener("click", ()=>{ if(state.vm) exportProblems(); });
 $("#exp-charts").addEventListener("click", ()=>{ if(state.json) exportCharts(); });
-$("#g-pct").addEventListener("change", e=>{ setThreshold("pass", e.target.value); renderGLimit(); });   // ogiltigt värde: fältet återgår
+$("#g-pct").addEventListener("change", e=>{ setThreshold("pass", e.target.value); renderGLimit(); renderGradeNote(); });   // ogiltigt värde: fältet återgår
 $("#exp-html").addEventListener("click", ()=>{ if(state.vm) exportInteractive(); });
 $("#modeseg").addEventListener("click", e=>{
   const b=e.target.closest(".modebtn"); if(!b || b.dataset.mode===state.mode) return;

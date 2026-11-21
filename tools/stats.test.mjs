@@ -46,7 +46,7 @@ test("arbetsboken har mallens flikar och rubriker, och betyget följer G-gränse
   assert.deepEqual(sh.map(s => s.name), ["Sammanfattning", "Resultat per sektion", "Resultat per fall"]);
   const res = sh[1].aoa, nq = a.ev("state.json.qMeta.length"), n = a.ev("state.json.candCount");
   assert.deepEqual(res[0].slice(0, 4), ["Antal deltagare", "Studieort", "Deltagare", "Q 1"]);
-  assert.deepEqual(res[0].slice(3 + nq), ["Slutpoäng", "Betyg"]);
+  assert.deepEqual(res[0].slice(3 + nq, 5 + nq), ["Slutpoäng", "Betyg"]);      // därefter Insperas uppgifter, när filen har dem
   assert.equal(res[1][1], "Jönköping");
   assert.match(res[1][4 + nq].f, /Sammanfattning!/);
   assert.ok(["G", "U"].includes(res[1][4 + nq].v));
