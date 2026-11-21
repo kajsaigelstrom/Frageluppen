@@ -85,7 +85,7 @@ Sammanfattningen överst visar hur många frågor som behöver åtgärdas:
 - Läser tentans **PDF** och ett eller flera **JSON-resultat** från Inspera, samt en valfri **Excel** med teman per fråga.
 - Visar per fråga: **svarsfördelning** per alternativ, **andel rätt** (svårighet) och **diskriminering** (punkt-biseriell item–total-korrelation), med färgkodad distraktoranalys.
 - Två vägar för examinatorn: **problemfrågor före betygssättning** (flervalsfrågorna, före rättningen av essäfrågorna) och **hela rapporten** (alla frågetyper på en sida efter rättning, med Översiktstabell inför betygskollegiet).
-- Filtrering på tema, exkludering av trasiga frågor, och export till **Excel, CSV och PDF**.
+- Filtrering på tema, exkludering av trasiga frågor, och export till **Excel** och som **översiktstabell** att skriva ut.
 - En fristående **Temarapport** att dela med temagrupperna: utan triage och åtgärdsförslag, med frågor att ställa sig där svaren följer ett mönster, och med möjlighet att bocka för frågor och spara en egen sida att ge vidare.
 - **Justerbara gränser** för märkningarna Lätt och Svår, god diskriminering och godkänt, i en hopfälld inställningspanel.
 - En inbyggd **"? Hjälp"** förklarar hur måtten tolkas.

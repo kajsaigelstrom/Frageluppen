@@ -22,7 +22,8 @@ inte dokumenterad här.
   starkt diskriminerande frågor ovanför korten är borta; de väljs i stället med **Stark
   diskriminering** under Att titta på i filtret. Kort utan råd har ingen ruta, och det gröna
   "Inga anmärkningar" är borttaget. Exporterna står samlade på rubrikraden: Temarapport,
-  Översiktstabell, Excel och PDF (examinatorns).
+  Översiktstabell och Excel. **PDF (examinatorns) är borttagen**: återkopplingen går till
+  temagrupperna, genom Temarapporten.
 - **Exkluderingar följer med från Inspera.** En fråga som är viktad till 0 % i Inspera känns igen
   i exporten och räknas som exkluderad när filen öppnas, med orsaken "Viktad till 0 % i Inspera".
   En rad överst säger vilka frågor det gäller. Har inte alla studenter vikten 0 på frågan visas
@@ -88,7 +89,7 @@ inte dokumenterad här.
 - **Examinatorns flöde i två steg.** Under fliken Examinator finns en enda filruta, där filen
   från kurssamordnaren väljs (den går också att öppna med ett dubbelklick). Sedan väljer
   examinatorn mellan **Hitta problemfrågor före betygssättning** (en egen vy med bara
-  flervalsfrågorna att se över, exkludering på kortet och examinatorns egen PDF) och **Se hela
+  flervalsfrågorna att se över, exkludering på kortet) och **Se hela
   rapporten** (alla frågor efter rättning, med Temarapport, Översiktstabell och Excel; kräver
   färdig rättning).
   De tre filrutorna för Insperas filer finns bara hos kurssamordnaren.

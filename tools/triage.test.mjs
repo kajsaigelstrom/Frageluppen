@@ -81,10 +81,8 @@ test("ingen fråga utpekad: vyn säger det och pekar på läget med alla frågor
   assert.match(el("#cards").innerHTML, /Statistiken pekar inte ut någon fråga/);
   assert.match(el("#cards").innerHTML, /Alla flervalsfrågor/);
 });
-test("examinatorns PDF före betygssättning har bara det som ska ses över", () => {
-  const a = tri();
-  let doc = ""; a.set("open", () => ({ document: { open(){}, write(h){ doc = h; }, close(){} } }));
-  a.ev("window.open = open; exportPdf();");
-  assert.match(doc, /Att se över/);
-  assert.ok(!/Förbättra svarsalternativen|Ta upp i undervisningen|Triage/.test(doc));
+test("examinatorns PDF finns inte längre: återkopplingen går till temagrupperna", () => {
+  const { ev, el } = tri();
+  assert.equal(ev("typeof exportPdf"), "undefined");
+  assert.ok(!/PDF/.test(el("#modehint").textContent));
 });

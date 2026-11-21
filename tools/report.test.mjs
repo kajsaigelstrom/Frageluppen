@@ -31,12 +31,11 @@ test("kort utan råd har ingen ruta och inget grönt besked", () => {
 test("exporterna står samlade på rubrikraden, med Temarapport först", () => {
   const head = STATIC.slice(STATIC.indexOf('class="viewhead"'), STATIC.indexOf('id="modehint"'));
   const order = [...head.matchAll(/id="(exp-[a-z]+)"/g)].map(m => m[1]);
-  assert.deepEqual(order, ["exp-html", "exp-overview", "exp-xlsx", "exp-pdf"]);
+  assert.deepEqual(order, ["exp-html", "exp-overview", "exp-xlsx"]);
   const ctrls = STATIC.slice(STATIC.indexOf('id="cardctrls"'), STATIC.indexOf('id="tagbar"'));
   assert.ok(!/id="exp-/.test(ctrls));
   const { ev, el } = rep();
-  for (const id of ["#exp-html", "#exp-overview", "#exp-xlsx", "#exp-pdf"]) assert.equal(el(id).classList.contains("hidden"), false, id);
+  for (const id of ["#exp-html", "#exp-overview", "#exp-xlsx"]) assert.equal(el(id).classList.contains("hidden"), false, id);
   ev("setStep('choose'); setStep('triage');");
   for (const id of ["#exp-html", "#exp-overview", "#exp-xlsx"]) assert.equal(el(id).classList.contains("hidden"), true, id);
-  assert.equal(el("#exp-pdf").classList.contains("hidden"), false);
 });

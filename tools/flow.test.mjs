@@ -57,7 +57,6 @@ test("problemfrågor före betygssättning: en egen vy med bara flervalsfrågorn
   assert.ok(!tabs.includes("Slutrapport") && !tabs.includes("Totalrapport"));
   assert.equal(el("#exp-html").classList.contains("hidden"), true);          // export till temagrupper hör till hela rapporten
   assert.equal(el("#exp-xlsx").classList.contains("hidden"), true);
-  assert.equal(el("#exp-pdf").classList.contains("hidden"), false);          // examinatorns eget arbetsunderlag
 });
 test("hela rapporten: en sida efter rättning, med export", async () => {
   const { ev, el } = fresh();
@@ -67,7 +66,7 @@ test("hela rapporten: en sida efter rättning, med export", async () => {
   assert.equal(ev("state.view"), "final");
   const tabs = el("#viewtabs").innerHTML;
   assert.ok(tabs.includes("Hela rapporten") && !tabs.includes("reptab") && !tabs.includes("Preliminär"));
-  for (const id of ["#exp-html", "#exp-xlsx", "#exp-pdf", "#exp-overview"]) assert.equal(el(id).classList.contains("hidden"), false, id);
+  for (const id of ["#exp-html", "#exp-xlsx", "#exp-overview"]) assert.equal(el(id).classList.contains("hidden"), false, id);
   ev("setStep('choose')");
   assert.equal(el("#stepchoice").classList.contains("hidden"), false);
   assert.equal(el("#results").classList.contains("hidden"), true);

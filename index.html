@@ -548,7 +548,6 @@
         <button class="expbtn" id="exp-html" title="Rapport till temagrupperna: frågor i stället för åtgärder, bara sammanräknade resultat.">Temarapport</button>
         <button class="expbtn" id="exp-overview" title="Tabell med en rad per fråga, alla frågetyper, att skriva ut eller skicka vidare. Följer filtret.">Översiktstabell</button>
         <button class="expbtn" id="exp-xlsx" title="Arbetsbok med alla frågor och poäng per student. Examinatorns eget underlag.">Excel</button>
-        <button class="expbtn" id="exp-pdf" title="Flervalsfrågorna som visas, med åtgärdsförslag. Examinatorns eget arbetsunderlag, inte återkoppling till lärare. Till temagrupperna går Temarapporten.">PDF (examinatorns)</button>
       </div>
     </div>
     <div class="modehint" id="modehint"></div>
@@ -820,8 +819,7 @@ eller exkluderas, med diskriminering mot flervalsdelens poäng. Går att göra i
 vilken fråga som helst. Råden till nästa gång står inte här utan i hela rapporten.
 En fråga exkluderas med knappen på kortet, och allt räknas då om. Exkluderingen gäller bara
 i verktyget tills frågan också är viktad till 0 % i Inspera. Då följer den med i filen efter
-rättningen, och verktyget räknar frågan som exkluderad utan att du behöver göra något. <b>PDF
-(examinatorns)</b> sparar listan med åtgärdsförslagen som ditt eget arbetsunderlag.</p>
+rättningen, och verktyget räknar frågan som exkluderad utan att du behöver göra något.</p>
 <p><b>Se hela rapporten</b> – alla frågor efter rättningen på en sida: flervalsfrågor (MCQ),
 essäfrågor och flersvarsfrågor, med diskriminering mot hela tentans poäng. Frågetyp väljs i
 filtret. Essä- och flersvarsfrågor exkluderas med knappen på sitt kort, precis som
@@ -845,9 +843,8 @@ men ingen triage och inga åtgärdsförslag. Överst står det som gäller flera
 ruta bara när något gäller just den frågan. Mottagaren kan bocka för frågor och spara en egen
 sida med bara dem, att ge vidare till den som skrev frågorna. Rapporten innehåller bara
 sammanräknade resultat, aldrig enskilda studenters svar. Den innehåller också frågetexterna och rätt svar.</p>
-<p>Temarapporten är det som går till temagrupperna. <b>PDF (examinatorns)</b> innehåller
-åtgärdsförslagen och är ditt eget arbetsunderlag, inte återkoppling till lärare. Filen från
-kurssamordnaren skickas aldrig vidare.</p>
+<p>Temarapporten är det som går till temagrupperna. Filen från kurssamordnaren skickas aldrig
+vidare.</p>
 </div></details>
 <details class="helpsec"><summary>Inställningar</summary><div class="body">
 <p>Under <b>Inställningar</b> högst upp kan gränserna för märkningarna Lätt och Svår och för god
@@ -2358,9 +2355,9 @@ function render(){
     if(eh){ const ok=!!(state.json && state.json.fullyGraded); eh.disabled=!ok;
       eh.title = ok ? "Rapport till temagrupperna: frågor i stället för åtgärder, bara sammanräknade resultat."
                     : "Temarapporten kräver färdig rättning."; }
-    // I vyn för problemfrågor finns bara examinatorns egen PDF. Export till temagrupper och Excel hör till hela rapporten.
-    const tri = state.step==="triage", hx=$("#exp-xlsx"), hp=$("#exp-pdf"), ho=$("#exp-overview");
-    if(eh) eh.classList.toggle("hidden", tri); if(hx) hx.classList.toggle("hidden", tri); if(ho) ho.classList.toggle("hidden", tri); if(hp) hp.classList.remove("hidden"); }
+    // Vyn för problemfrågor har inga exporter. Temarapport, översiktstabell och Excel hör till hela rapporten.
+    const tri = state.step==="triage", hx=$("#exp-xlsx"), ho=$("#exp-overview");
+    if(eh) eh.classList.toggle("hidden", tri); if(hx) hx.classList.toggle("hidden", tri); if(ho) ho.classList.toggle("hidden", tri); }
   const results=$("#results"); results.classList.remove("hidden");
   results.classList.remove("stubmode","totalmode");
   // Grind 1: obyggd vy → platshållare.
@@ -2796,14 +2793,6 @@ function currentView(opts){
   else if(sort==="tag") v.sort((a,b)=> (a.tagKey<b.tagKey?-1:a.tagKey>b.tagKey?1:0) || cmpArr(codeSortKey(a.code),codeSortKey(b.code)));
   return v;
 }
-function filterSummary(){
-  const activeCols=Object.keys(state.activeTags);
-  const parts=activeCols.map(col=>`${col}: ${[...state.activeTags[col]].join(", ")}`);
-  const q=$("#search").value.trim();
-  if(q) parts.unshift(`sök: "${q}"`);
-  parts.unshift(state.mode==="action"?"Att se över":(isPre()?"Alla flervalsfrågor":"Alla frågor"));
-  return parts.join(" · ");
-}
 /* Korten på sidan: MCQ, essä och flersvar i en lista, sorterad som valt (tentans ordning som standard). */
 function pageItems(opts){
   const m=currentView(opts).map(x=>({k:"mcq", x, seq:String(x.seq)}));
@@ -3019,27 +3008,6 @@ function card(v){
   </div>`;
 }
 
-/* ---------- export ---------- */
-function optRows(v){
-  const ci=v.correctIdx;
-  const unmappedSet = new Set(v.unmappedPdf||[]);
-  const rows = v.opts.map((o,i)=>{
-    const isUnmapped = unmappedSet.has(i);
-    const cnt=v.counts[i], pct=v.n?cnt/v.n*100:0;
-    const isCorrect = i===ci;
-    let roll;
-    if(isUnmapped) roll=unmapReason(v).roll;
-    else if(isCorrect) roll="Rätt";
-    else if(cnt===0) roll="Distraktor (ingen valde)";
-    else roll="Distraktor";
-    if(!isUnmapped && !isCorrect && ci>=0 && cnt>v.counts[ci]) roll="Distraktor (vanligare än rätt)";
-    const pb = (!isUnmapped && v.optPbis && v.optPbis[i]!==null && v.optPbis[i]!==undefined && cnt>=10) ? v.optPbis[i] : null;
-    return {text:o, roll, isCorrect, isUnmapped, cnt:isUnmapped?null:cnt, pct:isUnmapped?null:pct, pb};
-  });
-  // same order as the HTML card: correct first, mapped distractors by count, unmapped last
-  rows.sort((a,b)=> (a.isUnmapped-b.isUnmapped) || (b.isCorrect-a.isCorrect) || ((b.cnt||0)-(a.cnt||0)));
-  return rows;
-}
 function exportXlsx(opts){
   if(!state.json){ return; }
   opts=opts||{};
@@ -3632,67 +3600,6 @@ function exportInteractive(){
   downloadText(`temarapport_${stamp()}.html`, buildTemaReport(embed), "text/html;charset=utf-8");
 }
 
-function exportPdf(){
-  if(!state.vm){ return; }
-  const v=currentView();
-  const rows = v.map(x=>{
-    const ri=rpbInfo(x);
-    const ex=isExcluded(x.seq);
-    const opts = optRows(x).map(r=>{
-      if(r.isUnmapped)
-        return `<tr class="p-zero"><td class="p-pct">–</td><td>${esc(r.text)} <span class="p-pb">${esc(unmapReason(x).tag)}</span></td></tr>`;
-      const cls = r.roll==="Rätt"?"p-correct":(r.roll.includes("vanligare")?"p-trap":(r.cnt===0?"p-zero":(r.pct<5?"p-ineff":"p-eff")));
-      const pb = r.pb!==null ? ` <span class="p-pb">r_pb ${r.pb>=0?"+":""}${r.pb.toFixed(2)}</span>`:"";
-      return `<tr class="${cls}"><td class="p-pct">${r.cnt===0?"0 %":r.pct.toFixed(1)+" %"}</td><td>${esc(r.text)}${pb}</td></tr>`;
-    }).join("");
-    const adv = ex ? "" : [...x.advice.l1, ...(isPre() ? [] : x.advice.l2)].map(a=>
-      `<div class="p-adv p-${a.cls.replace('adv-','')}"><b>${esc(a.action)}</b> – ${esc(a.why)}</div>`).join("");
-    const exReason=exclReason(x.seq);
-    const exMark = ex ? `<span class="p-exclmark">Exkluderad${exReason?` · ${esc(exReason)}`:""}</span>` : "";
-    return `<div class="p-q${ex?' p-excl':''}">
-      <div class="p-h"><span class="p-code">${esc(x.code)} ${x.pts?`(${esc(x.pts)})`:""}${exMark}</span>
-        <span class="p-m">${x.pcorr.toFixed(1)} % rätt · n=${x.n} · r_pb ${x.rpb==null?"–":(x.rpb>=0?"+":"")+x.rpb.toFixed(2)} (${esc(ri.label)})</span></div>
-      ${x.tags.length?`<div class="p-tags">${x.tags.map(esc).join(" · ")}</div>`:""}
-      <div class="p-stem">${esc(x.stem)}</div>
-      <table class="p-opts">${opts}</table>
-      ${adv?`<div class="p-advbox">${adv}</div>`:""}
-    </div>`;
-  }).join("");
-  const html=`<!DOCTYPE html><html lang="sv"><head><meta charset="utf-8">
-  <title>MCQ-analys ${stamp()}</title><style>
-   *{box-sizing:border-box} body{font-family:Georgia,'Times New Roman',serif;color:#1c1b18;margin:28px;font-size:12px;line-height:1.45}
-   h1{font-size:19px;margin:0 0 2px} .sub{color:#666;font-size:12px;margin:0 0 16px}
-   .p-q{border:1px solid #d9d3c6;border-radius:7px;padding:11px 13px;margin:0 0 11px;page-break-inside:avoid}
-   .p-h{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
-   .p-code{font-weight:bold;font-size:14px;font-family:'Courier New',monospace}
-   .p-m{color:#444;font-size:11px;font-family:'Courier New',monospace}
-   .p-tags{color:#1f6f54;font-size:10.5px;margin:2px 0}
-   .p-stem{margin:6px 0 8px}
-   .p-opts{width:100%;border-collapse:collapse;margin-bottom:4px}
-   .p-opts td{padding:3px 6px;border-bottom:1px solid #eee;vertical-align:top}
-   .p-pct{width:52px;text-align:right;font-family:'Courier New',monospace;font-weight:bold;white-space:nowrap}
-   .p-correct td{background:#e9f3ec} .p-correct td:nth-child(2)::after{content:" ✓ rätt";color:#2f8c63;font-weight:bold;font-size:10px}
-   .p-trap td{background:#f7ece0} .p-zero td{color:#999}
-   .p-q.p-excl{background:#f0ede5;opacity:.78} .p-q.p-excl .p-code{text-decoration:line-through}
-   .p-exclmark{font-family:Georgia,serif;font-weight:bold;font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;
-     color:#7a5a14;background:#f0e6cc;border-radius:4px;padding:1px 6px;margin-left:8px;text-decoration:none;display:inline-block}
-   .p-pb{color:#777;font-family:'Courier New',monospace;font-size:10px}
-   .p-advbox{margin-top:7px;border-top:1px solid #eee;padding-top:6px}
-   .p-adv{font-size:11px;margin:3px 0;padding:5px 8px;border-radius:5px;background:#f6f4ee}
-   .p-adv.p-red{background:#f6e2dd} .p-adv.p-orange{background:#f7e8d8} .p-adv.p-amber{background:#f9f0dd}
-   .p-adv.p-blue{background:#eaf0f4} .p-adv.p-green{background:#eaf1ec}
-   @media print{body{margin:12mm}}
-  </style></head><body>
-   <h1>MCQ-analys</h1>
-   <p class="sub">${esc(filterSummary())} · ${v.length} frågor · ${state.json.candCount} studenter · ${stamp().replace('_',' ')}</p>
-   ${rows||"<p>Inga frågor i urvalet.</p>"}
-   <script>window.onload=function(){setTimeout(function(){window.print();},250);}<\/script>
-  </body></html>`;
-  const w=window.open("","_blank");
-  if(!w){ alert("Tillåt popup-fönster för att exportera PDF."); return; }
-  w.document.open(); w.document.write(html); w.document.close();
-}
-
 /* ---------- file wiring ---------- */
 async function tryRun(){
   if(!state.jsonFiles.length) return;
@@ -3873,7 +3780,6 @@ wireSettings(false, ()=>{ if(state.json && (state.step==="triage" || state.step=
 $("#clearfilter").addEventListener("click", clearFilters);
 $("#exp-xlsx").addEventListener("click", ()=>{ if(state.json) exportXlsx(); });
 $("#exp-overview").addEventListener("click", ()=>{ if(state.json) exportOverview(); });
-$("#exp-pdf").addEventListener("click", ()=>{ if(state.vm) exportPdf(); });
 $("#exp-html").addEventListener("click", ()=>{ if(state.vm) exportInteractive(); });
 $("#modeseg").addEventListener("click", e=>{
   const b=e.target.closest(".modebtn"); if(!b || b.dataset.mode===state.mode) return;

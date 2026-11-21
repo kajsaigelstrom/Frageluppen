@@ -68,7 +68,7 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
   finns bara hos kurssamordnaren. Examinatorn har en enda filruta för kurssamordnarens fil
   (`extractEmbedded`, `loadExaminerFile`) – lägg inte tillbaka en råfilsväg där.
 - **Examinatorns flöde är två steg** (`state.step`, `setStep`): först valet, sedan antingen
-  `triage` (bara Preliminär MCQ i triageläge, examinatorns egen PDF) eller `report` (Hela
+  `triage` (bara Preliminär MCQ, utan exporter) eller `report` (Hela
   rapporten med export). Vyerna väljs aldrig fritt.
 - **Ingen godkäntstatistik i vyerna eller i temarapporten** (Kajsas beslut 20 nov 2026). Den
   ska bli en egen export. `passMetric` finns kvar för det, men ritas inte.

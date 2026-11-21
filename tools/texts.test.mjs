@@ -22,10 +22,6 @@ test("samma ord för samma sak i hela verktyget", () => {
     assert.deepEqual(visible.map(l => l.trim().slice(0, 90)), [], `${bad}: ${why}`);
   }
 });
-test("examinatorns PDF beskrivs på ett sätt, som examinatorns eget arbetsunderlag", () => {
-  assert.ok(!SRC.includes("till rättarna"));
-  assert.match(STATIC, /id="exp-pdf"[^>]*title="[^"]*eget arbetsunderlag/);
-});
 test("sidhuvudet säger inte att verktyget bara gäller flervalsfrågor", () => {
   assert.ok(!/<h1>[^<]*MCQ-analys/.test(STATIC));
 });
@@ -79,4 +75,7 @@ test("temarapporten räknar studenter, inte kandidater", () => {
   const page = runHtml(html);
   assert.match(page.el("#fileline").textContent, /studenter/);
   assert.ok(!/kandidat/i.test(page.el("#fileline").textContent + page.el("#cards").innerHTML));
+});
+test("examinatorns PDF är borta ur sidan och ur hjälpen", () => {
+  for (const gone of ['id="exp-pdf"', "PDF (examinatorns)", "arbetsunderlag", "exportPdf"]) assert.ok(!SRC.includes(gone), gone);
 });
