@@ -56,8 +56,9 @@ test("inget filter i vyn, bara sök och sortering, och filter från rapporten f�
 test("sammanfattningen före betygssättning räknar bara det som hör dit", () => {
   const { el } = tri();
   const s = el("#summary").innerHTML;
-  assert.match(s, /att se över/);
-  assert.ok(!/tips|automatiska flaggor/.test(s));
+  assert.match(s, /studenter/); assert.match(s, /MCQ-frågor/);          // för att se att filen lästs rätt
+  assert.ok(!/tips|automatiska flaggor|att se över|andel rätt|taggkolumner/.test(s));
+  assert.ok(!/Sökrutan/.test(el("#modehint").textContent));
 });
 test("listan överst visas bara som register i läget med alla frågor", () => {
   const { ev, el } = tri();

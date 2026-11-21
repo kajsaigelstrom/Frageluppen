@@ -55,7 +55,7 @@ test("vyn före betygssättning talar om flervalsdelen, och säger varför", () 
   assert.match(hint, /poängen på flervalsdelen/);
   assert.match(hint, /essäfrågorna inte är rättade/);
   assert.ok(!/fritext|trasiga/.test(hint));
-  assert.match(el("#summary").innerHTML, /att se över/);
+  assert.match(el("#modeseg").innerHTML, /Att se över/);
   assert.match(ev("rpbInfo({n:100, ncorr:60, rpb:0.25, bestDistIdx:-1, bestDistPbis:null}).tip"), /studentens poäng på flervalsdelen/);
 });
 test("hjälpen i appen förklarar alla frågetyper och ordparet starka och svaga", () => {

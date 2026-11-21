@@ -663,7 +663,7 @@ function modeHint(m){ return m==="ask"
   : m==="ask-explain"
   ? "Som Rapport, och dessutom en förklaring av måttet bakom varje fråga."
   : m==="action"
-  ? "Frågor som statistiken pekar ut: tecken på fel i facit, eller mycket svåra frågor som inte skiljer mellan studenter. Sökrutan hittar även övriga frågor."
+  ? "Frågor som statistiken pekar ut: tecken på fel i facit, eller mycket svåra frågor som inte skiljer mellan studenter."
   : (m==="edu" && isPre())
   ? "Alla flervalsfrågor med mätvärden, för överblick över svårighet och diskriminering. Sortera för att hitta det du söker."
   : m==="simple"
@@ -2368,11 +2368,11 @@ function render(){
     (nEss?stat(nEss,"essäfrågor","","s-muted"):"") +
     (nMul?stat(nMul,"flersvarsfrågor","","s-muted"):"") +
     (nExclAll?stat(nExclAll,"exkluderade","Dragna ur poängsättningen – visas kvar men bidrar inte till total, diskriminering eller godkäntgränsen."):"") +
-    stat(meanPc.toFixed(1)+" %", state.scored.length ? "genomsnittlig andel rätt, MCQ" : "genomsnittlig andel rätt") +
+    (isPre()?"":stat(meanPc.toFixed(1)+" %", state.scored.length ? "genomsnittlig andel rätt, MCQ" : "genomsnittlig andel rätt")) +
     (state.smallN||!showExe?"":stat(nExe,"stark diskriminering","Skiljer starka från svaga väl (hög item–total-korrelation) utan automatiska flaggor. Diskriminering är evidens, inte bevis – bekräfta att frågan testar rätt sak innan du återanvänder den.")) +
     ((state.smallN||isPre())?"":stat(nClean,"inga automatiska flaggor","Inga flaggor från de automatiska kontrollerna (statistik, distraktorer, vanliga ledtrådar). Inget kvalitetsintyg – innehåll, måluppfyllelse och subtilare ledtrådar syns inte här.")) +
     (isPre()?"":stat(nTips,"tips")) +
-    stat(nAction,"att se över","",nAction>0?"s-act-on":"s-act-off") +
+    (isPre()?"":stat(nAction,"att se över","",nAction>0?"s-act-on":"s-act-off")) +
     ((state.tags && !isPre())?stat(state.tags.tagCols.map(c=>c.name).join(" · "),"taggkolumner","","s-muted"):"");
   $("#nnote").innerHTML = state.smallN
     ? `<div class="advnote">Litet underlag: ${esc(state.json.candCount)} studenter. Andel rätt och svarsfördelning visas, men diskriminering (r<sub>pb</sub>) och automatiska omdömen om svårighet och distraktorer kräver fler svar (riktmärke n ≥ 30). Tolka enskilda procenttal försiktigt – ett svar väger ${Math.round(100/Math.max(1,state.json.candCount))} procentenheter.</div>`
