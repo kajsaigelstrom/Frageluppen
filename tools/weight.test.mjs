@@ -19,11 +19,16 @@ test("vikten följer med i filen till examinatorn", () => {
   assert.equal(ev(`${q}.find(x => x.ext_inspera_questionNumber === QX).ext_inspera_questionWeight`), 0);
   assert.equal(ev(`${q}.find(x => x.ext_inspera_questionNumber !== QX && x.ext_inspera_questionNumber !== QY).ext_inspera_questionWeight`), 1);
 });
-test("en fråga som är viktad till 0 % för studenterna känns igen, och enstaka studenter redovisas för sig", () => {
+test("bara en fråga som ALLA studenter har vikten 0 på räknas som exkluderad; allt annat är en avvikelse", () => {
   const { ev, evj } = fresh();
   assert.deepEqual(evj("parseJSON([W]).zeroWeight"), [String(ev("QX"))]);
   assert.deepEqual(evj("parseJSON([W]).partialZero"), [{ num: String(ev("QY")), n: 2 }]);
   assert.deepEqual(evj("parseJSON([dirty]).zeroWeight"), []);
+  // ingen tröskel: saknar en enda student vikten 0 är det en avvikelse, inte en exkludering (Kajsa 21 nov 2026)
+  ev("W.ext_inspera_candidates[0].result.ext_inspera_questions.find(q => q.ext_inspera_questionNumber === QX).ext_inspera_questionWeight = 1");
+  const J = evj("(J => ({z: J.zeroWeight, p: J.partialZero, n: J.candCount}))(parseJSON([W]))");
+  assert.deepEqual(J.z, []);
+  assert.deepEqual(J.p.find(x => x.num === String(ev("QX"))), { num: String(ev("QX")), n: J.n - 1 });
 });
 test("när filen öppnas räknas frågan som exkluderad, och det står varför", async () => {
   const { ev, el } = fresh();
@@ -35,6 +40,9 @@ test("när filen öppnas räknas frågan som exkluderad, och det står varför",
   assert.match(note, new RegExp(`fråga ${ev("QX")}`));
   assert.match(note, /räknas som exkluderad/);
   assert.match(note, new RegExp(`[Ff]råga ${ev("QY")}[^.]*2 av ${ev("state.json.candCount")} studenter`));
+  assert.match(note, /class="bad"/);                                   // en varning, inte en upplysning
+  assert.match(note, /ser ut som ett fel i Inspera/);
+  assert.match(note, /räknas inte som exkluderad/);
   ev("setStep('report')");
   assert.match(el("#fileline").textContent, /1 exkluderad/);
   assert.match(el("#cards").innerHTML.split(`id="card-${ev("QX")}"`)[1].split('class="q ')[0], /Exkluderad ur tentan[\s\S]*0 % i Inspera/);

@@ -20,8 +20,8 @@ inte dokumenterad här.
   ihop. Excel och CSV ur temarapporten har en rad per synlig fråga med kolumnen Typ.
 - **Exkluderingar följer med från Inspera.** En fråga som är viktad till 0 % i Inspera känns igen
   i exporten och räknas som exkluderad när filen öppnas, med orsaken "Viktad till 0 % i Inspera".
-  En rad överst säger vilka frågor det gäller. Är en fråga viktad till 0 % bara för enstaka
-  studenter redovisas det, men inget räknas om. En exkludering som bara görs i verktyget säger på
+  En rad överst säger vilka frågor det gäller. Har inte alla studenter vikten 0 på frågan visas
+  en varning om att det ser ut som ett fel i Inspera, och frågan räknas då inte som exkluderad. En exkludering som bara görs i verktyget säger på
   kortet att frågan också ska vägas ner i Inspera. Vikten följer med i filen till examinatorn;
   filer skapade med äldre versioner saknar den.
 - **Ny layout i alla tre vyerna.** När en fil är vald blir sidhuvudet en smal rad: namnet,

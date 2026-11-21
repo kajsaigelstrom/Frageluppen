@@ -89,6 +89,7 @@
 
   #log{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);white-space:pre-wrap;margin-top:12px;min-height:18px}
   #qa.bad,#examwarn.bad{color:var(--warn)}
+  #weightnote .bad{color:var(--warn);border:1px solid var(--warn);border-radius:8px;padding:9px 12px;font-size:13px;line-height:1.5;margin-bottom:8px}
 
   .summary{display:flex;flex-wrap:wrap;gap:26px;align-items:baseline}
   .summary .stat{display:flex;flex-direction:column}
@@ -891,10 +892,11 @@ function renderWeightNote(){
   if(!z.length && !p.length){ el.innerHTML=""; return; }
   const name=n=>{ const t=J.qTitle && J.qTitle[n]; return `fråga ${esc(String(n))}${(t && t!==String(n))?` (${esc(t)})`:""}`; };
   const cap=x=>x.charAt(0).toUpperCase()+x.slice(1);
-  el.innerHTML = `<div class="advnote">`
-    + (z.length ? `${z.length===1?"En fråga är viktad":z.length+" frågor är viktade"} till 0 % i Inspera och räknas som ${z.length===1?"exkluderad":"exkluderade"}: ${z.map(name).join(", ")}. ` : "")
-    + p.map(x=>`${cap(name(x.num))} är viktad till 0 % för ${x.n} av ${J.candCount} studenter. Deras poäng på frågan räknas ändå med här.`).join(" ")
-    + `</div>`;
+  el.innerHTML =
+    (p.length ? `<div class="bad">⚠ ` + p.map(x=>`${cap(name(x.num))} är viktad till 0 % för ${x.n} av ${J.candCount} studenter.`).join(" ")
+      + ` Det ser ut som ett fel i Inspera: en exkluderad fråga ska ha vikten 0 för alla. `
+      + `${p.length===1?"Frågan räknas":"Frågorna räknas"} inte som ${p.length===1?"exkluderad":"exkluderade"} här. Kontrollera i Inspera, och exkludera själv på kortet om det är avsikten.</div>` : "")
+    + (z.length ? `<div class="advnote">${z.length===1?"En fråga är viktad":z.length+" frågor är viktade"} till 0 % i Inspera och räknas som ${z.length===1?"exkluderad":"exkluderade"}: ${z.map(name).join(", ")}.</div>` : "");
 }
 function isExcluded(seq){ return !!(state.excluded && state.excluded.has(String(seq))); }
 function exclReason(seq){ return (state.excluded && state.excluded.get(String(seq))) || ""; }
@@ -1459,10 +1461,11 @@ function parseJSON(jsonObjs){
   const candMeta = cands.map(c=>({ id: (c.ext_inspera_candidateId!=null ? c.ext_inspera_candidateId
                                        : (c.student && c.student.sourcedId) || "") }));
   // En fråga som examinatorn har exkluderat i Inspera är viktad till 0 %. Poängen står kvar i exporten, så frågan
-  // går att visa, men den ska inte räknas. Gäller vikten bara enstaka studenter redovisas det utan att något räknas om.
+  // går att visa, men den ska inte räknas. Ingen tröskel: har inte ALLA studenter vikten 0 är det en avvikelse som
+  // ska varnas för, inte en exkludering (Kajsa 21 nov 2026 – på junitentan hade två studenter fel fråga nedviktad).
   const zeroWeight=[], partialZero=[];
   for(const qn of order){ const w=agg[qn].w0||0; if(!w) continue;
-    if(w*2>=cands.length) zeroWeight.push(String(qn)); else partialZero.push({num:String(qn), n:w}); }
+    if(w===cands.length) zeroWeight.push(String(qn)); else partialZero.push({num:String(qn), n:w}); }
   const J={candCount:cands.length, agg, mcqSeqs, qMeta, qTitle:titleOf, cohortScores, ungradedPts, fullyGraded, maxTotal, mcqSlot:mcqSlotByCand, candMeta, zeroWeight, partialZero};
   // Steg 1: diskriminering frikopplad till computeDiscrimination. 'mcq'-kriteriet reproducerar
   // tidigare inline-r_pb exakt (verifierat mot riktig data). Vyerna väljer kriterium per vy.
