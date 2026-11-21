@@ -38,6 +38,7 @@
   body.compact .titlerow h1{font-size:19px}
   body.compact .h1sub,body.compact .devpill,body.compact header .subtitle,body.compact header .intro{display:none}
   #warnings > div:not(:empty){margin:0 0 10px}
+  .exclnote{flex:1 1 100%;font-size:12px;color:var(--muted);margin-top:4px}
   .viewhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:6px 0 4px}
   .viewhead #viewtabs{flex:1 1 auto}
   .viewhead .steptitle{margin:0}
@@ -522,6 +523,7 @@
     <div id="log"></div>
   </div>
   <div id="warnings">
+    <div id="weightnote"></div>
     <div id="examwarn"></div>
     <div id="qa"></div>
     <div id="pdfnote"></div>
@@ -815,7 +817,9 @@ eller exkluderas, med diskriminering mot flervalsdelens poäng. Går att göra i
 är rättade. Vyn öppnar på frågorna <b>att se över</b>, alltså dem som statistiken pekar ut.
 <b>Alla flervalsfrågor</b> ger överblick över svårighet och diskriminering, och sökrutan hittar
 vilken fråga som helst. Råden till nästa gång står inte här utan i hela rapporten.
-En fråga exkluderas med knappen på kortet, och allt räknas då om. <b>PDF
+En fråga exkluderas med knappen på kortet, och allt räknas då om. Exkluderingen gäller bara
+i verktyget tills frågan också är viktad till 0 % i Inspera. Då följer den med i filen efter
+rättningen, och verktyget räknar frågan som exkluderad utan att du behöver göra något. <b>PDF
 (examinatorns)</b> sparar listan med åtgärdsförslagen som ditt eget arbetsunderlag.</p>
 <p><b>Se hela rapporten</b> – alla frågor efter rättningen på en sida: flervalsfrågor (MCQ),
 essäfrågor och flersvarsfrågor, med diskriminering mot hela tentans poäng. Frågetyp väljs i
@@ -879,6 +883,19 @@ function wireHelp(){
 /* Exkludering = frågan dras ur poängsättningen. state.excluded: Map(frågenummer → orsak).
    Allt räknas om på den reducerade tentan; frågan visas kvar men märkt. */
 const EXCL_REASONS = ["Tekniskt fel","Låg kvalitet","Annan orsak"];
+const INSPERA_REASON = "Viktad till 0 % i Inspera";      // exkluderingen kommer ur exporten, inte från ett val här
+const LOCAL_EXCL_NOTE = "Gäller bara här. Väg ner frågan till 0 % i Inspera, så följer exkluderingen med i filen efter rättningen.";
+function renderWeightNote(){
+  const el=$("#weightnote"); if(!el) return;
+  const J=state.json, z=(J && J.zeroWeight)||[], p=(J && J.partialZero)||[];
+  if(!z.length && !p.length){ el.innerHTML=""; return; }
+  const name=n=>{ const t=J.qTitle && J.qTitle[n]; return `fråga ${esc(String(n))}${(t && t!==String(n))?` (${esc(t)})`:""}`; };
+  const cap=x=>x.charAt(0).toUpperCase()+x.slice(1);
+  el.innerHTML = `<div class="advnote">`
+    + (z.length ? `${z.length===1?"En fråga är viktad":z.length+" frågor är viktade"} till 0 % i Inspera och räknas som ${z.length===1?"exkluderad":"exkluderade"}: ${z.map(name).join(", ")}. ` : "")
+    + p.map(x=>`${cap(name(x.num))} är viktad till 0 % för ${x.n} av ${J.candCount} studenter. Deras poäng på frågan räknas ändå med här.`).join(" ")
+    + `</div>`;
+}
 function isExcluded(seq){ return !!(state.excluded && state.excluded.has(String(seq))); }
 function exclReason(seq){ return (state.excluded && state.excluded.get(String(seq))) || ""; }
 function reducedMax(J){ let s=0; J.qMeta.forEach(m=>{ if(!isExcluded(m.num)) s+=m.max; }); return s; }
@@ -1241,7 +1258,7 @@ function minimizeInspera(obj, offset){
     const res = { ext_inspera_candidateId: String((offset||0)+i+1) };
     if(qs) res.ext_inspera_questions = qs.map(q=>{
       const o={};
-      for(const k of ["ext_inspera_maxQuestionScore","ext_inspera_questionNumber","ext_inspera_questionTitle","ext_inspera_autoScore"])
+      for(const k of ["ext_inspera_maxQuestionScore","ext_inspera_questionNumber","ext_inspera_questionTitle","ext_inspera_autoScore","ext_inspera_questionWeight"])
         if(k in q) o[k]=q[k];
       if(Array.isArray(q.ext_inspera_manualScores))
         o.ext_inspera_manualScores = q.ext_inspera_manualScores.map(m=>({ext_inspera_manualScore: m ? m.ext_inspera_manualScore : undefined}));
@@ -1364,6 +1381,7 @@ function parseJSON(jsonObjs){
     for(const q of c.ext_inspera_questions){
       const qn=q.ext_inspera_questionNumber; const a=agg[qn]; if(!a) continue;
       a.max=q.ext_inspera_maxQuestionScore; a.total++;
+      if(Number(q.ext_inspera_questionWeight)===0 && q.ext_inspera_questionWeight!==null && q.ext_inspera_questionWeight!=="") a.w0=(a.w0||0)+1;   // exkluderad i Inspera
       const sel=(q.ext_inspera_candidateResponses||[]).filter(isChoice);
       if(sel.length){ a.anyChoice=true; a.maxSel=Math.max(a.maxSel,sel.length);
         if(sel.length===1){
@@ -1440,7 +1458,12 @@ function parseJSON(jsonObjs){
   // Kandidatidentifierare i samma ordning som cohortScores (Insperas pseudonyma kandidatnummer).
   const candMeta = cands.map(c=>({ id: (c.ext_inspera_candidateId!=null ? c.ext_inspera_candidateId
                                        : (c.student && c.student.sourcedId) || "") }));
-  const J={candCount:cands.length, agg, mcqSeqs, qMeta, qTitle:titleOf, cohortScores, ungradedPts, fullyGraded, maxTotal, mcqSlot:mcqSlotByCand, candMeta};
+  // En fråga som examinatorn har exkluderat i Inspera är viktad till 0 %. Poängen står kvar i exporten, så frågan
+  // går att visa, men den ska inte räknas. Gäller vikten bara enstaka studenter redovisas det utan att något räknas om.
+  const zeroWeight=[], partialZero=[];
+  for(const qn of order){ const w=agg[qn].w0||0; if(!w) continue;
+    if(w*2>=cands.length) zeroWeight.push(String(qn)); else partialZero.push({num:String(qn), n:w}); }
+  const J={candCount:cands.length, agg, mcqSeqs, qMeta, qTitle:titleOf, cohortScores, ungradedPts, fullyGraded, maxTotal, mcqSlot:mcqSlotByCand, candMeta, zeroWeight, partialZero};
   // Steg 1: diskriminering frikopplad till computeDiscrimination. 'mcq'-kriteriet reproducerar
   // tidigare inline-r_pb exakt (verifierat mot riktig data). Vyerna väljer kriterium per vy.
   J.discMcq = computeDiscrimination(J, {criterion:'mcq'});
@@ -2848,6 +2871,7 @@ function card(v){
   const exclBanner = excluded ? `<div class="exclbanner">
       <span class="exclmark">Exkluderad ur tentan</span>${exReason?`<span class="exclreasontag">${esc(exReason)}</span>`:""}
       ${isApp?`<select class="card-reason" data-qnum="${esc(String(v.seq))}"><option value=""${exReason?'':' selected'}>Orsak…</option>${EXCL_REASONS.map(r=>`<option ${r===exReason?'selected':''}>${esc(r)}</option>`).join("")}</select><button type="button" class="card-reinclude" data-qnum="${esc(String(v.seq))}">Återinkludera</button>`:""}
+      ${(isApp && exReason!==INSPERA_REASON)?`<div class="exclnote">${esc(LOCAL_EXCL_NOTE)}</div>`:""}
     </div>` : "";
   const exclCtrl = (isApp && !excluded && !simple && !askMode)
     ? `<div class="exclctrl"><button type="button" class="card-exclude" data-qnum="${esc(String(v.seq))}">Exkludera frågan</button></div>` : "";
@@ -3468,6 +3492,7 @@ function scoreCard(e){
   const reason=e.reason||"";
   const excl = e.excluded ? `<div class="exclbanner"><span class="exclmark">Exkluderad ur tentan</span>${reason?`<span class="exclreasontag">${esc(reason)}</span>`:""}`
       + (isApp ? `<select class="card-reason" data-qnum="${seq}"><option value=""${reason?'':' selected'}>Orsak…</option>${EXCL_REASONS.map(r=>`<option ${r===reason?'selected':''}>${esc(r)}</option>`).join("")}</select><button type="button" class="card-reinclude" data-qnum="${seq}">Återinkludera</button>` : "")
+      + ((isApp && reason!==INSPERA_REASON) ? `<div class="exclnote">${esc(LOCAL_EXCL_NOTE)}</div>` : "")
       + `</div>` : "";
   const exclCtrl = (isApp && !e.excluded && !simple) ? `<div class="exclctrl"><button type="button" class="card-exclude" data-qnum="${seq}">Exkludera frågan</button></div>` : "";
   return `<div class="q ftcard${e.excluded?" excluded":""}" id="card-${seq}">
@@ -3508,7 +3533,7 @@ function temaConsts(){
   return `const MIN_N_DIST=${MIN_N_DIST};const TH_DEFAULT=${JSON.stringify(TH_DEFAULT)};const TH_RANGE=${JSON.stringify(TH_RANGE)};const TH_LABEL=${JSON.stringify(TH_LABEL)};const PSY=${JSON.stringify(PSY)};`
     + `const TW=${JSON.stringify(TW)};const CUE_ABS=${JSON.stringify(CUE_ABS)};const CUE_HEDGE=${JSON.stringify(CUE_HEDGE)};`
     + `const FORM_META=${JSON.stringify(FORM_META)};const FORM_REGLER=${JSON.stringify(FORM_REGLER)};const FORM_CUE=${JSON.stringify(FORM_CUE)};const FORM_EXPLAINS=${JSON.stringify(FORM_EXPLAINS)};`
-    + `const FACETS=${JSON.stringify(FACETS)};const SCORE_TEXT=${JSON.stringify(SCORE_TEXT)};const EXCL_REASONS=${JSON.stringify(EXCL_REASONS)};const ASK_SUMMARY=${JSON.stringify(ASK_SUMMARY)};const SUM_TEXT=${JSON.stringify(SUM_TEXT)};const SUM_LEAD=${JSON.stringify(SUM_LEAD)};const ASK_ORDER=${JSON.stringify(ASK_ORDER)};const ASK_TEXT=${JSON.stringify(ASK_TEXT)};const ASK_PSY=${JSON.stringify(ASK_PSY)};`
+    + `const FACETS=${JSON.stringify(FACETS)};const SCORE_TEXT=${JSON.stringify(SCORE_TEXT)};const EXCL_REASONS=${JSON.stringify(EXCL_REASONS)};const INSPERA_REASON=${JSON.stringify(INSPERA_REASON)};const LOCAL_EXCL_NOTE=${JSON.stringify(LOCAL_EXCL_NOTE)};const ASK_SUMMARY=${JSON.stringify(ASK_SUMMARY)};const SUM_TEXT=${JSON.stringify(SUM_TEXT)};const SUM_LEAD=${JSON.stringify(SUM_LEAD)};const ASK_ORDER=${JSON.stringify(ASK_ORDER)};const ASK_TEXT=${JSON.stringify(ASK_TEXT)};const ASK_PSY=${JSON.stringify(ASK_PSY)};`
     + `const HELP_HTML=${JSON.stringify(HELP_TEMA_HTML)};const HELP_TEMA_HTML=HELP_HTML;`;
 }
 /* Bygger hela den fristående temarapporten som en HTML-sträng. Använder bara embed, funktionslistan
@@ -3693,6 +3718,8 @@ async function tryRun(){
     const ownPdf = state.pdfMcqs;
     const R = resolveInputs(objs, {pdfMcqs:ownPdf, tagRows:ownTagRows});   // tentapaket eller råfiler
     state.json = parseJSON(R.jsonObjs);
+    (state.json.zeroWeight||[]).forEach(n=>{ if(!state.excluded.has(n)) state.excluded.set(n, INSPERA_REASON); });
+    renderWeightNote();
     { const pk=objs.find(isPackage);
       state.examName = (pk && pk.examName) || commonTitle(objs.map(o=>o && o.ext_inspera_assessmentRunTitle)) || ""; }
     state.synthMcqs = null;   // JSON-lägets kortunderlag byggs om från nya datan vid behov

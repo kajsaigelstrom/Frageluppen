@@ -18,6 +18,12 @@ inte dokumenterad här.
   följer resten av tentan, frågan "Stämmer facit och poängregeln?" (för essäfrågor gäller
   bedömningsmallen). Mönsterraderna säger "MCQ-frågor" och "essäfrågor" så att de inte blandas
   ihop. Excel och CSV ur temarapporten har en rad per synlig fråga med kolumnen Typ.
+- **Exkluderingar följer med från Inspera.** En fråga som är viktad till 0 % i Inspera känns igen
+  i exporten och räknas som exkluderad när filen öppnas, med orsaken "Viktad till 0 % i Inspera".
+  En rad överst säger vilka frågor det gäller. Är en fråga viktad till 0 % bara för enstaka
+  studenter redovisas det, men inget räknas om. En exkludering som bara görs i verktyget säger på
+  kortet att frågan också ska vägas ner i Inspera. Vikten följer med i filen till examinatorn;
+  filer skapade med äldre versioner saknar den.
 - **Ny layout i alla tre vyerna.** När en fil är vald blir sidhuvudet en smal rad: namnet,
   tentan med antal studenter och frågor (i hela rapporten också exkluderade frågor och
   maxpoäng), Byt fil, Inställningar och Hjälp. Den ersätter det stora sidhuvudet, filrutan,
