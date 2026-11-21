@@ -165,6 +165,7 @@
   .opt{display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:center;margin:7px 0}
   .opt .pct{font-family:"IBM Plex Mono",monospace;font-size:13px;text-align:right;font-weight:600;color:var(--ink)}
   .opt.zero .pct{color:var(--ineff0)}
+  .opt.blank .pct,.opt.blank .txt{color:var(--muted)}
   .opt .body{position:relative}
   .opt .txt{font-size:14px}
   .opt .barwrap{height:8px;background:#ece7da;border-radius:4px;margin-top:5px;overflow:hidden}
@@ -489,10 +490,9 @@ const $ = s => document.querySelector(s);
 const logEl = $("#log");
 function log(m){ logEl.textContent = m; }
 /* Justerbara gränser. Ändrar bara märkningar och vilka kort som får en fråga/ett tips – aldrig mätvärdena.
-   Minsta underlag (MIN_N_DIST för svårighet och distraktorer, n ≥ 30 för diskriminering) och gränserna 0,10/0,30
-   för diskrimineringsetiketterna ligger fast. */
-const TH_DEFAULT = { easy:90, hard:60, goodDisc:0.20, pass:65 };
-const TH_RANGE   = { easy:[70,100], hard:[30,70], goodDisc:[0.10,0.30], pass:[50,100] };
+   Minsta underlag (MIN_N) och gränsen för låg diskriminering (R_LOW) ligger fast. */
+const TH_DEFAULT = { easy:90, hard:60, goodDisc:0.30, pass:65 };
+const TH_RANGE   = { easy:[70,100], hard:[30,70], goodDisc:[0.20,0.50], pass:[50,100] };
 const TH_LABEL   = { easy:"Lätt från (% rätt)", hard:"Svår under (% rätt)", goodDisc:"God diskriminering från (r)" };   // G-gränsen har ett eget fält (#g-pct)
 const state = { pdfMcqs:null, jsonFiles:[], tags:null, activeTags:{}, facets:{}, mode:"edu", view:"pre-mcq", excluded:new Map(), comments:new Map(), th:Object.assign({},TH_DEFAULT), prep:false, embedded:false };
 function setThreshold(key, value){
@@ -568,31 +568,38 @@ const VIEWS = [
 function activeView(){ return VIEWS.find(v=>v.id===state.view) || VIEWS[0]; }
 /* I temarapporten finns activeView() också (rapportens wrapper ger den inbakade vyn), så samma kod gäller där. */
 function critLabel(){ return activeView().criterion==="whole" ? "poäng på hela tentan" : "poäng på flervalsdelen"; }
-/* Polytom item–total-tolkning (fler-svars och fritext): n≥30 + spridning i poängen.
-   Minoritetsgrindar gäller bara dikotoma frågor, så de ersätts här av en variansgrind. */
+/* Diskrimineringen för essä- och flersvarsfrågor: samma regel som för flervalsfrågor (rpbInfo). Den mindre
+   gruppen är de studenter som INTE fick det vanligaste poängtalet. För en fråga med bara rätt eller fel är det
+   detsamma som det minsta av antal rätt och antal fel. Under 5 går r inte att tolka, 5–9 är osäkert, och
+   "negativ" sägs först från 10 och när r ligger under −2/√n (Kajsa 21 nov 2026). */
+function scoreMinority(scores){
+  const m=new Map(); let top=0;
+  for(const x of scores){ const k=Math.round(x*100)/100, c=(m.get(k)||0)+1; m.set(k,c); if(c>top) top=c; }
+  return scores.length-top;
+}
 function polyInfo(scores, r, max, typ){
-  const n=scores.length;
-  const mean=n?scores.reduce((s,v)=>s+v,0)/n:0;
-  const varc=n?scores.reduce((s,v)=>s+(v-mean)**2,0)/n:0;
+  const n=scores.length, minority=scoreMinority(scores), sig=n?2/Math.sqrt(n):2;
   const fmt=(r===null||r===undefined)?"–":((r>=0?"+":"")+r.toFixed(2));
-  if(r===null||r===undefined||n<30)
+  if(n<MIN_N)
     return {cls:"rpb-na",value:"r –",label:"för få svar",
-      tip:`För få svar (n=${n}) för att mäta item–total-korrelation (riktmärke n ≥ 30).`};
-  if(varc<1e-9)
+      tip:`För få svar (n=${n}) för att mäta diskriminering. Det krävs minst ${MIN_N}.`};
+  if(minority===0 || r===null || r===undefined)
     return {cls:"rpb-na",value:"r –",label:"ingen spridning",
-      tip:`Alla fick i praktiken samma poäng – då finns inget att korrelera mot. Bedöm utifrån innehållet.`};
-  if(r < -0.10)
+      tip:`Alla fick samma poäng, så det finns inget att korrelera mot.`};
+  if(minority<5)
+    return {cls:"rpb-na",value:"r –",label:"ej mätbar",
+      tip:`Diskrimineringen går inte att mäta eftersom bara ${minority} fick en annan poäng än de övriga. (Beräknat värde ${fmt}, men opålitligt.)`};
+  if(minority<10)
+    return {cls:"rpb-lowconf",value:`r ${fmt}`,label:"osäker",
+      tip:`Osäkert mått: bara ${minority} fick en annan poäng än de övriga (n=${n}). Värdet kan svänga mycket.`};
+  if(r < -sig)
     return {cls:"rpb-bad",value:`r ${fmt}`,label:"negativ",
       tip: typ==="multi"
-        ? `Poängen på frågan följer inte tentan i övrigt: starka studenter får inte högre poäng här. Granska facit och poängregeln. n=${n}.`
-        : `Poängen på frågan följer inte tentan i övrigt: starka studenter får inte högre poäng här. Granska bedömningsmatrisen/rättningen. (Detta är ingen flervalsfråga, så det handlar inte om facit.) n=${n}.`};
-  let cls,label;
-  if(r>=0.30){cls="rpb-good";label="mycket god";}
-  else if(r>=state.th.goodDisc){cls="rpb-good";label="god";}
-  else if(r>=0.10){cls="rpb-mid";label="acceptabel";}
-  else {cls="rpb-lowconf";label="låg";}
-  return {cls,value:`r ${fmt}`,label,
-    tip:`Korrigerad item–total-korrelation mot studentens ${critLabel()} (exkl. frågan) – hur väl poängen på frågan följer studentens prestation i stort. 0,20+ god, 0,30+ mycket god. n=${n}.`};
+        ? `Tydligt negativt (under −${sig.toFixed(2)}): studenter med hög totalpoäng fick lägre poäng på frågan. Granska facit och poängregeln. n=${n}.`
+        : `Tydligt negativt (under −${sig.toFixed(2)}): studenter med hög totalpoäng fick lägre poäng på frågan. Granska bedömningsmallen och rättningen. n=${n}.`};
+  const d=discLabel(r);
+  return {cls:d.cls,value:`r ${fmt}`,label:d.label,
+    tip:`Korrelation mellan poängen på frågan och studentens ${critLabel()} utan frågan. n=${n}.`};
 }
 /* Rubriken över korten: vilket steg som visas. Stegen har var sin vy, så det finns inga flikar att välja mellan. */
 function renderViewTabs(){
@@ -669,12 +676,17 @@ function keepPrepInputs(inp){
   state.prepPdf = inp.pdfMcqs || null;
   if(state.tagsFile) state.prepTags=state.tagsFile;
 }
-/* Minsta underlag för automatiska omdömen om svårighet/distraktorer. Under detta
-   väger ett enda svar för mycket (1 svar = 100/n procentenheter) för att flagga något. */
-const MIN_N_DIST = 20;
+/* Minsta underlag, en gräns för allt (Kajsa 21 nov 2026): under MIN_N svar visas bara mätvärden, utan etiketter,
+   observationer eller uppmaningar. Enda undantaget är "ingen svarade rätt", som inte är en statistisk bedömning.
+   R_LOW är den fasta gränsen för etiketten "låg"; gränsen för "god" är justerbar (state.th.goodDisc). */
+const MIN_N = 30;
+const R_LOW = 0.10;
+function discLabel(r){
+  return r>=state.th.goodDisc ? {label:"god", cls:"rpb-good"} : r<R_LOW ? {label:"låg", cls:"rpb-bad"} : {label:"", cls:"rpb-mid"};
+}
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum. */
-const VERSION = "3.26.0";
+const VERSION = "3.27.0";
 const UPDATED = "2026-11-21";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
@@ -1126,7 +1138,7 @@ function computeDiscrimination(model, {criterion, excluded}){
    Per-alternativ point-biserial (valde slot 0/1 mot korrigerad total) per aktivt kriterium.
    'mcq' återanvänder förberäknade a.optRpb (mot flervalsdelens summa) när inget är exkluderat;
    'whole' räknar om mot hela tentans poäng – så att omdömena om distraktorerna i hela rapporten stämmer
-   med frågans r_pb där. Endast studenter som svarade med enkelval ingår (då slot är definierad). */
+   med frågans r_pb där. Alla studenter som fick frågan ingår; ett blankt svar har inget valt alternativ. */
 function computeOptDisc(model, {criterion, excluded}){
   const ex = excluded || new Set();
   const out={};
@@ -1137,7 +1149,7 @@ function computeOptDisc(model, {criterion, excluded}){
     const base=model.cohortScores.map(r=>inc.reduce((s,qn)=>s+r[idx[qn]],0));
     for(const qn of model.mcqSeqs){
       const i=idx[qn], exq=ex.has(String(qn)), optData=[];
-      model.mcqSlot.forEach((slots,k)=>{ const slot=slots[qn]; if(slot===undefined) return;
+      model.mcqSlot.forEach((slots,k)=>{ const slot=slots[qn]; if(slot===undefined) return;   // null = blankt svar, ingår
         optData.push([slot, exq?base[k]:(base[k]-model.cohortScores[k][i])]); });
       const m=new Map();
       for(const slot of model.agg[qn].slotN.keys()) m.set(slot, optPbis(optData, slot));
@@ -1315,7 +1327,7 @@ function parseJSON(jsonObjs){
   // slotN/slotCorr/slotText: aggregat per svars-SLOT (alternativets simpleChoice-id) i stället för per
   // alternativtext. Inspera kodar specialteckenalternativ (Na⁺, H₂CO₃ …) med tom interactionValue, men
   // slot-id:t finns alltid – så slot-baserad räkning tappar aldrig svar även när texten saknas.
-  for(const qn of order) agg[qn]={max:null, anyChoice:false, maxSel:0, picks:new Map(), n:0, ncorr:0, total:0,
+  for(const qn of order) agg[qn]={max:null, anyChoice:false, maxSel:0, picks:new Map(), n:0, ncorr:0, total:0, answered:0,
     pairs:[], optData:[],
     slotN:new Map(), slotCorr:new Map(), slotText:new Map()};
   for(const c of cands){
@@ -1329,7 +1341,7 @@ function parseJSON(jsonObjs){
           const r0=sel[0];
           const v=norm(r0.ext_inspera_interactionValue);
           const slot=String(r0.ext_inspera_response||"");   // alternativets slot-id (alltid satt för val)
-          a.n++; a.picks.set(v,(a.picks.get(v)||0)+1);
+          a.answered++; a.picks.set(v,(a.picks.get(v)||0)+1);
           a.slotN.set(slot,(a.slotN.get(slot)||0)+1);
           if(v && !a.slotText.has(slot)) a.slotText.set(slot,v);   // lär oss slottens text när den finns (saknas för specialtecken)
           if(q.ext_inspera_autoScore===q.ext_inspera_maxQuestionScore){
@@ -1350,9 +1362,9 @@ function parseJSON(jsonObjs){
     for(const qn of mcqSeqs){
       const q=qd[qn]; if(!q) continue;
       const sel=(q.ext_inspera_candidateResponses||[]).filter(isChoice);
-      if(sel.length!==1) continue;
-      const it = q.ext_inspera_autoScore===q.ext_inspera_maxQuestionScore ? 1 : 0;
-      itemScore[qn]=it; mcqTotal+=it; chosenSlot[qn]=String(sel[0].ext_inspera_response||"");
+      // Blankt svar räknas som fel (Kajsa 21 nov 2026): studenten ingår med 0 poäng och utan valt alternativ (null).
+      const it = (sel.length===1 && q.ext_inspera_autoScore===q.ext_inspera_maxQuestionScore) ? 1 : 0;
+      itemScore[qn]=it; mcqTotal+=it; chosenSlot[qn]= sel.length===1 ? String(sel[0].ext_inspera_response||"") : null;
     }
     mcqSlotByCand.push(chosenSlot);
     for(const qn of mcqSeqs){
@@ -1361,6 +1373,8 @@ function parseJSON(jsonObjs){
       agg[qn].optData.push([chosenSlot[qn], mcqTotal-itemScore[qn]]);  // (vald slot, korrigerad MCQ-total)
     }
   }
+  // n är alla studenter som fick frågan. blank = de som inte valde något alternativ; de räknas som fel överallt.
+  for(const qn of order){ const a=agg[qn]; if(a.anyChoice && a.maxSel<=1){ a.n=a.total; a.blank=a.total-a.answered; } }
   for(const qn of mcqSeqs){ const a=agg[qn];
     if(a.slotCorr.size) a.correctSlot=[...a.slotCorr.entries()].sort((x,y)=>y[1]-x[1])[0][0];  // slot som rättats som rätt
     a.optRpb = new Map();
@@ -1434,16 +1448,23 @@ function readTagRows(buf){
   const ws = wb.Sheets[wb.SheetNames[0]];
   return XLSX.utils.sheet_to_json(ws,{header:1,raw:false});
 }
-/* per-column values for a question, aligned with state.tags.tagCols (empty strings if none).
-   Matcha PÅ POSITIONELLT NUMMER (Nr) först: det är den enda nyckel som delas av PDF:ens
-   marginalnummer, JSON:s questionNumber och Excel-kolumnen Nr. Kodkolumnen (Namn/Fråga) kan
-   innehålla mänskliga etiketter ("55a)", "56") eller blanka nummer som krockar med seq-strängar,
-   så den används bara som reserv – t.ex. för tentor med bokstavskod (A1.2) utan Nr-kolumn. */
-function lookupTagVals(code, seq){
+/* En frågas taggar, ett värde per kolumn i state.tags.tagCols (tomma strängar om frågan saknas i taggfilen).
+   EN uppslagning för kort, tabeller och statistik (Kajsa 21 nov 2026): frågenumret först, eftersom det är den
+   enda nyckel som delas av PDF:ens marginalnummer, resultatfilens questionNumber och taggfilens Nr. Därefter
+   frågans namn ur resultatfilen, och sist PDF:ens kod. */
+function tagValsFor(seq, pdfCode){
   if(!state.tags) return [];
-  return state.tags.byNum.get(String(seq))
-      || state.tags.byCode.get(String(code).toLowerCase())
-      || state.tags.tagCols.map(()=> "");
+  const T=state.tags, J=state.json;
+  const title = J && J.qTitle ? J.qTitle[seq] : "";
+  return T.byNum.get(String(seq))
+      || (title ? T.byCode.get(String(title).toLowerCase()) : null)
+      || (pdfCode ? T.byCode.get(String(pdfCode).toLowerCase()) : null)
+      || T.tagCols.map(()=> "");
+}
+/* Hur många av tentans frågor som taggfilen träffade. */
+function tagMatchCount(){
+  const J=state.json; if(!J || !J.qMeta || !state.tags) return {hit:0, total:J && J.qMeta ? J.qMeta.length : 0};
+  return {hit:J.qMeta.filter(m=>tagValsFor(m.num).some(Boolean)).length, total:J.qMeta.length};
 }
 
 /* ---------- Utan PDF: MCQ-kort ur svarsdatan ---------- */
@@ -1563,8 +1584,9 @@ function buildView(){
                correctIdx, topDist, bestDistIdx, bestDistPbis, unmatched,
                orphanSlots, unmappedPdf, slotAmbiguous, exportGap,
                title:(J.qTitle&&J.qTitle[seq])||"",
-               tagVals:lookupTagVals(P.code,seq), tags:lookupTagVals(P.code,seq).filter(Boolean),
-               tagKey:(lookupTagVals(P.code,seq)[0]||"~"), seq});
+               blank:a.blank||0,
+               tagVals:tagValsFor(seq,P.code), tags:tagValsFor(seq,P.code).filter(Boolean),
+               tagKey:(tagValsFor(seq,P.code)[0]||"~"), seq});
   }
   // Exakt diagnostik vid antalsskillnad: vilka nummer saknar PDF-kort, och vilka PDF-MCQ är inte
   // single-best i JSON (med typ). Gör "olika antal" actionable i stället för bara en varning.
@@ -1593,12 +1615,12 @@ function rpbInfo(v){
   const sig=n?2/Math.sqrt(n):2;              // ~2 standard errors above zero
   const r=v.rpb;
   const fmt=(r===null||r===undefined)?"–":((r>=0?"+":"")+r.toFixed(2));
-  if(n>=30 && (r===null||r===undefined))
-    return {state:"na",cls:"rpb-na",value:"r_pb –",label:"ej mätbar",badge:"",
-      tip:`Diskriminering går inte att mäta: alla svarade lika på frågan (${ncorr===0?"ingen svarade rätt":"alla svarade rätt"}), så det finns inget att korrelera mot. (n=${n}.)`};
-  if(r===null||r===undefined||n<30)
+  if(n<MIN_N)
     return {state:"na",cls:"rpb-na",value:"r_pb –",label:"för få svar",badge:"",
-      tip:`För få svar (n=${n}) för att mäta diskriminering – punkt-biseriell korrelation behöver ungefär n ≥ 30. Bedöm frågan utifrån andel rätt, svarsfördelningen och innehållet i stället.`};
+      tip:`För få svar (n=${n}) för att mäta diskriminering. Det krävs minst ${MIN_N}.`};
+  if(r===null||r===undefined)
+    return {state:"na",cls:"rpb-na",value:"r_pb –",label:"ej mätbar",badge:"",
+      tip:`Diskrimineringen går inte att mäta eftersom ${ncorr===0?"ingen svarade rätt":"alla svarade rätt"}. (n=${n}.)`};
   if(minority<5){
     const why = ncorr<nwrong ? `bara ${ncorr} rätt svar (för svår)` : `bara ${nwrong} fel svar (för lätt)`;
     return {state:"na",cls:"rpb-na",value:"r_pb –",label:"ej mätbar",badge:"",
@@ -1617,20 +1639,17 @@ function rpbInfo(v){
     return {state:"miskey",cls:"rpb-bad",value:`r_pb ${fmt}`,label:"dubbelkolla facit",
       badge:`<span class="badge bad">Dubbelkolla facit</span>`,
       tip:`Rätt svar diskriminerar svagt (r_pb ${fmt}) medan en distraktor diskriminerar tydligt positivt (r_pb +${v.bestDistPbis.toFixed(2)}) – starka studenter väljer distraktorn. Vanligt tecken på felregistrerat facit eller att «rätt» svar är diskutabelt. (n=${n}.)`};
-  let cls,label,badge="";
-  if(r>=0.30){cls="rpb-good";label="mycket god";}
-  else if(r>=state.th.goodDisc){cls="rpb-good";label="god";}
-  else if(r>=0.10){cls="rpb-mid";label="acceptabel";}
-  else {cls="rpb-bad";label=(r<0?"låg (svagt negativ)":"låg");badge=`<span class="badge hard">Låg diskriminering</span>`;}
+  const {cls,label}=discLabel(r);
+  const badge = label==="låg" ? `<span class="badge hard">Låg diskriminering</span>` : "";
   const negNote=(r<0)?` Värdet är svagt negativt men inom bruset (ej under −${sig.toFixed(2)}), så det är inte ett tydligt tecken på felregistrerat facit – snarare ingen diskriminering.`:"";
   const sigNote=(r>=0 && r<sig)?` Obs: under signifikansgränsen (~${sig.toFixed(2)} vid n=${n}) – inte säkert skilt från noll.`:"";
   return {state:"ok",cls,label,value:`r_pb ${fmt}`,badge,
-    tip:`Korrelation mellan rätt på frågan och studentens ${critLabel()} (exkl. frågan). Mått på hur väl frågan skiljer starka från svaga studenter. 0,20+ god, 0,30+ mycket god.${negNote}${sigNote} (n=${n}, tak ≈ ${cmax.toFixed(2)}.)`};
+    tip:`Korrelation mellan rätt på frågan och studentens ${critLabel()} (exkl. frågan). Mått på hur väl frågan skiljer starka från svaga studenter.${negNote}${sigNote} (n=${n}, tak ≈ ${cmax.toFixed(2)}.)`};
 }
 /* sortable rpb: shown values sort by value; non-interpretable go last */
 function rpbSortVal(v){
   const n=v.n||0, ncorr=v.ncorr||0, minority=Math.min(ncorr,n-ncorr);
-  if(v.rpb===null||v.rpb===undefined||n<30||minority<5) return Infinity;
+  if(v.rpb===null||v.rpb===undefined||n<MIN_N||minority<5) return Infinity;
   return v.rpb;
 }
 
@@ -1719,8 +1738,8 @@ function advice(v){
   const n=v.n, sig=v.sig, r=v.rpb, ci=v.correctIdx;
   const nOpt=v.opts.length||4, chance=1/nOpt, P=v.pcorr/100;
   const minority=Math.min(v.ncorr, n-v.ncorr);
-  const rpbOk = (r!==null && r!==undefined && n>=30 && minority>=10);
-  const distOk = n>=MIN_N_DIST;   // underlag nog för automatiska omdömen om svårighet/distraktorer
+  const distOk = n>=MIN_N;        // underlag nog för observationer och uppmaningar
+  const rpbOk = (distOk && r!==null && r!==undefined && minority>=10);
   // distrOk: per-DISTRAKTOR-omdömen kräver dessutom att hela fördelningen är känd. När en eller flera
   // slots inte kunde knytas till ett alternativ (specialtecken) är fördelningen ofullständig, så vi
   // stänger av distraktor-tipsen men behåller svårighet/diskriminering som bygger på n/ncorr/r_pb.
@@ -1730,7 +1749,7 @@ function advice(v){
 
   // ===== Inför betygsättning (nu) – kräver fullt diskrimineringsunderlag (rpbOk ⇒ distOk) =====
   let facitDone=false;
-  if(distOk && v.ncorr===0){                                   // ingen fick rätt: det tydligaste tecknet på fel i facit
+  if(n>0 && v.ncorr===0){                                      // ingen fick rätt: gäller oavsett antal svar
     out.l1.push({cls:"adv-red", action:"Dubbelkolla facit", psy:"none-correct",
       why:`Ingen svarade rätt. Det tyder på att facit är felregistrerat, eller att frågan inte går att besvara som den är ställd. Kontrollera facit före betygssättningen.`});
     facitDone=true;
@@ -1751,8 +1770,9 @@ function advice(v){
   }
   const veryHard = P>0 && P < chance*1.25;
   const goodDisc = rpbOk && r>=state.th.goodDisc;
-  if(distOk && veryHard && !goodDisc && !facitDone){
-    out.l1.push({cls:"adv-orange", action:"Se över frågan", psy:"hard",
+  // Nära gissningsnivå: uppmaningen ges när r inte är säkert skild från noll (under 2/√n) eller inte går att mäta.
+  if(distOk && veryHard && !facitDone && !(rpbOk && r>=sig)){
+    out.l1.push({cls:"adv-orange", action:"Se över frågan", psy:"hard", rState: rpbOk ? "low" : "na",
       why:`Få svarade rätt – nära ren gissningsnivå – och frågan skiljer inte starka från svaga studenter. Den kan vara otydlig eller felaktig; överväg att exkludera den. (En svår fråga som ändå skiljer väl behålls.)`});
   }
 
@@ -1770,8 +1790,10 @@ function advice(v){
   // Bedöms bara när minst 8 svarade fel – annars ser varje lätt fråga (få fel ⇒ låga
   // procent) ut att ha svaga distraktorer. Andel av ALLA svar, inte av felen: 11 % är
   // inte "nästan ingen" även om felen råkar samlas på en annan distraktor.
-  const nWrong = n - (correctCnt>=0?correctCnt:0);
-  if(distrOk && ci>=0 && nWrong>=8){
+  // Bedöms bara när andelen fel räcker för att ALLA distraktorer ska kunna nå 5 % (Kajsa 21 nov 2026): annars
+  // följer flaggan av svårigheten. Med fyra alternativ betyder det minst 15 % fel.
+  const nWrong = v.counts.reduce((t,c,k)=> k===ci ? t : t+c, 0);
+  if(distrOk && ci>=0 && nWrong>=8 && nWrong/n >= 0.05*(v.counts.length-1) - 1e-9){
     const weakD=[]; let veryDead=false;
     for(let k=0;k<v.counts.length;k++){ if(k===ci) continue;
       const pct = n? v.counts[k]/n*100 : 0;
@@ -2187,16 +2209,16 @@ function renderForm(f, cls){
       + (f.varfor?`<div class="formvarfor">${esc(f.varfor)}</div>`:"")
       + (f.ref?`<div class="formref">${esc(f.ref)}</div>`:"") + `</details>` : "") + `</div>`;
 }
-/* Förebild = medelsvår (50–85 % rätt), skiljer väl, inget i statistiken som ger en fråga på kortet, och inga fynd
-   i formkontrollen utöver lathundens tips. En fråga med formfynd ska inte hållas fram som förebild (Kajsa 20 nov
-   2026: annars förvirrar vi lärarna), så kontrollen körs även på tänkbara förebilder. Utan frågetext går det inte
-   att kontrollera, och då märks ingen förebild. */
+/* Förebild = diskrimineringen är mätbar, god (state.th.goodDisc) och över brusgränsen 2/√n, kortet har varken
+   observation eller uppmaning, och formkontrollen har inga fynd utöver lathundens tips. Inget krav på andel rätt:
+   svårighet är inget kvalitetskriterium (Kajsa 21 nov 2026). Utan frågetext går formen inte att kontrollera, och då
+   märks ingen förebild. */
 function isForebild(v){
   if(!v || isExcluded(v.seq) || !v.stem || !(v.correctIdx>=0)) return false;
-  const minority=Math.min(v.ncorr, v.n-v.ncorr);
-  if(!(v.rpb!=null && v.n>=30 && minority>=10 && v.rpb>=state.th.goodDisc)) return false;
-  if(!(v.pcorr>=50 && v.pcorr<=85)) return false;
-  if(cardQuestions(v).length) return false;
+  const minority=Math.min(v.ncorr, v.n-v.ncorr), sig=v.n?2/Math.sqrt(v.n):2;
+  if(!(v.rpb!=null && v.n>=MIN_N && minority>=10 && v.rpb>=state.th.goodDisc && v.rpb>sig)) return false;
+  const a=v.advice||advice(v);
+  if(a.l1.length || a.l2.length) return false;
   return !formFindings(v).some(f=>f.prio!=="tips");
 }
 /* ---------- Att fråga sig (temarapporten) ----------
@@ -2217,7 +2239,7 @@ const ASK_TEXT = {
 const ASK_PSY = { "none-correct":"facit", "rpb-neg":"facit", "dist-pos":"forsvar", "hard":"tydlig", "misconception":"undervisning",
                   "target-vs-norm":"ledtrad", "distractor-eff":"distraktor" };
 function askQuestions(v){
-  if(isExcluded(v.seq) || !(v.n>=MIN_N_DIST)) return [];
+  if(isExcluded(v.seq) || !(v.n>=MIN_N)) return [];
   const adv=v.advice||advice(v), hit={};      // render() och xExportRender() har redan räknat råden för korten
   for(const a of adv.l1.concat(adv.l2)){
     const k=ASK_PSY[a.psy]; if(!k || hit[k]) continue;
@@ -2246,7 +2268,7 @@ function patternSummary(view){
   const live=(view||[]).filter(v=>!isExcluded(v.seq)), N=live.length, rows=[];
   if(!N) return rows;
   const ids=a=>a.map(v=>String(v.seq));
-  const withStat=live.filter(v=>v.n>=MIN_N_DIST);
+  const withStat=live.filter(v=>v.n>=MIN_N);
   // antal av frågorna i ett mönster där formkontrollen ger en trolig förklaring (den står på de frågornas kort)
   const sub=(a,k)=>{ const n=a.filter(v=>Object.keys(formFor(v,[{key:k}])).length).length;
     return {explained:n, sub: n ? `I ${n} av dem finns något i frågans form som kan förklara det. Det står på de frågornas kort.` : ""}; };
@@ -2320,7 +2342,7 @@ function render(){
   const {view, qaFails, mismatch, jsonOnly=[], pdfExtra=[]} = state.vm;
   // attach advice to each view item once
   for(const v of view) v.advice = advice(v);
-  state.smallN = state.json.candCount < MIN_N_DIST;
+  state.smallN = state.json.candCount < MIN_N;
   // Lägen är vy-specifika; återställ om aktivt läge inte finns i den här vyn.
   const modeIds = activeView().modes.map(m=>m.id);
   if(modeIds.length && !modeIds.includes(state.mode)) state.mode = modeIds[0];
@@ -2330,7 +2352,7 @@ function render(){
   { const sd = state.step==="report" ? statsData() : null;   // räknas en gång, till G-gränsen och till jämförelsen med Inspera
     renderGLimit(sd); renderGradeNote(sd); }
   $("#nnote").innerHTML = state.smallN
-    ? `<div class="advnote">Litet underlag: ${esc(state.json.candCount)} studenter. Andel rätt och svarsfördelning visas, men diskriminering (r<sub>pb</sub>) och automatiska omdömen om svårighet och distraktorer kräver fler svar (riktmärke n ≥ 30). Tolka enskilda procenttal försiktigt – ett svar väger ${Math.round(100/Math.max(1,state.json.candCount))} procentenheter.</div>`
+    ? `<div class="advnote">Litet underlag: ${esc(state.json.candCount)} studenter. Under ${MIN_N} svar visas bara mätvärdena, utan etiketter, observationer eller uppmaningar. Ett svar väger ${Math.round(100/Math.max(1,state.json.candCount))} procentenheter.</div>`
     : "";
   const qa=$("#qa"); qa.className="";
   const gapN = view.filter(v=>v.exportGap).length;
@@ -2405,7 +2427,7 @@ function scoredItems(disc, neutral){
     const info=polyInfo(scores, r, m.max, m.type);
     out.push({seq:String(m.num), num:m.num, typ:m.type, title:m.title||"", stem:(src && src.stem) || "", max:m.max, n, mean,
       pct:m.max?mean/m.max*100:0, r:(r===null||r===undefined)?null:r, info: neutral ? neutralInfo(info, r) : info,
-      dist, tagVals:lookupTagVals(m.title,m.num), excluded:isExcluded(m.num), reason:exclReason(m.num)});
+      dist, tagVals:tagValsFor(m.num), excluded:isExcluded(m.num), reason:exclReason(m.num)});
   });
   return out;
 }
@@ -2416,13 +2438,17 @@ function overviewPayload(){
   const disc=computeDiscrimination(J,{criterion:'whole',excluded:state.excluded});
   const n=J.candCount;
   const TYPE={single:"MCQ",multi:"Flersvar",text:"Essä"};
+  // Samma etikett som på kortet: kortets underlag (med distraktorernas diskriminering) används när det finns.
+  const byCard=new Map();
+  if(activeView().criterion==="whole" && state.vm && state.vm.view) state.vm.view.forEach(v=>byCard.set(String(v.seq), v));
   const rows=J.qMeta.map((m,i)=>{
     const a=J.agg[m.num], r=disc[m.num];
     const scores=J.cohortScores.map(row=>row[i]);
     const tlabel=TYPE[m.type]||TYPE.text;
     const isSingle=m.type==='single';
     const mean = isSingle? null : (n?scores.reduce((s,v)=>s+v,0)/n:0);
-    const info = isSingle ? rpbInfo({n:a?a.n:0,ncorr:a?a.ncorr:0,rpb:r}) : polyInfo(scores,r,m.max,m.type);
+    const cv=byCard.get(String(m.num));
+    const info = isSingle ? rpbInfo(cv ? Object.assign({}, cv, {rpb:r}) : {n:a?a.n:0,ncorr:a?a.ncorr:0,rpb:r,bestDistIdx:-1,bestDistPbis:null}) : polyInfo(scores,r,m.max,m.type);
     return {num:m.num,title:m.title,typeLabel:tlabel,max:m.max,isSingle,
       diffPc: isSingle?(a&&a.n?a.ncorr/a.n*100:0):null,
       diffMean: mean, diffPct: isSingle?null:(m.max?mean/m.max*100:0),
@@ -2479,14 +2505,6 @@ function exportOverview(){
   downloadText(`oversiktstabell_${stamp()}.html`, overviewHtml(payload, rows, filterText(), tema ? EMBED.credit : creditText()), "text/html;charset=utf-8");
 }
 
-/* exemplarisk = tydlig diskriminering OCH helt utan anmärkning (varken L1 eller L2).
-   Att även kräva tomt L2 är det som hindrar att en fråga med död distraktor (t.ex. D10.1)
-   prisas och flaggas för förbättring samtidigt. */
-function isExemplary(v){
-  const minority=Math.min(v.ncorr, v.n-v.ncorr);
-  return v.rpb!=null && v.n>=30 && minority>=10 && v.rpb>=0.30
-      && !(v.advice && (v.advice.l1.length || v.advice.l2.length));
-}
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
 /* ---------- Filterraden ----------
@@ -2497,8 +2515,8 @@ function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",
 const FACETS = [
   {key:"typ",   label:"Frågetyp",       values:[["single","MCQ"],["text","Essä"],["multi","Flersvar"]]},
   {key:"svar",  label:"Svårighet",      values:[["latt","Lätt"],["medel","Medel"],["svar","Svår"]]},
-  {key:"disk",  label:"Diskriminering", values:[["neg","Negativ"],["lag","Låg"],["acc","Acceptabel"],["god","God"],["mgod","Mycket god"],["na","Ej mätbar"]]},
-  {key:"titta", label:"Att titta på",   values:[["fraga",""],["stark","Stark diskriminering"],["forebild","Förebild"],["excl","Exkluderad"]]}
+  {key:"disk",  label:"Diskriminering", values:[["neg","Negativ"],["lag","Låg"],["mellan","Mellan"],["god","God"],["na","Ej mätbar"]]},
+  {key:"titta", label:"Att titta på",   values:[["fraga",""],["forebild","Förebild"],["excl","Exkluderad"]]}
 ];
 function isTemaPage(){ return typeof EMBED!=="undefined" && !!EMBED && EMBED.kind==="tema"; }
 function facetLabel(key, val){
@@ -2508,7 +2526,9 @@ function facetLabel(key, val){
 }
 function facetTitle(key, val){
   if(key==="svar") return val==="latt" ? `Minst ${thFmt("easy")} % rätt (essä: medel av max)` : val==="svar" ? `Under ${thFmt("hard")} % rätt (essä: medel av max)` : "Mellan gränserna för Svår och Lätt";
-  if(key==="disk" && val==="god") return `Från ${thFmt("goodDisc")} till 0,30`;
+  if(key==="disk" && val==="god") return `Från ${thFmt("goodDisc")}`;
+  if(key==="disk" && val==="mellan") return `Från 0,10 till ${thFmt("goodDisc")}`;
+  if(key==="disk" && val==="lag") return "Under 0,10";
   return "";
 }
 /* Diskrimineringsgrupp ur den etikett som visas (rpbInfo/polyInfo, efter thInfo), så att filtret och kortet säger samma sak. */
@@ -2517,16 +2537,13 @@ function discBucket(info, r){
   if((info && info.cls==="rpb-na") || L==="för få svar" || L==="ej mätbar" || L==="ingen spridning" || r===null || r===undefined) return "na";
   if(L==="negativ" || (L==="dubbelkolla facit" && r<0)) return "neg";
   if(L.startsWith("låg") || L==="dubbelkolla facit") return "lag";
-  if(L==="acceptabel") return "acc";
   if(L==="god") return "god";
-  if(L==="mycket god") return "mgod";
-  return r<0.10 ? "lag" : r<state.th.goodDisc ? "acc" : r<0.30 ? "god" : "mgod";     // "osäker": efter värdet
+  return r<R_LOW ? "lag" : r<state.th.goodDisc ? "mellan" : "god";     // utan etikett, och "osäker": efter värdet
 }
 function mkFacets(o){
   const pct=o.pct||0;
   const titta=[];
   if(o.fraga) titta.push("fraga");
-  if(o.stark) titta.push("stark");
   if(o.forebild) titta.push("forebild");
   if(o.excluded) titta.push("excl");
   return { typ:o.typ, svar: pct>=state.th.easy ? "latt" : pct<state.th.hard ? "svar" : "medel",
@@ -2536,8 +2553,7 @@ function facetsOfMcq(v){
   const tema=isTemaPage(), ex=isExcluded(v.seq);
   return mkFacets({typ:"single", pct:v.pcorr, info:rpbInfo(v), r:v.rpb, excluded:ex,
     fraga: !ex && (tema ? cardQuestions(v).length>0 : !!((v.advice||advice(v)).l1.length)),
-    stark: !tema && !ex && isExemplary(v),            // appen: r minst 0,30 och inga råd
-    forebild: tema && isForebild(v)});
+    forebild: !ex && isForebild(v)});
 }
 function facetsOfScored(e){
   return mkFacets({typ:e.typ||"text", pct:e.pct, info:thInfo(e.info,e.r), r:e.r, excluded:e.excluded, fraga:!e.excluded && scoreQuestions(e).length>0});
@@ -2650,7 +2666,7 @@ function pageItems(opts){
   const num=it=>{ const n=Number(it.seq); return isNaN(n) ? Infinity : n; };
   const byDoc=(a,b)=>(num(a)-num(b)) || (a.seq<b.seq?-1:a.seq>b.seq?1:0);
   const pc=it=>it.k==="mcq" ? it.x.pcorr : it.x.pct;
-  const rv=it=>it.k==="mcq" ? rpbSortVal(it.x) : ((it.x.r===null || it.x.r===undefined || !(it.x.n>=30)) ? Infinity : it.x.r);
+  const rv=it=>it.k==="mcq" ? rpbSortVal(it.x) : ((it.x.r===null || it.x.r===undefined || !(it.x.n>=MIN_N)) ? Infinity : it.x.r);
   const td=it=>it.k==="mcq" ? it.x.topDist : -1;
   const ck=it=>codeSortKey(it.k==="mcq" ? it.x.code : (it.x.title || it.seq));
   const tk=it=>it.k==="mcq" ? it.x.tagKey : ((it.x.tagVals||[])[0] || "~");
@@ -2713,6 +2729,7 @@ function selBoxHtml(seq){
 function levelBadge(pct){
   return pct<state.th.hard ? `<span class="badge hard">Svår</span>` : pct>=state.th.easy ? `<span class="badge easy">Lätt</span>` : "";
 }
+function levelBadgeFor(n, pct){ return n>=MIN_N ? levelBadge(pct) : ""; }
 function card(v){
   const simple = state.mode==="simple";   // Bara mätvärden: inga råd eller tolkningar
   const askMode = state.mode==="ask";   // temarapporten: frågor, aldrig åtgärder
@@ -2771,9 +2788,10 @@ function card(v){
       <div class="body"><div class="txt">${esc(r.o)}${discMark}</div>
         <div class="barwrap"><div class="bar" style="width:${barW}%;background:${barColor}"></div></div>
       </div></div>`;
-  }).join("");
+  }).join("")
+    + (v.blank ? `<div class="opt blank"><div class="pct">${(v.n?v.blank/v.n*100:0).toFixed(1)+" %"}</div><div class="body"><div class="txt"><em>Inget svar</em> (${v.blank} ${v.blank===1?"student":"studenter"})</div></div></div>` : "");
   const tags=v.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("");
-  let badge = v.n>=MIN_N_DIST ? levelBadge(v.pcorr) : "";
+  let badge = levelBadgeFor(v.n, v.pcorr);
   const flag=v.unmatched>0;
   const ri = askMode ? Object.assign(neutralInfo(rpbInfo(v), v.rpb), {badge: rpbInfo(v).state==="miskey" ? "" : rpbInfo(v).badge}) : rpbInfo(v);
   badge += ri.badge;
@@ -2822,7 +2840,7 @@ function card(v){
               + (PSY[q.psy] ? (k=>`<details class="askmore" data-k="${esc(k)}"${(state.open && state.open.has(k))?" open":""}><summary>Mer om måttet</summary><div class="askpsy">${esc(PSY[q.psy])}</div></details>`)(`psy:${v.seq}:${q.key}`) : "") + `</div>`; }).join("") : "")
       + (expl.length ? `<div class="askhead${qs.length?" askhead2":""}">Möjlig förklaring i frågans form</div>` + expl.join("") : "")
       + `</div>` : "";
-    if(isForebild(v)) advHtml += `<div class="forebild">✓ Fungerar som förebild: medelsvår, skiljer väl mellan studenter med höga och låga totalpoäng, och utan fynd i formkontrollen.</div>`;
+    if(isForebild(v)) advHtml += `<div class="forebild">✓ Fungerar som förebild: skiljer väl mellan studenter med höga och låga totalpoäng, och utan fynd i formkontrollen.</div>`;
   }
   if(excluded) advHtml="";   // exkluderad fråga: ingen åtgärdsruta – beslutet är taget, talen visas som dokumentation
   return `<div class="q ${flag?'flag':''}${excluded?' excluded':''}" id="card-${esc(String(v.seq))}">
@@ -2876,7 +2894,7 @@ function statsData(){
   const J=state.json; if(!J || !J.qMeta || !J.cohortScores) return null;
   const keep=[], excluded=[];
   J.qMeta.forEach((m,i)=>{ if(isExcluded(m.num)) excluded.push({num:m.num, title:m.title||"", reason:exclReason(m.num)}); else keep.push(i); });
-  const tema=i=>{ const tv=lookupTagVals(J.qMeta[i].title, J.qMeta[i].num)||[]; return tv[0]||""; };
+  const tema=i=>{ const tv=tagValsFor(J.qMeta[i].num)||[]; return tv[0]||""; };
   const N=J.cohortScores.length;
   const questions=keep.map(i=>{ const m=J.qMeta[i]; const mean=N?J.cohortScores.reduce((s,r)=>s+r[i],0)/N:0;
     return {num:m.num, title:m.title||"", max:m.max, mean, tema:tema(i)}; });
@@ -3089,11 +3107,11 @@ function neutralInfo(info, r){
   out.tip = String(out.tip||"").split(/\s(?:Tyder på|Vanligt tecken|Granska|Bedöm)\b/)[0].trim();
   return out;
 }
-/* Etiketten god/acceptabel följer den justerbara gränsen även för rader som räknades fram vid exporten. */
+/* Etiketterna god, låg och ingen etikett följer den justerbara gränsen även för rader som räknades fram vid exporten. */
 function thInfo(info, r){
-  if(r===null || r===undefined || (info.label!=="god" && info.label!=="acceptabel")) return info;
-  const good = r>=state.th.goodDisc;
-  return Object.assign({}, info, {label: good?"god":"acceptabel", cls: good?"rpb-good":"rpb-mid"});
+  if(r===null || r===undefined || !(info.label==="god" || info.label==="låg" || info.label==="")) return info;
+  if(info.cls==="rpb-na") return info;
+  return Object.assign({}, info, discLabel(r));
 }
 const HELP_TEMA_HTML = `
 <details class="helpsec" open><summary>Så läser du rapporten</summary><div class="body">
@@ -3191,7 +3209,7 @@ function temaEmbed(){
     n:v.n,ncorr:v.ncorr,pcorr:v.pcorr,rpb:v.rpb,sig:v.sig,correctIdx:v.correctIdx,
     topDist:v.topDist,bestDistIdx:v.bestDistIdx,bestDistPbis:v.bestDistPbis,unmatched:v.unmatched,
     orphanSlots:v.orphanSlots,unmappedPdf:v.unmappedPdf,slotAmbiguous:v.slotAmbiguous,exportGap:v.exportGap,
-    title:v.title,tagVals:v.tagVals,tags:v.tags,tagKey:v.tagKey,seq:v.seq});
+    blank:v.blank||0,title:v.title,tagVals:v.tagVals,tags:v.tags,tagKey:v.tagKey,seq:v.seq});
   // spara globala fält vi tillfälligt skriver om under bakningen
   const sd=state.disc, sod=state.optDisc, svm=state.vm;
   const cardsFor = criterion => {
@@ -3269,14 +3287,16 @@ const SCORE_TEXT = {
   elatt: "Är det väntat för de här målen, eller skiljer bedömningsmallen för lite mellan svaren?"
 };
 function scoreQuestions(e){
-  if(e.excluded || !(e.n>=30) || e.r===null || e.r===undefined) return [];
-  if(!(e.r < -0.10)) return [];                                     // samma gräns som etiketten "negativ" (polyInfo)
+  // Samma regel som etiketten "negativ" (polyInfo), räknad ur kortets poängfördelning.
+  if(e.excluded || !(e.n>=MIN_N) || e.r===null || e.r===undefined) return [];
+  const top=(e.dist||[]).reduce((m,d)=>Math.max(m,d.count),0);
+  if(e.n-top<10 || !(e.r < -2/Math.sqrt(e.n))) return [];
   return e.typ==="multi" ? [{key:"facit", text:SCORE_TEXT.facit}] : [{key:"mall", text:SCORE_TEXT.mall}];
 }
 function scorePatterns(list){
   const live=(list||[]).filter(e=>!e.excluded && (e.typ||"text")==="text"), N=live.length;
   if(!N) return [];
-  const easy=live.filter(e=>e.n>=MIN_N_DIST && e.pct>=state.th.easy);
+  const easy=live.filter(e=>e.n>=MIN_N && e.pct>=state.th.easy);
   return easy.length ? [{key:"elatt", seqs:easy.map(e=>String(e.seq)),
     head:`${easy.length} av ${N} essäfrågor hade ett medel på minst ${thFmt("easy")} % av maxpoängen.`, ask:SCORE_TEXT.elatt, sub:""}] : [];
 }
@@ -3296,7 +3316,7 @@ function scoreCard(e){
   const sel = selBoxHtml(e.seq);
   const nm=(e.title && e.title!==String(e.num)) ? `<span class="qtitle">${esc(e.title)}</span>` : "";
   const tags=(e.tagVals||[]).filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join("");
-  const badge = (!e.excluded && e.n>=MIN_N_DIST) ? levelBadge(e.pct) : "";
+  const badge = e.excluded ? "" : levelBadgeFor(e.n, e.pct);
   const maxCount=e.dist.reduce((m,d)=>Math.max(m,d.count),0)||1;
   const bars=e.dist.map(d=>{ const w=Math.max(d.count/maxCount*100,2), pc=e.n?d.count/e.n*100:0;
     return `<div class="ftrow"><div class="ftpts">${fmt(d.pts)} p</div><div class="ftbarwrap"><div class="ftbar" style="width:${w}%"></div></div><div class="ftcnt">${d.count} <small>(${pc.toFixed(0)} %)</small></div></div>`; }).join("");
@@ -3330,7 +3350,7 @@ function activePatternRows(){
 function temaFns(){
   return [esc,norm,key,codeSortKey,cmpArr,rpbSortVal,distColor,critLabel,isPre,commentHtml,modeHint,
              isTemaPage,facetLabel,facetTitle,discBucket,mkFacets,facetsOfMcq,facetsOfScored,facetPass,anyFacet,toggleFacet,toggleTag,filterBase,filterGroups,tagPass,filtersActive,updateClearBtn,applyFilters,clearFilters,rpbInfo,isExcluded,exclReason,
-             cueWords,cueHas,cueScan,advice,askQuestions,isExemplary,unmapReason,cardIsApp,exclParts,selBoxHtml,levelBadge,card,
+             cueWords,cueHas,cueScan,advice,askQuestions,unmapReason,cardIsApp,exclParts,selBoxHtml,levelBadge,levelBadgeFor,discLabel,card,
              currentView,pageItems,drawCards,buildTagbar,
              setThreshold,thresholdsCustom,resetThresholds,thFmt,thresholdsText,settingsHtml,renderThCustom,wireSettings,thInfo,neutralInfo,
              temaFns,temaConsts,buildTemaReport,downloadText,stamp,
@@ -3341,7 +3361,7 @@ function temaFns(){
              fileLineText,temaSource,xExportRender,xExportPrint,openHelp,closeHelp,wireHelp,xExportInit];
 }
 function temaConsts(){
-  return `const MIN_N_DIST=${MIN_N_DIST};const TH_DEFAULT=${JSON.stringify(TH_DEFAULT)};const TH_RANGE=${JSON.stringify(TH_RANGE)};const TH_LABEL=${JSON.stringify(TH_LABEL)};const PSY=${JSON.stringify(PSY)};`
+  return `const MIN_N=${MIN_N};const R_LOW=${R_LOW};const TH_DEFAULT=${JSON.stringify(TH_DEFAULT)};const TH_RANGE=${JSON.stringify(TH_RANGE)};const TH_LABEL=${JSON.stringify(TH_LABEL)};const PSY=${JSON.stringify(PSY)};`
     + `const TW=${JSON.stringify(TW)};const CUE_ABS=${JSON.stringify(CUE_ABS)};const CUE_HEDGE=${JSON.stringify(CUE_HEDGE)};`
     + `const FORM_META=${JSON.stringify(FORM_META)};const FORM_REGLER=${JSON.stringify(FORM_REGLER)};const FORM_CUE=${JSON.stringify(FORM_CUE)};const FORM_EXPLAINS=${JSON.stringify(FORM_EXPLAINS)};`
     + `const FACETS=${JSON.stringify(FACETS)};const SCORE_TEXT=${JSON.stringify(SCORE_TEXT)};const EXCL_REASONS=${JSON.stringify(EXCL_REASONS)};const INSPERA_REASON=${JSON.stringify(INSPERA_REASON)};const LOCAL_EXCL_NOTE=${JSON.stringify(LOCAL_EXCL_NOTE)};const ASK_SUMMARY=${JSON.stringify(ASK_SUMMARY)};const SUM_TEXT=${JSON.stringify(SUM_TEXT)};const SUM_LEAD=${JSON.stringify(SUM_LEAD)};const ASK_ORDER=${JSON.stringify(ASK_ORDER)};const ASK_TEXT=${JSON.stringify(ASK_TEXT)};const ASK_PSY=${JSON.stringify(ASK_PSY)};`

@@ -7,7 +7,7 @@ const snapshot = evj => { const s = evj(SNAPSHOT_EXPR); for (const c of s.cards)
 
 test("standardgränserna ger exakt samma utfall som förut", () => {
   const { ev, evj } = fresh();
-  assert.deepEqual(evj("TH_DEFAULT"), { easy: 90, hard: 60, goodDisc: 0.2, pass: 65 });
+  assert.deepEqual(evj("TH_DEFAULT"), { easy: 90, hard: 60, goodDisc: 0.3, pass: 65 });
   assert.deepEqual(evj("state.th"), evj("TH_DEFAULT"));
   assert.deepEqual(snapshot(evj), baseline);
 });
@@ -29,9 +29,9 @@ test("höjd gräns för Svår flyttar märkningen", () => {
 });
 test("gränsen för god diskriminering styr etiketten", () => {
   const { ev } = fresh();
-  assert.equal(ev("rpbInfo({n:100, ncorr:50, rpb:0.22}).label"), "god");
-  assert.equal(ev("setThreshold('goodDisc', 0.25)"), true);
-  assert.equal(ev("rpbInfo({n:100, ncorr:50, rpb:0.22}).label"), "acceptabel");
+  assert.equal(ev("rpbInfo({n:100, ncorr:50, rpb:0.32}).label"), "god");
+  assert.equal(ev("setThreshold('goodDisc', 0.35)"), true);
+  assert.equal(ev("rpbInfo({n:100, ncorr:50, rpb:0.32}).label"), "");
 });
 test("godkäntgränsen styr godkäntandelen", () => {
   const { ev, evj } = fresh();
@@ -42,8 +42,8 @@ test("godkäntgränsen styr godkäntandelen", () => {
 });
 test("ogiltiga värden avvisas", () => {
   const { ev, evj } = fresh();
-  for (const [k, v] of [["easy",""],["easy","abc"],["easy",69],["easy",101],["hard",71],["hard",29],["goodDisc",0.5],
-                        ["goodDisc",0.05],["pass",49],["okand",5],["easy",null],["easy",NaN],["easy","  "]])
+  for (const [k, v] of [["easy",""],["easy","abc"],["easy",69],["easy",101],["hard",71],["hard",29],["goodDisc",0.55],
+                        ["goodDisc",0.15],["pass",49],["okand",5],["easy",null],["easy",NaN],["easy","  "]])
     assert.equal(ev(`setThreshold(${JSON.stringify(k)}, ${typeof v === "number" && isNaN(v) ? "NaN" : JSON.stringify(v)})`), false, `${k}=${v}`);
   assert.deepEqual(evj("state.th"), evj("TH_DEFAULT"));
 });
@@ -69,7 +69,7 @@ test("thresholdsCustom och resetThresholds", () => {
   assert.equal(ev("thresholdsCustom()"), false);
   ev("setThreshold('easy', 85)");
   assert.equal(ev("thresholdsCustom()"), true);
-  assert.match(ev("thresholdsText()"), /Lätt från 85 %.*Svår under 60 %.*God diskriminering från 0,20/);
+  assert.match(ev("thresholdsText()"), /Lätt från 85 %.*Svår under 60 %.*God diskriminering från 0,30/);
   ev("resetThresholds()");
   assert.equal(ev("thresholdsCustom()"), false);
   assert.deepEqual(evj("state.th"), evj("TH_DEFAULT"));

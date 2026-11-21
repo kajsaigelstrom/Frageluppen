@@ -46,7 +46,7 @@ test("flersvarsfrågans förklaring pekar på facit, inte på bedömningsmallen"
   const { ev } = fresh();
   const tip = t => ev(`polyInfo(Array.from({length:40}, (_, i) => i % 3), -0.4, 2, '${t}').tip`);
   assert.match(tip("multi"), /facit och poängregeln/);
-  assert.match(tip("text"), /bedömningsmatrisen/);
+  assert.match(tip("text"), /bedömningsmallen/);
 });
 test("essäfrågor som nästan alla fick full poäng på sammanfattas en gång", () => {
   const { ev, evj } = fresh();

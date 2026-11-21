@@ -23,13 +23,12 @@ test("svårighet och diskriminering delas in efter gränserna under Inställning
   assert.equal(d("negativ", -0.2), "neg");
   assert.equal(d("låg (svagt negativ)", -0.05), "lag");
   assert.equal(d("låg", 0.05), "lag");
-  assert.equal(d("acceptabel", 0.15), "acc");
-  assert.equal(d("god", 0.25), "god");
-  assert.equal(d("mycket god", 0.4), "mgod");
+  assert.equal(d("", 0.15), "mellan");                          // mellan 0,10 och gränsen för god: ingen etikett
+  assert.equal(d("god", 0.35), "god");
   assert.equal(d("för få svar", null, "rpb-na"), "na");
   assert.equal(d("ej mätbar", 0.3, "rpb-na"), "na");
-  assert.equal(d("osäker", 0.35), "mgod");                      // osäkert men mätt: efter värdet
-  assert.equal(d("osäker", 0.15), "acc");
+  assert.equal(d("osäker", 0.35), "god");                       // osäkert men mätt: efter värdet
+  assert.equal(d("osäker", 0.15), "mellan");
 });
 test("flera val i samma grupp breddar, val i olika grupper smalnar av", () => {
   const { page } = tema();
@@ -86,11 +85,11 @@ test("att titta på: fråga på kortet, förebild och exkluderad", () => {
 });
 test("valda filter står på en rad och kan tas bort ett i taget", () => {
   const { page } = tema();
-  page.ev("toggleFacet('svar','latt'); toggleFacet('disk','mgod');");
+  page.ev("toggleFacet('svar','latt'); toggleFacet('disk','god');");
   const bar = page.el("#tagbar").innerHTML;
   assert.match(bar, /class="filtsel"/);
   assert.match(bar, /Lätt ✕/);
-  assert.match(bar, /Mycket god ✕/);
+  assert.match(bar, /God ✕/);
   assert.equal(page.ev("filtersActive()"), true);
   page.ev("toggleFacet('svar','latt')");
   assert.doesNotMatch(page.el("#tagbar").innerHTML, /Lätt ✕/);
@@ -101,7 +100,7 @@ test("valda filter står på en rad och kan tas bort ett i taget", () => {
 });
 test("mönster och urval följer filtret", () => {
   const { page } = tema();
-  page.ev("toggleFacet('disk','mgod')");
+  page.ev("toggleFacet('disk','god')");
   const n = page.ev("selVisible().length");
   assert.ok(n > 0 && n < page.ev("EMBED.views[0].view.length + EMBED.views[0].scored.length"));
   const pat = page.evj("patternSummary(currentView({ignorePattern:true}))");

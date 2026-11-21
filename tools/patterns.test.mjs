@@ -49,7 +49,8 @@ test("alternativ som nästan ingen valde sammanfattas en gång", () => {
 });
 test("sammanfattningen har bara de statistiska mönstren, med antal som har en möjlig förklaring i formen", () => {
   const { evj } = fresh();
-  assert.deepEqual(evj("patternSummary(V3).map(r => r.key)"), ["latt", "distraktor"]);   // inga rader per formregel
+  assert.deepEqual(evj("patternSummary(V3).map(r => r.key)"), ["latt"]);   // inga rader per formregel, och på lätta frågor ingen rad om sällan valda alternativ
+  assert.deepEqual(evj("patternSummary([mk({seq:'4', counts:[70,20,8,2], rpb:0.2})]).map(r => r.key)"), ["distraktor"]);
   const r = evj("row(V3, 'latt')");
   assert.equal(r.explained, 2);
   assert.equal(r.sub, "I 2 av dem finns något i frågans form som kan förklara det. Det står på de frågornas kort.");

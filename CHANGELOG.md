@@ -6,6 +6,34 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.27.0
+Första etappen efter genomgången 21 nov 2026: räknereglerna. Texterna på korten följer i nästa etapp.
+- **En gräns för litet underlag.** Under 30 svar visas bara mätvärden, utan etiketter, observationer
+  eller uppmaningar. Förut bedömdes svårighet och distraktorer redan från 20. Undantaget är "ingen
+  svarade rätt", som ger "Dubbelkolla facit" oavsett antal.
+- **Blankt svar räknas som fel överallt.** Andel rätt och svarsfördelning räknas på alla som fick
+  frågan, och kortet har en egen rad "Inget svar". Förut räknades andel rätt bara på dem som valde
+  ett alternativ, medan diskrimineringen mot hela tentan räknade blankt som 0 poäng.
+- **Etiketterna för diskriminering är "god" från 0,30 och "låg" under 0,10**, utan etikett
+  däremellan. "Mycket god" och "acceptabel" finns inte längre. Gränsen för god är justerbar
+  (0,20–0,50) och styr etiketten, filtret och förebilden. Filtret har valen Negativ, Låg, Mellan,
+  God och Ej mätbar.
+- **Essä- och flersvarsfrågor följer samma regel som flervalsfrågor.** Den mindre gruppen är de
+  studenter som inte fick det vanligaste poängtalet: under 5 är diskrimineringen ej mätbar, 5–9
+  osäker, och "negativ" sägs först från 10 och när r ligger under −2/√n. Förut var gränsen fast
+  −0,10 utan krav på spridning.
+- **"Se över frågan" nära gissningsnivå** utlöses när r ligger under 2/√n eller inte går att mäta,
+  i stället för under den fasta gränsen 0,20.
+- **Sällan valda alternativ bedöms bara när felen räcker** för att alla distraktorer ska kunna nå
+  5 % (minst 15 % fel med fyra alternativ). Annars följde flaggan av frågans svårighet.
+- **Förebild** kräver god diskriminering över brusgränsen 2/√n och att kortet varken har
+  observation eller uppmaning. Kravet på 50–85 % rätt är borta: svårighet är inget
+  kvalitetskriterium. Förebild finns nu som filterval även hos examinatorn, och valet "Stark
+  diskriminering" är borttaget.
+- **Taggar slås upp på ett sätt** för kort, tabeller och statistik: frågenumret först, sedan
+  frågans namn ur resultatfilen, sist PDF:ens kod.
+- **Översiktstabellen har samma etikett som kortet** för varje flervalsfråga.
+
 ## 3.26.0
 - **En sida i stället för tre flikar.** Hela rapporten efter rättningen är en enda sida med
   kort för alla frågetyper i tentans ordning: flervalsfrågor (MCQ), essäfrågor och, nytt,

@@ -103,7 +103,7 @@ test("högst tre formfynd per kort", () => {
   assert.ok(evj(`rules(${many})`).length > 3);
   assert.ok(evj(`Object.values(formFor(${many}, askQuestions(${many}))).flat().length`) <= 3);
 });
-test("förebild: lagom svår, skiljer väl, ingen fråga på kortet och utan fynd i formkontrollen", () => {
+test("förebild: skiljer väl, inget på kortet och utan fynd i formkontrollen; svårigheten är inget krav", () => {
   const { ev } = fresh();
   assert.equal(ev("isForebild(mk({n:90, counts:[65,9,8,8], rpb:0.35}))"), true);
   // en fråga med formfynd ska inte hållas fram som förebild, även om statistiken är bra
@@ -113,8 +113,8 @@ test("förebild: lagom svår, skiljer väl, ingen fråga på kortet och utan fyn
   assert.ok(!ev(`card(${flawed})`).includes("Rätt svar sticker ut."));          // fyndet visas inte: frågan har ingen svaghet att förklara
   // fynd som bara är tips i lathunden hindrar inte (t.ex. parallella alternativ)
   assert.equal(ev(`isForebild(mk({n:90, counts:[65,9,8,8], rpb:0.35, stem:"Vilken dos är lämpligast?", opts:["1000 mg 2 gånger per dygn","1000 mg 3 gånger per dygn","1500 mg 3 gånger per dygn","1500 mg 2 gånger per dygn"]}))`), true);
-  assert.equal(ev("isForebild(mk({n:90, counts:[81,3,3,3], rpb:0.35}))"), false);     // 90 % rätt, för lätt
-  assert.equal(ev("isForebild(mk({n:90, counts:[40,20,15,15], rpb:0.35}))"), false);  // 44 % rätt, för svår
+  assert.equal(ev("isForebild(mk({n:90, counts:[81,3,3,3], rpb:0.35}))"), false);     // bara 9 fel: diskrimineringen är osäker
+  assert.equal(ev("isForebild(mk({n:90, counts:[40,20,15,15], rpb:0.35}))"), true);   // 44 % rätt hindrar inte
   assert.equal(ev("isForebild(mk({n:90, counts:[65,9,8,8], rpb:0.15}))"), false);     // skiljer för svagt
   assert.equal(ev("isForebild(mk({n:25, counts:[18,3,2,2], rpb:0.35}))"), false);     // för litet underlag
   assert.equal(ev("isForebild(mk({n:90, counts:[65,9,8,8], rpb:0.35, stem:''}))"), false);   // ingen text att kontrollera

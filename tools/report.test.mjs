@@ -11,14 +11,15 @@ test("lägena heter Med råd och Bara mätvärden", () => {
   assert.ok(!/Utbildningsläge|Förenklad vy/.test(fs.readFileSync(INDEX, "utf8")));
   assert.match(el("#modehint").textContent, /råd/);
 });
-test("ingen lista över starkt diskriminerande frågor ovanför korten; de väljs i filtret i stället", () => {
+test("ingen lista över förebilder ovanför korten; de väljs i filtret i stället", () => {
   const { ev, el } = rep();
-  assert.match(el("#tagbar").innerHTML, /Stark diskriminering/);
-  const n = ev("state.vm.view.filter(v => !isExcluded(v.seq) && isExemplary(v)).length");
+  assert.match(el("#tagbar").innerHTML, /Förebild/);
+  assert.ok(!/Stark diskriminering/.test(el("#tagbar").innerHTML));
+  const n = ev("state.vm.view.filter(v => !isExcluded(v.seq) && isForebild(v)).length");
   assert.ok(n > 0);
-  ev("toggleFacet('titta','stark')");
+  ev("toggleFacet('titta','forebild')");
   assert.equal(ev("pageItems().length"), n);
-  assert.ok(ev("pageItems().every(it => it.k === 'mcq' && isExemplary(it.x))"));
+  assert.ok(ev("pageItems().every(it => it.k === 'mcq' && isForebild(it.x))"));
 });
 test("kort utan råd har ingen ruta och inget grönt besked", () => {
   const { ev, el } = rep();

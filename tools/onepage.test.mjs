@@ -51,8 +51,8 @@ test("flersvarskortet visar poängfördelningen och frågar om facit när poäng
   const { ev, evj } = app();
   const m = evj("state.scored.find(e => e.typ === 'multi')");
   assert.equal(m.dist.reduce((s, d) => s + d.count, 0), m.n);
-  assert.deepEqual(evj(`scoreQuestions(Object.assign(${JSON.stringify(m)}, {r:-0.3, n:100}))`).map(q => q.key), ["facit"]);
-  assert.deepEqual(evj(`scoreQuestions(Object.assign(${JSON.stringify(m)}, {r:-0.3, n:100, typ:'text'}))`).map(q => q.key), ["mall"]);
+  assert.deepEqual(evj(`scoreQuestions(Object.assign(${JSON.stringify(m)}, {r:-0.3, n:100, dist:[{pts:0,count:30},{pts:1,count:30},{pts:2,count:40}]}))`).map(q => q.key), ["facit"]);
+  assert.deepEqual(evj(`scoreQuestions(Object.assign(${JSON.stringify(m)}, {r:-0.3, n:100, dist:[{pts:0,count:30},{pts:1,count:30},{pts:2,count:40}], typ:'text'}))`).map(q => q.key), ["mall"]);
 });
 test("temarapporten är också en enda sida med alla frågetyper", () => {
   const { ev, page } = tema();
