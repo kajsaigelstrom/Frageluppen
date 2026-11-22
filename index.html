@@ -19,7 +19,7 @@
     --eff:#e3b121; --eff-ink:#977713;          /* effektiv distraktor (>= 5 %) */
     --ineff:#cf4636; --ineff-ink:#b23123;      /* mindre effektiv (0 < andel < 5 %) */
     --ineff0:#8f241a;                           /* helt ineffektiv (0 %, ingen valde) */
-    --trap:#cf7a22; --trap-ink:#a85f15;        /* vanligare än rätt svar */
+    --trap:#cf7a22; --trap-ink:#96530f;        /* vanligare än rätt svar */
     --warn:#9a3b2e; --warn-soft:#f1ddd7; --zero:#bdb6a6;
   }
   *{box-sizing:border-box}
@@ -116,6 +116,8 @@
   .chip{font-size:12px;border:1px solid var(--line);background:#fff;color:var(--muted);
     border-radius:20px;padding:4px 12px;cursor:pointer;font-weight:600;transition:.12s;letter-spacing:.02em}
   .chip:hover{border-color:var(--accent)}
+  button.chip,button.fchip{font-family:inherit;line-height:inherit}
+  .chip:focus-visible,.fchip:focus-visible,.patbtn:focus-visible,.modebtn:focus-visible,.expbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
   .chip .c{opacity:.7;font-family:"IBM Plex Mono",monospace;margin-left:5px}
   .chip.zero:not(.on){opacity:.45}
@@ -153,15 +155,15 @@
     border-radius:5px;padding:2px 8px;cursor:help}
   .q .rpb sub{font-size:9px}
   .rpb-good{background:#e2efe6;color:#2c6b48}
-  .rpb-mid{background:#f3efe2;color:#8a7a3c}
+  .rpb-mid{background:#f3efe2;color:#756628}
   .rpb-bad{background:var(--warn-soft);color:var(--warn)}
-  .rpb-na{background:#eceae3;color:var(--faint)}
-  .rpb-lowconf{background:#eceae3;color:#7a7568;font-style:italic}
+  .rpb-na{background:#eceae3;color:#6b665b}
+  .rpb-lowconf{background:#eceae3;color:#68635a;font-style:italic}
   .q .badge{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;border-radius:5px;
     padding:2px 7px;letter-spacing:.03em;white-space:nowrap}
   .badge.hard{background:var(--warn-soft);color:var(--warn)}
   .badge.bad{background:#f3d5cf;color:#8f241a}
-  .badge.easy{background:#e6efe6;color:#3a7a47}
+  .badge.easy{background:#e6efe6;color:#2f6b3c}
   .q .stem{margin:9px 0 14px;font-size:15px}
   .opt{display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:center;margin:7px 0}
   .opt .pct{font-family:"IBM Plex Mono",monospace;font-size:13px;text-align:right;font-weight:600;color:var(--ink)}
@@ -175,8 +177,6 @@
   .opt.correct .bar{background:var(--correct-bar)}
   .opt.correct .txt{font-weight:600}
   .opt.correct .txt::after{content:"RÄTT";font-size:10px;background:var(--correct);color:#fff;border-radius:4px;padding:1px 6px}
-  .opt.eff   .txt::after{content:"effektiv";color:var(--eff-ink);font-weight:600}
-  .opt.ineff .txt::after{content:"mindre effektiv";color:var(--ineff-ink);font-weight:600}
   .opt.trap  .txt::after{content:"vanligare än rätt svar";color:var(--trap-ink);font-weight:600}
   .opt.unmapped .pct{color:var(--faint)}
   .opt.unmapped .txt{color:var(--muted)}
@@ -265,10 +265,6 @@
   .btn-ghost{font:inherit;font-size:13px;font-weight:600;padding:7px 16px;border:1px solid var(--line);
     background:#fff;color:var(--accent);border-radius:8px;cursor:pointer;transition:.12s;margin-left:auto}
   .btn-ghost:hover{border-color:var(--accent);background:var(--accent-soft)}
-  .viewstub{padding:48px 32px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px;margin:8px 0}
-  .viewstub h3{font-size:17px;color:var(--ink);margin:0 0 8px}
-  .viewstub p{font-size:13.5px;line-height:1.6;max-width:540px;margin:0 auto}
-  #results.stubmode > *:not(#viewtabs):not(#viewstub){display:none}
   /* ---------- samlat, klistrat kontrollband: sök · sortering · filter ---------- */
   #controlband{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:14px 0 6px;
     padding:9px 12px;background:rgba(244,241,234,.94);border:1px solid var(--line);border-radius:9px;
@@ -446,35 +442,9 @@
       </div>
     </div>
     <div class="modehint" id="modehint"></div>
-    <div id="viewstub" class="viewstub hidden"></div>
     <div class="nnote" id="nnote"></div>
 
-    <div id="controlband">
-      <input type="text" id="search" placeholder="Sök">
-      <button id="clearfilter" class="btn-ghost hidden">Rensa filter</button>
-      <div class="cardctrls" id="cardctrls">
-        <span class="lbl">Sortera</span>
-        <select id="sort">
-          <option value="doc">Tentans ordning</option>
-          <option value="pc-asc">Andel rätt – lägst först</option>
-          <option value="pc-desc">Andel rätt – högst först</option>
-          <option value="trap-desc">Mest valda distraktor först</option>
-          <option value="rpb-asc">Diskriminering (r), lägst först</option>
-          <option value="code">Frågans namn</option>
-          <option value="tag">Tema, sedan frågans namn</option>
-        </select>
-      </div>
-      <div class="tagbar" id="tagbar"></div>
-    </div>
-    <div id="patterns"></div>
-    <div id="count"></div>
-    <div class="legend">
-      <span class="sw"><i style="background:var(--correct-bar)"></i>Rätt svar</span>
-      <span class="sw"><i style="background:var(--eff)"></i>Distraktor ≥ 5 %</span>
-      <span class="sw"><i style="background:var(--ineff)"></i>Distraktor &lt; 5 %</span>
-      <span class="sw"><i style="background:var(--ineff0)"></i>Distraktor 0 %</span>
-      <span class="sw"><i style="background:var(--trap)"></i>Vanligare än rätt svar</span>
-    </div>
+    <div id="controlhost"></div>
     <div id="cards"></div>
   </div>
 
@@ -729,7 +699,7 @@ function discLabel(r){
 }
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum. */
-const VERSION = "3.30.0";
+const VERSION = "3.31.0";
 const UPDATED = "2026-11-22";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
@@ -2236,18 +2206,6 @@ function togglePattern(k){
 }
 
 /* ---------- render ---------- */
-/* Spärr om hela rapporten skulle ritas innan allt är rättat. setStep visar då steg 2 i stället, så spärren nås inte
-   i det vanliga flödet. Den finns kvar som skydd mot att diskrimineringen räknas mot en ofärdig totalpoäng. */
-function showGate(spec){
-  const results=$("#results"); results.classList.add("stubmode");
-  const stub=$("#viewstub"); stub.classList.remove("hidden");
-  const J=state.json;
-  stub.innerHTML = `<h3>${spec.label} – väntar på rättning</h3>`+
-    `<p>Den här rapporten beräknar r<sub>pb</sub> mot <b>hela tentans poäng</b> och kräver att allt är rättat. `+
-    `Cirka <b>${(+J.ungradedPts.toFixed(1))} p</b> ser ut att vara orättade (konstruerade svar utan vare sig manuell rättning eller auto-poäng). `+
-    `Tills de är rättade och exporterade på nytt blir hela-tentan-kriteriet missvisande.<br><br>`+
-    `Använd <b>Preliminär MCQ</b> så länge – den fungerar utan färdig rättning.</p>`;
-}
 function render(){
   renderViewTabs();
   const spec=activeView();
@@ -2261,12 +2219,10 @@ function render(){
     { const gc=$("#gctl"); if(gc) gc.classList.toggle("hidden", tri); }
     if(eh) eh.classList.toggle("hidden", tri); if(hx) hx.classList.toggle("hidden", tri); if(ho) ho.classList.toggle("hidden", tri); }
   const results=$("#results"); results.classList.remove("hidden");
-  results.classList.remove("stubmode");
   // Utan PDF byggs MCQ-korten ur svarsdatan (synthMcqsFromJson). Det sägs i #pdfnote nedan.
   if(!state.pdfMcqs && !state.synthMcqs) state.synthMcqs=synthMcqsFromJson(state.json);
-  // Vyn kräver färdigrättad tenta men allt är inte rättat → spärr med förklaring.
-  if(spec.needsFullyGraded && !state.json.fullyGraded){ showGate(spec); return; }
-  $("#viewstub").classList.add("hidden");
+  // Steg 3 räknar mot hela tentans poäng och visas aldrig för en tenta som inte är färdigrättad: då visas steg 2.
+  if(spec.needsFullyGraded && !state.json.fullyGraded){ setStep("triage"); return; }
   // Diskriminering enligt aktiv vys kriterium (täcker alla frågor för 'whole').
   state.disc = computeDiscrimination(state.json, {criterion:spec.criterion, excluded:state.excluded});
   // Per-alternativ-diskriminering för MCQ-korten; essä- och flersvarsfrågorna får egna kort på samma sida.
@@ -2563,15 +2519,19 @@ function buildTagbar(){
   if(isPre()){ bar.innerHTML=""; return; }             // före betygssättning: inget filter, bara sök och sortering
   const groups=filterGroups();
   let html = groups.map(g=>`<div class="tagrow"><span class="tagrow-label">${esc(g.label)}</span>`
-    + g.values.map(v=>`<span class="chip ${v.on?'on':''}${v.n?'':' zero'}" ${g.tag!==undefined?`data-col="${esc(g.tag)}"`:`data-facet="${esc(g.key)}"`} data-val="${esc(v.val)}"${v.title?` title="${esc(v.title)}"`:""}>${esc(v.label)}<span class="c">${v.n}</span></span>`).join("")
+    + g.values.map(v=>`<button type="button" class="chip ${v.on?'on':''}${v.n?'':' zero'}" aria-pressed="${v.on?"true":"false"}" ${g.tag!==undefined?`data-col="${esc(g.tag)}"`:`data-facet="${esc(g.key)}"`} data-val="${esc(v.val)}"${v.title?` title="${esc(v.title)}"`:""}>${esc(v.label)}<span class="c">${v.n}</span></button>`).join("")
     + `</div>`).join("");
   const chosen=[];
-  Object.keys(state.activeTags).forEach(col=>[...state.activeTags[col]].forEach(v=>chosen.push(`<span class="fchip" data-col="${esc(col)}" data-val="${esc(v)}">${esc(v)} ✕</span>`)));
-  FACETS.forEach(g=>[...(state.facets[g.key]||[])].forEach(v=>chosen.push(`<span class="fchip" data-facet="${esc(g.key)}" data-val="${esc(v)}">${esc(facetLabel(g.key,v))} ✕</span>`)));
+  Object.keys(state.activeTags).forEach(col=>[...state.activeTags[col]].forEach(v=>chosen.push(`<button type="button" class="fchip" aria-label="Ta bort filtret ${esc(v)}" data-col="${esc(col)}" data-val="${esc(v)}">${esc(v)} ✕</button>`)));
+  FACETS.forEach(g=>[...(state.facets[g.key]||[])].forEach(v=>chosen.push(`<button type="button" class="fchip" aria-label="Ta bort filtret ${esc(facetLabel(g.key,v))}" data-facet="${esc(g.key)}" data-val="${esc(v)}">${esc(facetLabel(g.key,v))} ✕</button>`)));
   if(chosen.length) html += `<div class="filtsel"><span class="tagrow-label">Valda filter</span>${chosen.join("")}</div>`;
   bar.innerHTML=html;
   bar.querySelectorAll(".chip,.fchip").forEach(ch=>ch.addEventListener("click",()=>{
-    if(ch.dataset.facet) toggleFacet(ch.dataset.facet, ch.dataset.val); else toggleTag(ch.dataset.col, ch.dataset.val);
+    const d=ch.dataset, wasChip=ch.classList.contains("chip");
+    if(d.facet) toggleFacet(d.facet, d.val); else toggleTag(d.col, d.val);
+    // Raden ritas om vid varje val. Fokus sätts tillbaka på samma knapp, så att tangentbordet inte tappar platsen.
+    const again=[...$("#tagbar").querySelectorAll(".chip")].find(x=>x.dataset.val===d.val && x.dataset.facet===d.facet && x.dataset.col===d.col);
+    if(wasChip && again && again.focus) again.focus();
   }));
 }
 
@@ -2657,6 +2617,47 @@ function exclParts(seq, reason, isApp){
     ctrl: (local?`<select class="card-reason" data-qnum="${seq}"><option value=""${reason?'':' selected'}>Orsak…</option>${EXCL_REASONS.map(r=>`<option ${r===reason?'selected':''}>${esc(r)}</option>`).join("")}</select>`:"")
         + (isApp?`<button type="button" class="card-reinclude" data-qnum="${seq}">Återinkludera</button>`:""),
     note: local?`<div class="exclnote">${esc(LOCAL_EXCL_NOTE)}</div>`:"" };
+}
+/* Sök, sortering, filter, mönster och färgförklaring: samma rad i verktyget och i temarapporten. Temarapporten
+   har dessutom rutan med tentans reliabilitet. */
+function controlsHtml(tema){
+  return `<div id="controlband">
+      <input type="text" id="search" placeholder="Sök" aria-label="Sök bland frågorna">
+      <button id="clearfilter" class="btn-ghost hidden" type="button">Rensa filter</button>
+      <div class="cardctrls" id="cardctrls">
+        <label class="lbl" for="sort">Sortera</label>
+        <select id="sort">
+          <option value="doc">Tentans ordning</option>
+          <option value="pc-asc">Andel rätt – lägst först</option>
+          <option value="pc-desc">Andel rätt – högst först</option>
+          <option value="trap-desc">Mest valda distraktor först</option>
+          <option value="rpb-asc">Diskriminering (r), lägst först</option>
+          <option value="code">Frågans namn</option>
+          <option value="tag">Tema, sedan frågans namn</option>
+        </select>
+      </div>
+      <div class="tagbar" id="tagbar"></div>
+    </div>
+    ${tema?'<div id="relbox"></div>':""}
+    <div id="patterns"></div>
+    <div id="count"></div>
+    <div class="legend">
+      <span class="sw"><i style="background:var(--correct-bar)"></i>Rätt svar</span>
+      <span class="sw"><i style="background:var(--eff)"></i>Distraktor ≥ 5 %</span>
+      <span class="sw"><i style="background:var(--ineff)"></i>Distraktor &lt; 5 %</span>
+      <span class="sw"><i style="background:var(--ineff0)"></i>Distraktor 0 %</span>
+      <span class="sw"><i style="background:var(--trap)"></i>Vanligare än rätt svar</span>
+    </div>`;
+}
+/* Kommentarer på korten: knappen öppnar rutan, och texten sparas medan man skriver. .cmtprint är det som skrivs ut.
+   Samma lyssnare i verktyget och i temarapporten. */
+function wireComments(){
+  const host=$("#cards") || document;
+  host.addEventListener("click", e=>{ const cm=e.target && e.target.closest && e.target.closest(".card-comment"); if(cm){ state.commentOpen=String(cm.dataset.qnum); drawCards(); } });
+  host.addEventListener("input", e=>{ const ta=e.target && e.target.closest && e.target.closest(".card-cmt"); if(!ta) return;
+    const q=String(ta.dataset.qnum), t=String(ta.value||"");
+    if(t.trim()) state.comments.set(q, t.trim()); else state.comments.delete(q);
+    const pr=ta.parentNode && ta.parentNode.querySelector && ta.parentNode.querySelector(".cmtprint"); if(pr) pr.textContent=t.trim(); });
 }
 /* Rutan för att välja frågan till en egen sida. Finns bara i temarapporten. */
 function selBoxHtml(seq){
@@ -2977,7 +2978,7 @@ function statsChartsHtml(d){
   const strip=`<svg viewBox="0 0 ${W} ${H2}" width="100%" role="img" aria-label="Poäng per student och ort"><line x1="${L}" y1="${H2-B}" x2="${W-R}" y2="${H2-B}" stroke="#888"/>`
     + groups.map((o,gi)=>{ const cy=T+gi*rowH+rowH/2;
         return `<text x="4" y="${cy+4}" font-size="11" fill="#333">${esc(o||"Alla")}</text>`
-          + d.students.filter(s=>(s.ort||"")===o || groups.length===1).map((s,k)=>`<circle cx="${x(s.total).toFixed(1)}" cy="${(cy+((k*7)%19)-9).toFixed(1)}" r="3.2" fill="${s.g?"#3f7a63":"#b3261e"}" fill-opacity=".75"/>`).join(""); }).join("")
+          + d.students.filter(s=>(s.ort||"")===o || groups.length===1).map((s,k)=>`<circle cx="${x(s.total).toFixed(1)}" cy="${(cy+((k*7)%19)-9).toFixed(1)}" r="3.2" ${s.g?'fill="#3f7a63" fill-opacity=".75"':'fill="#fff" stroke="#b3261e" stroke-width="1.6"'}/>`).join(""); }).join("")
     + xt.map(v=>`<text x="${x(v).toFixed(1)}" y="${H2-B+17}" text-anchor="middle" font-size="11" fill="#555">${v}</text>`).join("")
     + `<text x="${L+pw/2}" y="${H2-2}" text-anchor="middle" font-size="11" fill="#555">Slutpoäng</text>` + gl(T, H2-B) + `</svg>`;
   const nG=d.students.filter(s=>s.g).length, n=d.students.length;
@@ -3051,11 +3052,7 @@ function xExportInit(){
     renderSelBar();
   });
   // Kommentarer: vem som helst med rapporten kan skriva, och texten följer med när sidan sparas eller skrivs ut.
-  document.addEventListener("click", e=>{ const cm=e.target && e.target.closest && e.target.closest(".card-comment"); if(cm){ state.commentOpen=String(cm.dataset.qnum); drawCards(); } });
-  document.addEventListener("input", e=>{ const ta=e.target && e.target.closest && e.target.closest(".card-cmt"); if(!ta) return;
-    const q=String(ta.dataset.qnum), t=String(ta.value||"");
-    if(t.trim()) state.comments.set(q, t.trim()); else state.comments.delete(q);
-    const pr=ta.parentNode && ta.parentNode.querySelector && ta.parentNode.querySelector(".cmtprint"); if(pr) pr.textContent=t.trim(); });
+  wireComments();
   // En öppnad utfällning står kvar öppen när korten ritas om, och följer därmed med i utskriften.
   document.addEventListener("toggle", e=>{ const d=e.target; if(!d || !d.dataset || !d.dataset.k) return; if(d.open) state.open.add(d.dataset.k); else state.open.delete(d.dataset.k); }, true);
   if(EMBED.autoPrint) setTimeout(()=>{ try{ xExportPrint(); }catch(_){} }, 500);
@@ -3343,7 +3340,7 @@ function temaFns(){
              patternSummary,renderPatterns,togglePattern,
              scoreQuestions,scorePatterns,scoredVisible,scoreCard,activePatternRows,relBoxHtml,filterText,overviewHtml,exportOverview,
              lathundKontrollInit,splitStem,formFindings,renderForm,isForebild,
-             subsetEmbed,selVisible,renderSelBar,selRedraw,selAllVisible,selClear,saveSubset,savePage,printHtml,
+             controlsHtml,wireComments,subsetEmbed,selVisible,renderSelBar,selRedraw,selAllVisible,selClear,saveSubset,savePage,printHtml,
              fileLineText,temaSource,xExportRender,xExportPrint,openHelp,closeHelp,wireHelp,xExportInit];
 }
 function temaConsts(){
@@ -3403,33 +3400,7 @@ function buildTemaReport(EMBED){
         </div>
       </div>
       <div class="nnote" id="nnote"></div>
-      <div id="controlband">
-        <input type="text" id="search" placeholder="Sök">
-        <button id="clearfilter" class="btn-ghost hidden">Rensa filter</button>
-        <div class="cardctrls" id="cardctrls">
-          <span class="lbl">Sortera</span>
-          <select id="sort">
-            <option value="doc">Tentans ordning</option>
-            <option value="pc-asc">Andel rätt – lägst först</option>
-            <option value="pc-desc">Andel rätt – högst först</option>
-            <option value="trap-desc">Mest valda distraktor först</option>
-            <option value="rpb-asc">Diskriminering (r), lägst först</option>
-            <option value="code">Frågans namn</option>
-            <option value="tag">Tema, sedan frågans namn</option>
-          </select>
-        </div>
-        <div class="tagbar" id="tagbar"></div>
-      </div>
-      <div id="relbox"></div>
-      <div id="patterns"></div>
-      <div id="count"></div>
-      <div class="legend">
-        <span class="sw"><i style="background:var(--correct-bar)"></i>Rätt svar</span>
-        <span class="sw"><i style="background:var(--eff)"></i>Distraktor ≥ 5 %</span>
-        <span class="sw"><i style="background:var(--ineff)"></i>Distraktor &lt; 5 %</span>
-        <span class="sw"><i style="background:var(--ineff0)"></i>Distraktor 0 %</span>
-        <span class="sw"><i style="background:var(--trap)"></i>Vanligare än rätt svar</span>
-      </div>
+      ${controlsHtml(true)}
       <div id="cards"></div>
     <footer style="margin-top:36px;color:var(--muted);font-size:12px;text-align:center;line-height:1.6">
       <div>${EMBED.credit||""}</div>
@@ -3638,6 +3609,7 @@ function expandUpload(){
   { const r=$("#reopen"); if(r) r.classList.add("hidden"); }
   renderFileLine();
 }
+{ const ch=$("#controlhost"); if(ch) ch.innerHTML=controlsHtml(false); }      // före lyssnarna: sök och sortering ligger i raden
 $("#pdf").addEventListener("change", async e=>{
   const f=e.target.files[0]; if(!f) return;
   $("#got-pdf").textContent="läser …";
@@ -3716,20 +3688,14 @@ $("#modeseg").addEventListener("click", e=>{
   $("#modehint").textContent = modeHint(state.mode);
   if(state.vm) drawCards();
 });
+wireComments();
 // Exkludera/återinkludera direkt på kortet, alla frågetyper. Delegerat → överlever drawCards-omritning.
 { const cards=$("#cards");
   if(cards){
     cards.addEventListener("click", e=>{
       const ex=e.target.closest(".card-exclude"), re=e.target.closest(".card-reinclude");
-      const cm=e.target.closest(".card-comment");
-      if(cm){ state.commentOpen=String(cm.dataset.qnum); drawCards(); return; }
       if(ex){ state.excluded.set(String(ex.dataset.qnum), ""); render(); }
       else if(re){ state.excluded.delete(String(re.dataset.qnum)); render(); }
-    });
-    cards.addEventListener("input", e=>{                    // kommentar: sparas medan man skriver, utan omritning
-      const ta=e.target.closest(".card-cmt"); if(!ta) return;
-      const q=String(ta.dataset.qnum), t=String(ta.value||"");
-      if(t.trim()) state.comments.set(q, t.trim()); else state.comments.delete(q);
     });
     cards.addEventListener("change", e=>{
       const sel=e.target.closest(".card-reason"); if(!sel) return;

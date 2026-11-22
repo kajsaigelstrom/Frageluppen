@@ -2,7 +2,7 @@
 
 **Ett webbverktyg för att analysera flervalstentor (MCQ) från Inspera – och för att bedöma och förbättra frågornas kvalitet.**
 
-Frågeluppen visar, för varje fråga på en tenta, hur svaren fördelade sig, hur många som svarade rätt, och hur väl frågan *skiljer starka från svaga studenter* (diskriminering). Det används för att hitta frågor som behöver rättas om eller exkluderas, för att förbereda betygskollegiet, och för att ge frågekonstruktörer återkoppling.
+Frågeluppen visar, för varje fråga på en tenta, hur svaren fördelade sig, hur många som svarade rätt, och hur väl frågan *skiljer mellan studenter med höga och låga totalpoäng* (diskriminering). Det används för att hitta frågor som behöver rättas om eller exkluderas, för att förbereda betygskollegiet, och för att ge frågekonstruktörer återkoppling.
 
 ---
 
@@ -28,8 +28,9 @@ själva. I Linköping gör kurssamordnaren steg 1 och examinatorn steg 2 och 3.
 **1 Förbered filer.** Sidan öppnar här.
 
 1. Släpp resultatfilerna (JSON) från Inspera, tentans PDF och taggfilen om den finns.
-2. Kontrollera kvittot (tentans namn och antal studenter). Klicka sedan **Gå vidare till steg 2**,
-   eller **Spara kombinerad datafil** om någon annan ska göra steg 2 och 3.
+2. Kontrollera kvittot: tentans namn, antal studenter, om essäfrågorna är rättade och hur många
+   frågor taggfilen matchade. Gå sedan direkt till steg 2 eller 3, eller klicka **Spara kombinerad
+   datafil** om någon annan ska göra dem. Raden högst upp säger om datafilen är sparad.
 3. Gör samma sak en gång till när tentan är rättad, med nya filer från Inspera.
 
 Datafilen innehåller bara den data verktyget behöver. Studenternas skrivna svar,
@@ -38,13 +39,17 @@ Insperas slutbetyg och totalpoäng följer med, så att rättningen kan kontroll
 minimerad, inte anonym, och ska behandlas som tentamaterial. Skicka den aldrig vidare till
 temagrupperna.
 
-**2 Hitta problemfrågor.** Välj datafilen, om du inte kom hit direkt från steg 1. Här står de
-flervalsfrågor som statistiken pekar ut före betygssättningen. Går att göra innan essäfrågorna
-är rättade. **Problemfrågor** sparar en sida till betygskollegiet.
+Har du fått en sparad datafil väljer du den i steg 1, i rutan under filrutorna. Steg 2 och 3
+tänds när filerna är inlästa.
+
+**2 Hitta problemfrågor.** Här står de flervalsfrågor som statistiken pekar ut före
+betygssättningen. Går att göra innan essäfrågorna är rättade. **Problemfrågor (PDF)** öppnar en
+sida till betygskollegiet för utskrift.
 
 **3 Skapa rapporter.** Alla frågor efter rättningen. Härifrån skapas Temarapporten (interaktiv
-eller som PDF, för hela tentan eller för det filter som är valt), översiktstabellen och
-tentamensstatistiken.
+eller som PDF, för hela tentan eller för det filter som är valt), översiktstabellen, diagrammen
+och tentamensstatistiken i Excel, som också har tentans reliabilitet. Exporterna som heter (PDF)
+öppnas för utskrift, där du väljer Spara som PDF.
 
 ## För temagrupper: temarapporten
 
@@ -54,8 +59,10 @@ tentans frågor fungerade och innehåller bara sammanräknade resultat.
 - Filtrera på tema och klicka **Markera alla visade**, eller bocka för enskilda frågor.
 - **Spara sida med valda frågor** ger en ny fil med bara de frågorna, att ge vidare till den
   som skrev dem. Den sidan fungerar likadant och kan delas upp igen.
-- Överst står det som gäller flera frågor på samma sätt, till exempel hur många som var
-  mycket lätta. Korten har en ruta bara när något gäller just den frågan.
+- Överst står tentans reliabilitet och det som gäller flera frågor på samma sätt, till exempel
+  hur många som var mycket lätta. Korten har en ruta bara när svaren på just den frågan följer
+  ett mönster: en observation, med möjliga orsaker under "Mer om måttet".
+- **Spara sidan med kommentarer** sparar hela sidan med det du har skrivit på korten.
 - **Filtrera** på tema, frågetyp, svårighet, diskriminering och sådant att titta på. Siffran
   på varje knapp säger hur många frågor ett klick ger.
 - **Alla frågetyper på en sida**, i tentans ordning: flervalsfrågor (MCQ) med svarsfördelning,
@@ -63,8 +70,8 @@ tentans frågor fungerade och innehåller bara sammanräknade resultat.
   i filtret.
 - **Översiktstabell**: en tabell med en rad per fråga att skriva ut eller skicka vidare. Den
   följer filtret.
-- Har en fråga en svaghet i statistiken prövas den mot den mekaniska kontrollen ur
-  **MCQ-lathunden**, och ett fynd visas när det är en trolig förklaring.
+- En fråga som var mycket lätt eller har ett alternativ som nästan ingen valde prövas mot den
+  mekaniska kontrollen ur **MCQ-lathunden**, och ett fynd visas när det kan förklara mönstret.
 - Statistiken visar hur frågorna fungerade i studentgruppen. Den säger inget om huruvida en
   fråga ligger på rätt nivå i förhållande till kursplanen.
 
@@ -88,7 +95,7 @@ Skärmbilderna nedan är från en äldre version av verktyget och visar inte dag
 - Visar per fråga: **svarsfördelning** per alternativ, **andel rätt** (svårighet) och **diskriminering** (punkt-biseriell item–total-korrelation), med färgkodad distraktoranalys.
 - Två vägar för examinatorn: **problemfrågor före betygssättning** (flervalsfrågorna, före rättningen av essäfrågorna) och **hela rapporten** (alla frågetyper på en sida efter rättning, med Översiktstabell inför betygskollegiet).
 - Filtrering på tema, exkludering av trasiga frågor, och export till **Excel** och som **översiktstabell** att skriva ut.
-- En fristående **Temarapport** att dela med temagrupperna: utan triage och åtgärdsförslag, med frågor att ställa sig där svaren följer ett mönster, och med möjlighet att bocka för frågor och spara en egen sida att ge vidare.
+- En fristående **Temarapport** att dela med temagrupperna: utan uppmaningar, med observationer och möjliga orsaker där svaren följer ett mönster, och med möjlighet att bocka för frågor och spara en egen sida att ge vidare.
 - **Justerbara gränser** för märkningarna Lätt och Svår och för god diskriminering, i en hopfälld inställningspanel, och G-gränsen i procent direkt på rapportsidan.
 - En inbyggd **"? Hjälp"** förklarar hur måtten tolkas.
 
@@ -110,7 +117,7 @@ Kodimplementeringen är framtagen med AI-assisterad utveckling (Claude), utifrå
 
 ## Integritet
 
-Verktyget bearbetar riktiga studentresultat lokalt i webbläsaren; ingenting laddas upp. Temarapporten, Problemfrågor och Översiktstabellen innehåller **endast aggregat** (antal per alternativ, n, diskriminering, teman) – aldrig enskilda kandidatsvar, identifierare eller rådata. Exempeltentan är en simulerad kohort som återger en riktig tentas statistik utan några riktiga svar eller frågetexter.
+Verktyget bearbetar riktiga studentresultat lokalt i webbläsaren; ingenting laddas upp. Temarapporten, Problemfrågor och Översiktstabellen innehåller **endast aggregat** (antal per alternativ, n, diskriminering, teman) – aldrig enskilda kandidatsvar, identifierare eller rådata. Testerna i `tools/` körs mot en syntetisk tenta utan riktiga svar eller frågetexter.
 
 ---
 
@@ -121,6 +128,7 @@ Verktyget bearbetar riktiga studentresultat lokalt i webbläsaren; ingenting lad
 | [`index.html`](index.html) | **Hela verktyget.** Det enda du behöver för att köra det. |
 | [`CHANGELOG.md`](CHANGELOG.md) | Utvecklingshistorik version för version. |
 | [`docs/`](docs) | Skärmbilder till denna README. |
+| [`tools/`](tools) | Automatiska tester. Körs med `node --test tools/*.test.mjs`. |
 | [`CLAUDE.md`](CLAUDE.md) | Arbetsinstruktioner för vidareutveckling (AI-assisterad). |
 | [`LICENSE`](LICENSE) | MIT-licens. |
 
@@ -129,7 +137,7 @@ Verktyget bearbetar riktiga studentresultat lokalt i webbläsaren; ingenting lad
 **Koden** har MIT-licens – se [LICENSE](LICENSE). Fri att använda, ändra och dela, så länge
 upphovsrättsnotisen följer med.
 
-**Texterna** (hjälptexter, frågorna i "Att fråga sig" samt råd och motiveringar ur
+**Texterna** (hjälptexter, observationerna och deras möjliga orsaker samt råd och motiveringar ur
 MCQ-lathunden) har [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/deed.sv): fria att
 använda, dela och bearbeta med angivande av källa (Kajsa Igelström, Linköpings universitet).
 

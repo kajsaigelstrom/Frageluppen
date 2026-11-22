@@ -21,9 +21,10 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
   följer med. Lägg aldrig till ett fält utan att det behövs för statistiken, och bygg aldrig
   paketet genom att kopiera ett objekt och ta bort fält i efterhand. Paketet är minimerat,
   inte anonymt.
-- Den delbara HTML-**exporten får bara innehålla aggregat** (antal per alternativ, n,
-  diskriminering, teman). Aldrig kandidatsvar eller rådata på individnivå. Bryt inte
-  det löftet när du ändrar exportlogiken.
+- **Temarapporten, Problemfrågor och Översiktstabellen får bara innehålla aggregat** (antal per
+  alternativ, n, diskriminering, teman). Aldrig kandidatsvar eller rådata på individnivå. Bryt
+  inte det löftet när du ändrar exportlogiken. `tools/compare-local.mjs` kontrollerar det mot
+  riktiga exporter som ligger lokalt och aldrig checkas in.
 
 ## Versionering
 - `VERSION`-konstanten högst upp i `index.html` ska matcha senaste Git-taggen.
@@ -44,9 +45,11 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
 - Föredra att verifiera mot verkliga format, men aldrig mot data som får checkas in.
 
 ## Domänlogik att inte gå sönder
-- **Tagg-uppslag:** matcha på frågans **positionsnummer** (Inspera `questionNumber` =
-  PDF:ens marginalnummer = Excel-kolumnen `Nr`) först. Etikettkolumnen (`Fråga`/`Namn`)
-  är reserv och kan innehålla mänskliga etiketter som krockar med positionsnummer.
+
+### Inläsning och koppling
+- **Tagg-uppslag sker på ett ställe**, `tagValsFor`: frågans **positionsnummer** först (Inspera
+  `questionNumber` = PDF:ens marginalnummer = Excel-kolumnen `Nr`), sedan frågans namn ur
+  resultatfilen, sist PDF:ens kod. Kort, tabeller och statistik använder samma funktion.
 - **Alternativens ordning slumpas per kandidat.** `ext_inspera_interactionAlternative` ger ett
   positionsnummer som är stabilt per alternativ men som **inte** följer PDF-utskriftens ordning
   (mätt på VT26-omtentan: 26 träffar av 127 = ren slumpnivå). Det går alltså inte att koppla
@@ -56,80 +59,91 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
   faktiskt valda alternativ, så ett alternativ som ingen valde saknar slot. Blev ingen slot
   över är fördelningen fullständig och raden har noll svar (visas som 0 %). Flagga "ej kopplad"
   bara när minst en svars-slot inte kunde knytas till en rad.
-- **Två vyer**, knutna till rättningsflödet: Preliminär MCQ (kriterium = MCQ-delen, före
-  rättning) och Hela rapporten (`id: "final"`, `layout: "all"`, kriterium = hela tentan, efter
-  rättning). Hela rapporten är EN sida med kort för alla frågetyper (Kajsas beslut 20 nov 2026):
-  MCQ-korten ur `state.vm.view`, essä- och flersvarskorten ur `state.scored` (`scoredItems`,
-  `scoreCard`), blandade och sorterade av `pageItems`. Lägg inte tillbaka flikar per frågetyp.
-  Tabellen över alla frågor är exporten Översiktstabell (`overviewPayload`, `overviewHtml`,
-  `exportOverview`), en fristående sida utan skript. Diskriminering = punkt-biseriell / item–total.
-- **Tre steg i stället för roller** (Kajsas beslut 21 nov 2026): 1 Förbered filer (`state.prep`,
-  `setPrep`), 2 Hitta problemfrågor (`state.step==="triage"`) och 3 Skapa rapporter (`"report"`).
-  Stegraden (`#step-prep`, `#step-triage`, `#step-report`, `renderStepBar`, `goStep`) ligger utanför
-  filpanelen och syns alltid. Adressen följer steget (`#forbered`, `#problemfragor`, `#rapporter`;
-  de äldre `#samordnare` och `#examinator` fungerar). Texterna säger aldrig vem som gör vad, utom
-  i hjälpen där Linköpings uppdelning nämns som exempel. Filen mellan steg 1 och de andra heter
-  datafilen (`datafil_<stämpel>.html`, `extractEmbedded`, `loadDataFile`) och är enda vägen:
-  de tre filrutorna för Insperas filer finns bara i steg 1 – lägg inte tillbaka en råfilsväg.
-  Inget mellansteg: `setStep("choose")` visar det steg som är valt (`state.want`).
-  Från steg 1 går `goStep` direkt vidare med de valda filerna, genom samma `buildPackage` som en
-  sparad datafil (Kajsas beslut 21 nov 2026: terminer där samma person gör alla steg). Råfilerna
-  ligger kvar i `state.prepFiles`/`prepPdf`/`prepTags`, och `state.prepDirty` säger att analysen ska
-  räknas om. Datafilen sparas som ren JSON; `buildExaminerFile` och den inbäddade läsningen
-  finns kvar bara för äldre HTML-filer.
-- **Ingen godkäntstatistik i vyerna eller i temarapporten** (Kajsas beslut 20 nov 2026). Den
-  ska bli en egen export. `passMetric` finns kvar för det, men ritas inte. G-regeln (gränsen nedåt,
-  studentens poäng uppåt) står på ett ställe, `gLimit` och `gPassed`, och används också av `statsData`.
-- **Examinatorns fil** (`buildExaminerFile`): kurssamordnaren sparar hela verktyget med
-  tentapaketet inbäddat som ett JSON-block i `<head>` (`id="fl-data"`). Filen öppnar direkt i
-  analysen. Den byggs ur `PRISTINE_HTML`, sidans källa fångad innan något lästs in – ändra
-  aldrig det till en avläsning av sidan i efterhand, då kan inläst data följa med. Källtexten
-  får inte själv innehålla datablockets tagg som en sammanhängande sträng. Filen har en rad
-  per student och är blockerad i `.gitignore`.
-- **Kurssamordnaren** kan förbereda tentan (läget "Förbered tentan"): ser bara ett kvitto,
-  aldrig resultat, och sparar ett tentapaket som examinatorn öppnar i rutan för resultat.
-  Examinatorns egen PDF eller taggfil gäller före paketets.
-- **Tre roller:** kurssamordnaren (förbereder tentapaketet), examinatorn (laddar upp, flaggar,
-  exkluderar, exporterar) och temagrupperna (får temarapporten).
-- **Temarapporten visar frågor, aldrig åtgärder.** Den innehåller bara vyerna efter rättning,
-  ingen triage, inga åtgärdsrutor och inga uppmaningar i etiketter eller verktygstips
-  (`neutralInfo`). Mönstren hittas med samma villkor som `advice()` men formuleras som frågor
-  (`askQuestions`, lydelserna i `ASK_TEXT`). Statistiken säger inget om en frågas nivå mot
-  kursplanen – verktyget bedömer aldrig taxonomisk nivå. Lägg inte tillbaka åtgärdsspråk.
-- **Formkontrollen kommer ur MCQ-lathunden** och underhålls där. Avsnitten `LATHUND-KONTROLL`
-  och `LATHUND-REGLER` i `index.html` skrivs av `node tools/sync-lathund.mjs <lathundens mapp>`
-  och ändras aldrig för hand. Med `LATHUND_DIR` satt jämför testerna mot lathunden. Lathundens
-  regelkod har MIT-licens som resten av repot; texterna (råd, motiveringar, hjälptexter) har
-  CC BY 4.0.
-- **Formkontrollen körs bara på frågor med en svaghet i statistiken, och ett fynd visas bara där
-  det är en trolig förklaring** (`FORM_EXPLAINS`, Kajsas beslut 20 nov 2026). Inga formfynd
-  på frågor som fungerar, inga rader per formregel, ingen "hela kontrollen"-ruta. Regler med
-  prio `tips` i lathunden används inte (undantag: bästa-svar-markören vid försvarbar
-  distraktor). Lathundens råd är det enda undantaget från "aldrig åtgärder" i temarapporten,
-  och bara i utfällningen "Ur MCQ-lathunden". Appens egna vyer använder `cueScan` och är orörda.
-- **Essä- och flersvarsfrågorna** (typ `text` och `multi`) har kort på samma sida som MCQ
-  (`scoreCard`, `scoreQuestions`: bedömningsmallen för essä, facit och poängregeln för flersvar).
-  Bara sammanräknade tal. Inga förebilder och ingen formkontroll för essäfrågor. Frågetexten
-  läses ur PDF:en med `parseEssayLines` (ren funktion, testas med påhittade rader): allt
-  mellan rubriken vid vänstermarginalen och raden "Skriv ditt svar här". Den ligger som
-  `pdfMcqs.essays` och i paketet som `pdf.essays`.
-- **Förebilder kräver en ren formkontroll** (inga fynd utöver lathundens tips). Håll aldrig fram
-  en fråga som förebild utan att den har gått igenom kontrollen.
-- **Filterraden** (`FACETS`, `filterGroups`, `buildTagbar`) är en och samma i appen och i
-  temarapporten. Synlighetsfunktionerna (`currentView` för MCQ, `scoredVisible` för essä och
-  flersvar, `pageItems` för båda) filtrerar med `tagPass` + `facetPass`; `{noFacets:true}` ger
-  underlaget för räkningen. Diskrimineringsgruppen tas ur den etikett som visas (`discBucket`),
-  så att filter och kort aldrig säger olika saker.
-- **Sammanfattning före kort.** En regel vars budskap är detsamma för varje fråga den träffar
-  (mycket lätt, alternativ som nästan ingen valde) hör hemma i
-  "Mönster i frågorna" (`patternSummary`, `ASK_SUMMARY`), inte på korten. Korten
-  (`cardQuestions`) bär bara det som måste läsas i frågans eget innehåll.
+- **Blankt svar räknas som fel överallt** (`parseJSON`): andel rätt och svarsfördelning räknas på
+  alla som fick frågan, och kortet har raden "Inget svar".
+
+### Stegen och filerna
+- **Tre steg, inga roller** (Kajsas beslut 21 nov 2026): 1 Förbered filer (`state.prep`,
+  `setPrep`), 2 Hitta problemfrågor (`state.step==="triage"`, vyn `pre-mcq`, r mot flervalsdelen)
+  och 3 Skapa rapporter (`"report"`, vyn `final`, r mot hela tentan). Adressen följer steget
+  (`#forbered`, `#problemfragor`, `#rapporter`). Texterna säger aldrig vem som gör vad, utom i
+  hjälpen där Linköpings uppdelning nämns som exempel.
+- **Steg 2 och 3 är gråa tills filer finns** (`filesReady`, `renderStepBar`). Filer kommer in i
+  steg 1 på två sätt: Insperas filer i de tre filrutorna, eller en sparad datafil i rutan under.
+  Verktyget väljer aldrig steg åt användaren: en datafil som väljs i steg 1 lämnar sidan kvar där
+  (`loadDataFile` med `stay`), och valen "2 Hitta problemfrågor" och "3 Skapa rapporter" står
+  bredvid spara-knappen. Steg 3 är grått med skälet utskrivet när rättningen inte är klar
+  (`gradeState`), och `render` visar steg 2 om steg 3 ändå skulle ritas för en orättad tenta.
+- **Filraden syns i alla steg** (`renderFileLine`) och säger om datafilen är sparad
+  (`state.dataSaved`, `#filesave`). Den är beviset på att filerna följer med mellan stegen.
+- **En väg in för datan:** från steg 1 går `goStep` vidare genom samma `buildPackage` som en
+  sparad datafil. Råfilerna ligger kvar i `state.prepFiles`/`prepPdf`/`prepTags`, och
+  `state.prepDirty` säger att analysen ska räknas om. Datafilen sparas som ren JSON;
+  `buildExaminerFile` och den inbäddade läsningen finns kvar bara för äldre HTML-filer.
+- **Kvittot i steg 1** (`prepReceipt`, `prepAnalysis`, `receiptFacts`) visar aldrig resultat, bara
+  vad som lästes: antal studenter, om essäfrågorna är rättade och hur många frågor taggfilen
+  matchade.
+- **Eget arbete skyddas** (`hasWork`): verktyget frågar innan kommentarer och egna exkluderingar
+  försvinner, och varnar när sidan stängs.
+
+### Reglerna på korten
+- **Princip (Kajsas beslut 21 nov 2026): verktyget ger examinatorn underlag, inte beslut.**
+  Uppmaningar finns bara där ett beslut ska fattas före betygssättning: "Dubbelkolla facit" och
+  "Se över frågan" (`advice().l1`), och för essä "Kontrollera bedömningsmallen och rättningen"
+  (`scoreQuestions`). Allt annat är observationer (`advice().l2`): en rad om vad som syns i
+  svaren, med möjliga orsaker under "Mer om måttet" (`PSY`). Ingen exkluderingsregel byggs in.
+  Lydelserna är godkända av Kajsa: ändra dem inte utan att visa henne.
+- **Ett kort överallt.** Examinatorn och temarapporten har samma kort och samma observationer.
+  Temarapporten visar aldrig uppmaningar: den ställer frågorna i `ASK_TEXT` ("Stämmer facit?",
+  "Går «X» att försvara?") eller visar bara observationsdelen (`obs` utan `todo`).
+- **En gräns för litet underlag**, `MIN_N` = 30: under den visas bara mätvärden. Undantaget är
+  "ingen svarade rätt", som ger "Dubbelkolla facit" oavsett antal.
+- **Diskrimineringen heter "god" från `state.th.goodDisc` (0,30) och "låg" under `R_LOW` (0,10)**,
+  utan etikett däremellan (`discLabel`). Under 5 i den mindre gruppen är den ej mätbar, 5–9
+  osäker, och kortet säger skälet. Essä- och flersvarsfrågor får aldrig etiketten "god" och inga
+  brickor Lätt/Svår (Kajsas beslut 22 nov 2026); deras mindre grupp är de studenter som inte
+  fick det vanligaste poängtalet (`scoreMinority`).
+- **Ett alternativs riktning skrivs i ord, aldrig som tecken:** "valdes oftare av studenter med
+  högre/lägre totalpoäng". Siffran står i verktygstipset. Orden starka och svaga används inte.
+- **Tal visas med decimalkomma** (`dk`, `rFmt`), och måttet heter "r".
+- **Sällan valda alternativ** bedöms bara när andelen fel räcker för att alla distraktorer ska
+  kunna nå 5 %. Svårighet är inget kvalitetskriterium.
+- **Förebild** (`isForebild`): mätbar och god diskriminering över brusgränsen 2/√n, varken
+  uppmaning eller observation på kortet, och inga formfynd utöver lathundens tips.
+- **Formkontrollen kommer ur MCQ-lathunden och är enda källan för formfynd.** Avsnitten
+  `LATHUND-KONTROLL` och `LATHUND-REGLER` i `index.html` skrivs av
+  `node tools/sync-lathund.mjs <lathundens mapp>` och ändras aldrig för hand. Med `LATHUND_DIR`
+  satt jämför testerna mot lathunden. Ett fynd visas bara där det kan förklara ett mönster
+  (`FORM_EXPLAINS`, `formPick`), högst två per observation. Bygg ingen egen ledtrådssökning.
+- **Det som gäller flera frågor står en gång överst** ("Mönster i de här frågorna",
+  `patternSummary`, `scorePatterns`), i steg 3 och i temarapporten.
+- **Statistiken säger inget om en frågas nivå mot kursplanen.** Verktyget bedömer aldrig
+  taxonomisk nivå.
+
+### Vyer, filter och exporter
+- **Steg 3 är EN sida med kort för alla frågetyper**: MCQ-korten ur `state.vm.view`, essä- och
+  flersvarskorten ur `state.scored` (`scoredItems`, `scoreCard`), blandade av `pageItems`. Lägg
+  inte tillbaka flikar per frågetyp.
+- **Kontrollraden** (sök, sortering, filter, mönster, färgförklaring) finns en gång,
+  `controlsHtml`, och delas med temarapporten. Detsamma gäller `wireComments`.
+- **Filterraden** (`FACETS`, `filterGroups`, `buildTagbar`) består av riktiga knappar med
+  `aria-pressed`. Synlighetsfunktionerna (`currentView`, `scoredVisible`, `pageItems`) filtrerar
+  med `tagPass` + `facetPass`. Diskrimineringsgruppen tas ur den etikett som visas (`discBucket`).
+- **Exportknapparna säger formatet.** De som heter (PDF) går genom `printHtml`: sidan öppnas för
+  utskrift och har inget eget skript. Med ett filter valt står antalet frågor på knappen
+  (`renderExportLabels`).
 - **Temarapporten måste kunna bygga sig själv** (urvalssidan skapas inne i den exporterade
-  filen). En funktion eller konstant som rapporten använder måste därför stå i `temaFns()`
+  filen). En funktion eller konstant som rapporten använder måste stå i `temaFns()`
   respektive `temaConsts()`. Testet "en exporterad sida kan själv bygga en urvalssida" fångar missar.
-  Det gäller också det som `card` och `scoreCard` delar: `cardIsApp`, `exclParts`, `selBoxHtml`, `levelBadge`.
+- **Reliabilitet** (`reliability`, `alphaOf`): Cronbachs alfa för hela tentan, flervalsdelen och
+  essädelen, med medeldiskrimineringen bredvid. Frågor i samma fall räknas som fristående
+  (`REL_CAVEAT`). Mätfel och antal nära G-gränsen står bara i Tentamensstatistiken.
+- **G-regeln** (gränsen nedåt, studentens poäng uppåt) står på ett ställe, `gLimit` och `gPassed`.
+  Ingen godkäntstatistik i vyerna eller i temarapporten.
 - **Gränserna i `state.th` är justerbara** och ändrar bara märkningar och vilka kort som får en
-  kommentar. Minsta underlag (`MIN_N_DIST`, n ≥ 30) ligger fast.
+  observation, aldrig mätvärdena.
+- **Tillgänglighet:** etiketternas kontrast är minst 4,5 (testas i `tools/a11y.test.mjs`), och
+  diagrammet skiljer G och U med form, inte bara färg.
 
 ## Språk och ton
 - Gränssnittet är på **svenska**. Behåll svensk text i UI och i exporten.

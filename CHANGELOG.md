@@ -6,6 +6,17 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.31.0
+Femte och sista etappen efter genomgången: tillgänglighet och städning (Kajsas beslut 21 nov 2026).
+- **Filterknapparna är riktiga knappar** och nås med tangentbord. Fokus står kvar på knappen efter ett val, och
+  knappar har synlig fokusmarkering.
+- **Etiketterna har kontrast minst 4,5:** utan etikett, ej mätbar, osäker och Lätt är mörkade.
+- **I diagrammet är G en fylld punkt och U en ofylld ring**, så att de skiljs åt utan färg.
+- **Stapelns värdeord är borta** ("effektiv", "mindre effektiv"), i linje med färgförklaringen.
+- **Städning utan ändrat beteende:** spärren för orättad tenta (`showGate`) är borttagen, kontrollraden och
+  lyssnarna för kommentarer finns en gång och delas med temarapporten, och `CLAUDE.md` och `README.md`
+  beskriver dagens verktyg.
+
 ## 3.30.0
 Fjärde etappen efter genomgången: reliabilitet (Kajsas beslut 21 nov 2026).
 - **Cronbachs alfa för hela tentan, flervalsdelen och essädelen**, med medeldiskrimineringen per del bredvid,
