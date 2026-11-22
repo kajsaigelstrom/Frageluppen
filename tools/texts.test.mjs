@@ -33,7 +33,7 @@ test("steg 1 har inga inställningar, och säger vad PDF och taggfil ger", () =>
   assert.match(STATIC, /id="d-tags"[\s\S]*?per tema/);
   ev("setPrep(false)");
   assert.equal(el("#settings-open").classList.contains("hidden"), false);
-  assert.match(STATIC, /id="prep-note"[^>]*>[^<]*<b>[^<]*<\/b>[\s\S]*?två gånger[\s\S]*?nya filer från Inspera/);
+  assert.match(STATIC, /id="prep-note"[^>]*>[\s\S]*?<b>en datafil<\/b>[\s\S]*?två gånger[\s\S]*?nya filer från Inspera/);
   assert.throws(() => ev("prepReceipt({jsonObjs:[buildPackage({jsonObjs:[demoToInspera(DEMO_DATA.DEMO)], pdfMcqs:null, tagRows:null})], pdfMcqs:null, tagRows:null})"),
     /redan en datafil/);
 });

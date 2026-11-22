@@ -15,7 +15,7 @@ test("filens innehåll går att läsa ut ur datafilen", () => {
   for (const bad of ["", "<html><body>hej</body></html>", "%PDF-1.4", '{"ext_inspera_candidates":[]}'])
     assert.throws(() => ev(`extractEmbedded(${JSON.stringify(bad)})`), /inte en datafil/, bad);
 });
-test("steg 2 och 3 har en enda filruta, och steg 1 har de tre", () => {
+test("steg 2 och 3 har en enda filruta, och steg 1 har de tre och rutan för en sparad datafil", () => {
   assert.match(STATIC, /<input[^>]*id="datafile"[^>]*accept="[^"]*\.html/);
   assert.ok(!STATIC.includes('id="compute"'));
   const { ev, el } = fresh();
@@ -24,7 +24,8 @@ test("steg 2 och 3 har en enda filruta, och steg 1 har de tre", () => {
   assert.equal(el("#databox").classList.contains("hidden"), false);
   ev("setPrep(true)");
   assert.equal(el("#drops").classList.contains("hidden"), false);
-  assert.equal(el("#databox").classList.contains("hidden"), true);
+  assert.equal(el("#databox").classList.contains("hidden"), false);        // en sparad datafil väljs också i steg 1
+  assert.ok(STATIC.indexOf('id="drops"') < STATIC.indexOf('id="databox"'));
 });
 test("när filen är vald visas steg 2 direkt, med samma siffror som råfilerna ger", async () => {
   const { ev, el } = fresh();
@@ -61,7 +62,7 @@ test("hela rapporten: en sida efter rättning, med export", async () => {
   assert.equal(ev("state.step"), "report");
   assert.equal(ev("state.view"), "final");
   const tabs = el("#viewtabs").innerHTML;
-  assert.ok(tabs.includes("Hela rapporten") && !tabs.includes("reptab") && !tabs.includes("Preliminär"));
+  assert.ok(tabs.includes("Alla frågor") && !tabs.includes("reptab") && !tabs.includes("Preliminär"));
   for (const id of ["#exp-html", "#exp-xlsx", "#exp-overview"]) assert.equal(el(id).classList.contains("hidden"), false, id);
   ev("setStep('triage')");
   assert.equal(ev("state.view"), "pre-mcq");

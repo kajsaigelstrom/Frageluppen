@@ -16,15 +16,75 @@ test("stegraden har tre steg, och rollvalet och mellansteget är borta", () => {
   assert.match(bar, /id="step-report"[^>]*>[\s\S]*?3[\s\S]*?Skapa rapporter/);
   for (const gone of ['id="role-exam"', 'id="stepchoice"', 'id="step-back"', ">Jag är<", "Vad vill du göra?"]) assert.ok(!STATIC.includes(gone), gone);
 });
-test("sidan öppnar på steg 1, och steg 2 och 3 ber om datafilen", () => {
+test("sidan öppnar på steg 1, och steg 2 och 3 är gråa tills filer finns", async () => {
   const a = fresh();
   assert.equal(a.ev("state.prep"), true); assert.equal(on(a, "#step-prep"), true);
-  click(a, "#step-triage");
-  assert.equal(a.ev("state.prep"), false);
-  assert.equal(on(a, "#step-triage"), true); assert.equal(on(a, "#step-prep"), false);
-  assert.equal(a.el("#databox").classList.contains("hidden"), false);
-  assert.equal(a.el("#drops").classList.contains("hidden"), true);
+  assert.equal(a.el("#step-triage").disabled, true); assert.equal(a.el("#step-report").disabled, true);
+  assert.match(a.el("#stephint").textContent, /Steg 2 och 3 tänds när filerna är inlästa/);
+  await a.ev("goStep('triage')");                                      // utan filer händer inget
+  assert.equal(a.ev("state.prep"), true);
   assert.equal(a.el("#results").classList.contains("hidden"), true);
+  a.ev("prepSynthetic()"); await a.ev("refreshPrep()");
+  assert.equal(a.el("#step-triage").disabled, false); assert.equal(a.el("#step-report").disabled, false);
+});
+test("en sparad datafil väljs i steg 1, och sidan står kvar där tills ett steg väljs", async () => {
+  const a = fresh();
+  await a.ev("loadDataFile(FILE, 'datafil.json', {saved:true, stay:true})");
+  assert.equal(a.ev("state.prep"), true);
+  assert.equal(a.el("#results").classList.contains("hidden"), true);
+  assert.match(a.el("#prep-receipt").innerHTML, /sparad datafil/);
+  assert.equal(a.el("#prep-save").disabled, true);                     // den är redan sparad
+  assert.equal(a.el("#filesave").classList.contains("hidden"), true);
+  assert.match(a.el("#fileline").textContent, /studenter/);
+  click(a, "#prep-go3");
+  await new Promise(r => setTimeout(r, 0));
+  assert.equal(a.ev("state.step"), "report");
+});
+test("filraden syns i alla steg och säger om datafilen är sparad", async () => {
+  const a = fresh();
+  a.ev("prepSynthetic()"); await a.ev("refreshPrep()");
+  const line = a.el("#fileline").textContent;
+  assert.match(line, /studenter · \d+ frågor/);                         // redan i steg 1
+  assert.equal(a.el("#filesave").classList.contains("hidden"), false);
+  assert.match(STATIC, /id="filesave"[^>]*>Datafilen är inte sparad <button id="fileline-save"[^>]*>Spara</);
+  await a.ev("goStep('triage')");
+  assert.equal(a.ev("state.step"), "triage");
+  assert.ok(a.el("#fileline").textContent.startsWith(line.split(" · ").slice(0, 2).join(" · ")));
+  assert.equal(a.el("#filesave").classList.contains("hidden"), false); // följer med till steg 2
+  await (a.el("#fileline-save").listeners.click || [])[0]({});
+  assert.equal(a.downloads.length, 1);
+  assert.equal(a.el("#filesave").classList.contains("hidden"), true);
+  click(a, "#step-prep"); await a.ev("refreshPrep()");
+  assert.equal(a.el("#filesave").classList.contains("hidden"), true);
+});
+test("kvittot säger om essäfrågorna är rättade och hur många frågor taggfilen matchade", async () => {
+  const a = fresh();
+  a.ev("prepSynthetic()"); await a.ev("refreshPrep()");
+  const h = a.el("#prep-receipt").innerHTML;
+  assert.match(h, /Essäfrågorna är (rättade|inte rättade än)\./);
+  assert.ok(!/Taggfilen matchade/.test(h));                            // ingen taggfil vald: ingen rad
+  a.ev(`globalThis.F = prepAnalysis({jsonObjs:[demoToInspera(DEMO_DATA.DEMO)], pdfMcqs:DEMO_DATA.PDF, tagRows:DEMO_DATA.TAGS});`);
+  const f = a.evj("F");
+  assert.ok(f.tagHit > 0 && f.tagHit <= f.total);
+  assert.match(a.ev("receiptFacts(F)"), new RegExp(`Taggfilen matchade ${f.tagHit} av ${f.total} frågor\\.`));
+  assert.match(a.ev("receiptFacts(Object.assign({}, F, {fullyGraded:false}))"), /Essäfrågorna är inte rättade än\./);
+  assert.match(a.ev("receiptFacts(Object.assign({}, F, {tagHit:3}))"), /class="warn">Taggfilen matchade 3 av/);
+});
+test("verktyget frågar innan kommentarer och egna exkluderingar försvinner", async () => {
+  const a = fresh();
+  await a.ev("loadDataFile(FILE, 'f.json', {saved:true})");
+  assert.equal(a.ev("hasWork()"), false);
+  a.ev("globalThis.ASKED = 0; globalThis.confirm = () => { ASKED++; return false; };");
+  await a.ev("loadDataFile(FILE, 'f.json', {saved:true})");
+  assert.equal(a.ev("ASKED"), 0);                                      // inget att förlora: ingen fråga
+  a.ev("state.comments.set('1', 'Oklar stam'); state.excluded.set('2', 'Fel i facit');");
+  assert.equal(a.ev("hasWork()"), true);
+  assert.equal(await a.ev("loadDataFile(FILE, 'f.json', {saved:true})"), false);
+  assert.equal(a.ev("ASKED"), 1);
+  assert.equal(a.ev("state.comments.get('1')"), "Oklar stam");          // nej: allt står kvar
+  a.ev("state.comments.clear(); state.excluded.clear(); state.excluded.set('3', INSPERA_REASON);");
+  assert.equal(a.ev("hasWork()"), false);                               // exkluderingar ur Inspera följer med filen
+  assert.match(SRC, /addEventListener\("beforeunload"/);
 });
 test("när filen är vald visas det valda steget direkt", async () => {
   const a = fresh();
@@ -134,10 +194,11 @@ test("väljs nya filer i steg 1 räknas analysen om nästa gång man går vidare
   assert.equal(a.ev("state.json.candCount"), 40);
   assert.notEqual(n0, 40);
 });
-test("utan filer i steg 1 ber steg 2 om datafilen, som förut", async () => {
+test("utan filer går det inte att gå till steg 2: datafilen väljs i steg 1", async () => {
   const a = fresh();
   await a.ev("goStep('triage')");
   assert.equal(a.ev("state.json || null"), null);
+  assert.equal(a.ev("state.prep"), true);
   assert.equal(a.el("#databox").classList.contains("hidden"), false);
 });
 test("datafilen är en ren datafil som väljs i verktyget: en enda väg in", async () => {
@@ -152,23 +213,24 @@ test("datafilen är en ren datafil som väljs i verktyget: en enda väg in", asy
   assert.equal(a.ev("state.step"), "triage");
   assert.ok(!/dubbelklick/i.test(STATIC + a.ev("HELP_HTML") + a.el("#log").textContent));
   assert.match(STATIC, /id="databox"[\s\S]*?datafil_….json/);
-  assert.match(STATIC, /id="prep-note"[^>]*>[\s\S]*?Gå vidare till steg 2/);
+  assert.match(STATIC, /id="prep-note"[^>]*>[\s\S]*?gå direkt till steg 2 eller 3/);
 });
 
-test("steg 1 har Spara framhävd och Gå vidare till steg 2 precis intill", async () => {
-  assert.match(STATIC, /id="prep-save" class="btn-primary[^>]*>Spara kombinerad datafil<\/button>\s*<button id="prep-next" class="btn-ghost[^>]*>Gå vidare till steg 2</);
-  assert.match(STATIC, /id="prep-note"[^>]*>[\s\S]*?inte analyserad än/);
+test("steg 1 har Spara framhävd och stegens egna namn som val precis intill", async () => {
+  assert.match(STATIC, /id="prep-save" class="btn-primary[^>]*>Spara kombinerad datafil<\/button>\s*<button id="prep-go2" class="btn-ghost[^>]*>.*?2.*?Hitta problemfrågor<\/button>\s*<button id="prep-go3" class="btn-ghost[^>]*>.*?3.*?Skapa rapporter</);
+  assert.ok(!STATIC.includes('id="prep-next"') && !STATIC.includes("Gå vidare till steg 2"));
+  assert.equal((STATIC.slice(STATIC.indexOf('id="prep-note"')).split("</ul>")[0].match(/<li>/g) || []).length, 3);   // tre korta punkter
   const a = fresh();
   await a.ev("refreshPrep()");
-  assert.equal(a.el("#prep-next").disabled, true);                   // inga filer valda än
+  assert.equal(a.el("#prep-go2").disabled, true);                    // inga filer valda än
   a.ev("prepSynthetic()"); await a.ev("refreshPrep()");
-  assert.equal(a.el("#prep-next").disabled, false);
-  assert.equal(a.el("#prep-next").classList.contains("hidden"), false);
-  await (a.el("#prep-next").listeners.click || [])[0]({});
+  assert.equal(a.el("#prep-go2").disabled, false);
+  assert.equal(a.el("#prep-go2").classList.contains("hidden"), false);
+  await (a.el("#prep-go2").listeners.click || [])[0]({});
+  await new Promise(r => setTimeout(r, 0));
   assert.equal(a.ev("state.step"), "triage");
   assert.equal(a.downloads.length, 0);
-  assert.equal(a.el("#prep-next").classList.contains("hidden"), true);   // knappen hör till steg 1
-  assert.match(STATIC, /id="prep-note"[^>]*>[\s\S]*?Gå vidare till steg 2[\s\S]*?ligger kvar/);
+  assert.equal(a.el("#prep-go2").classList.contains("hidden"), true);    // valen hör till steg 1
 });
 
 test("filrutorna i steg 1 är inte numrerade som stegen, och resultatfilen står först", () => {
@@ -193,4 +255,60 @@ test("kvittot vid varje filruta säger vad som lästes: studenter och orter, fr�
 });
 test("Gå vidare ligger direkt intill Spara, inte utknuffad till höger", () => {
   assert.match(SRC, /\.computebar \.btn-next\{[^}]*margin-left:0/);
+});
+
+// ---- exporterna (Kajsa 21 nov 2026): knapparna säger formatet, PDF går till utskrift, och antalet står vid filter ----
+test("exportknapparna säger formatet", () => {
+  for (const [id, label] of [["exp-problems", "Problemfrågor (PDF)"], ["exp-html", "Temarapport (interaktiv)"], ["exp-temapdf", "Temarapport (PDF)"],
+                             ["exp-overview", "Översiktstabell (PDF)"], ["exp-xlsx", "Tentamensstatistik (Excel)"], ["exp-charts", "Diagram (PDF)"]])
+    assert.ok(STATIC.includes(`id="${id}"`) && new RegExp(`id="${id}"[^>]*>${label.replace(/[()]/g, "\\$&")}<`).test(STATIC), label);
+});
+test("exporterna som heter PDF öppnas för utskrift, och sparas som fil bara när fönstret inte går att öppna", async () => {
+  const a = fresh();
+  await a.ev("loadDataFile(FILE, 'f.json', {saved:true})"); a.ev("setStep('report')");
+  a.ev(`globalThis.OPENED = []; window.open = () => { const w = { html:"", printed:0, document:{ open(){}, write(h){ w.html += h; }, close(){} }, focus(){}, print(){ w.printed++; } }; OPENED.push(w); return w; };`);
+  click(a, "#exp-overview"); click(a, "#exp-charts");
+  await new Promise(r => setTimeout(r, 450));
+  assert.equal(a.downloads.length, 0);
+  assert.equal(a.ev("OPENED.length"), 2);
+  assert.match(a.ev("OPENED[0].html"), /<h1>Översiktstabell<\/h1>/);
+  assert.ok(!/<script/i.test(a.ev("OPENED[0].html")));                 // sidan själv har inget skript
+  assert.equal(a.ev("OPENED[0].printed"), 1);
+  a.ev("window.open = () => null");
+  click(a, "#exp-overview");
+  assert.equal(a.downloads.length, 1);
+});
+test("med ett filter valt står antalet frågor på de exportknappar som följer filtret", async () => {
+  const a = fresh();
+  await a.ev("loadDataFile(FILE, 'f.json', {saved:true})"); a.ev("setStep('report')");
+  assert.equal(a.el("#exp-html").textContent, "Temarapport (interaktiv)");
+  a.ev("toggleFacet('typ','single')");
+  const n = a.ev("pageItems().length"), all = a.ev("state.vm.view.length + state.scored.length");
+  assert.ok(n < all);
+  assert.equal(a.el("#exp-html").textContent, `Temarapport (interaktiv) · ${n} av ${all} frågor`);
+  assert.equal(a.el("#exp-overview").textContent, `Översiktstabell (PDF) · ${n} av ${all} frågor`);
+  assert.ok(!/exp-xlsx|exp-charts|exp-problems/.test(a.ev("renderExportLabels.toString()")));      // de följer inte filtret
+  a.ev("clearFilters()");
+  assert.equal(a.el("#exp-html").textContent, "Temarapport (interaktiv)");
+});
+test("temarapporten har alltid knappen Spara sidan med kommentarer, och hjälpen öppnar på aktuellt steg", async () => {
+  const a = fresh();
+  await a.ev("loadDataFile(FILE, 'f.json', {saved:true})"); a.ev("setStep('report')");
+  const html = a.ev("buildTemaReport(temaEmbed())");
+  assert.match(html, /id="dlsave"[^>]*>Spara sidan med kommentarer</);
+  const page = runHtml(html);
+  page.ev("state.comments.set(String(EMBED.views[0].view[0].seq), 'Min kommentar')");
+  (page.el("#dlsave").listeners.click || []).forEach(f => f({}));
+  assert.match(page.downloads[page.downloads.length - 1].parts.join(""), /Min kommentar/);
+  const help = a.ev("HELP_HTML");
+  assert.match(help, /data-step="prep"><summary>De tre stegen/);
+  assert.match(help, /data-step="triage report"><summary>Steg 2 och 3/);
+  assert.match(help, /G-gräns\.[\s\S]*Kontrollen mot Inspera\./);
+  assert.match(help, /Med observationer<\/b> och <b>Bara mätvärden/);
+});
+test("sidans fasta delar är rätt nästlade: resultaten ligger inte inne i filpanelen", () => {
+  const body = STATIC.slice(STATIC.indexOf("<body>"));
+  assert.equal((body.match(/<div\b/g) || []).length, (body.match(/<\/div>/g) || []).length);
+  const panel = body.slice(body.indexOf('<div class="panel" id="uploadpanel">'), body.indexOf('<div id="warnings">'));
+  assert.equal((panel.match(/<div\b/g) || []).length, (panel.match(/<\/div>/g) || []).length);
 });

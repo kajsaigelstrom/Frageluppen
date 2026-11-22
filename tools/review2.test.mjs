@@ -42,15 +42,17 @@ test("urvalsetiketten säger Med observation, samma ord som filtret", () => {
   assert.ok(!/Att se över/.test(label));
   assert.match(label, /Med observation/);
 });
-test("steg 1 visar inga varningar från förra analysen och låser inte steg 3", async () => {
+test("steg 1 visar inga varningar från förra analysen, och steg 3 är grått med skälet när rättningen inte är klar", async () => {
   const a = fresh();
   await a.ev("loadDataFile(mk(dirty), 'f.json')");
   a.ev("state.json.fullyGraded = false; state.json.ungradedPts = 5; setStep('triage');");
   assert.equal(a.el("#step-report").disabled, true);
   a.ev("setPrep(true)");
   assert.equal(a.el("#warnings").classList.contains("hidden"), true);
-  assert.equal(a.el("#step-report").disabled, false);
-  assert.equal(a.el("#step-report-note").textContent, "");
+  assert.equal(a.el("#step-report").disabled, true);
+  assert.equal(a.el("#step-report-note").textContent, "");                 // i steg 1 står skälet vid stegvalen under kvittot
+  assert.match(a.el("#prep-go3-note").textContent, /Steg 3 kräver färdig rättning/);
+  assert.equal(a.el("#prep-go3").disabled, true); assert.equal(a.el("#prep-go2").disabled, false);
   a.ev("setPrep(false)");
   assert.equal(a.el("#warnings").classList.contains("hidden"), false);
 });

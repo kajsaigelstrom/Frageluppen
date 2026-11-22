@@ -34,6 +34,7 @@
   /* Smal rad överst när en fil är vald: namnet, tentan och filen, Byt fil, Inställningar och Hjälp. */
   .fileline{flex:1 1 260px;min-width:0;font-size:13px;color:var(--muted)}
   .fileline b{color:var(--ink);font-weight:600}
+  .filesave{font-size:13px;color:#8a3b12;white-space:nowrap}
   body.compact header{margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--line)}
   body.compact .titlerow h1{font-size:19px}
   body.compact .h1sub,body.compact .devpill,body.compact header .subtitle,body.compact header .intro{display:none}
@@ -255,6 +256,7 @@
   .prephead p{margin:0 0 14px;font-size:13.5px;color:var(--muted);max-width:70ch}
   #prep-receipt{margin-top:14px;font-size:13.5px;line-height:1.6}
   #prep-receipt .warn{color:#8a3b12}
+  #prep-note ul{margin:0;padding-left:18px} #prep-note li{margin:3px 0}
   #prep-note{margin-top:12px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:#faf6ea;font-size:13px;max-width:78ch}
   .computebar .btn-next{font-size:15px;padding:10px 22px;margin-left:0}
   .btn-ghost{font:inherit;font-size:13px;font-weight:600;padding:7px 16px;border:1px solid var(--line);
@@ -334,6 +336,7 @@
       <h1>Frågeluppen<span class="h1sub"> — frågeanalys för Inspera-tentor</span></h1>
       <span class="devpill">Under utveckling</span>
       <span id="fileline" class="fileline"></span>
+      <span id="filesave" class="filesave hidden">Datafilen är inte sparad <button id="fileline-save" class="linkbtn" type="button" title="Sparar den kombinerade datafilen, så att du eller någon annan kan välja den senare.">Spara</button></span>
       <button id="reopen" class="linkbtn hidden" type="button">Byt fil</button>
       <button class="helpbtn" id="helpOpen" type="button">? Hjälp</button>
       <button class="linkbtn" id="settings-open" type="button">Inställningar</button>
@@ -367,12 +370,6 @@
       <h2>Förbered filer</h2>
       <p>Släpp filerna från Inspera. De kombineras till en datafil, som du sparar eller går vidare med. Studenternas skrivna svar, rättarnamn, tider, extratid och alla id tas bort, och kandidatnumren ersätts av löpnummer. Insperas slutbetyg och totalpoäng följer med, så att rättningen kan kontrolleras i steg 3. Inga resultat visas här.</p>
     </div>
-    <div id="databox" class="drop databox hidden">
-      <label>Kombinerad datafil</label>
-      <div class="hint">Välj den kombinerade datafilen som sparades i steg 1. Den heter <b>datafil_….json</b>.</div>
-      <input type="file" id="datafile" accept=".html,.htm,.json,text/html,application/json">
-      <div class="got" id="got-data"></div>
-    </div>
     <div class="drops" id="drops">
       <div class="drop" id="d-json">
         <label>Resultat från Inspera (JSON) – behövs</label>
@@ -401,12 +398,24 @@
         <div class="got" id="got-tags"></div>
       </div>
     </div>
+    <div id="databox" class="drop databox hidden">
+      <label>Kombinerad datafil</label>
+      <div class="hint">Har du redan sparat datafilen i steg 1? Välj den här. Den heter <b>datafil_….json</b>.</div>
+      <input type="file" id="datafile" accept=".html,.htm,.json,text/html,application/json">
+      <div class="got" id="got-data"></div>
+    </div>
     <div class="computebar">
       <button id="prep-save" class="btn-primary hidden" type="button" disabled title="Sparar den kombinerade datafilen, som väljs i steg 2 och 3. Den är inte analyserad än.">Spara kombinerad datafil</button>
-      <button id="prep-next" class="btn-ghost btn-next hidden" type="button" disabled title="Fortsätt själv med filerna du har valt här. De ligger kvar om du går tillbaka.">Gå vidare till steg 2</button>
+      <button id="prep-go2" class="btn-ghost btn-next hidden" type="button" disabled title="Flervalsfrågor som kan behöva rättas i facit eller exkluderas. Filerna du har valt här följer med."><span class="stepno">2</span> Hitta problemfrågor</button>
+      <button id="prep-go3" class="btn-ghost btn-next hidden" type="button" disabled title="Alla frågor efter rättningen, och rapporterna. Filerna du har valt här följer med."><span class="stepno">3</span> Skapa rapporter</button>
+      <span id="prep-go3-note" class="stepnote"></span>
     </div>
     <div id="prep-receipt" class="hidden"></div>
-    <div id="prep-note" class="hidden">Filerna från Inspera kombineras till <b>en datafil</b>. Den är inte analyserad än; analysen görs i steg 2 och 3. <b>Spara kombinerad datafil</b> ger en fil som väljs i steg 2 och 3, av dig eller av någon annan. Med <b>Gå vidare till steg 2</b> fortsätter du själv direkt, och filerna du har valt här ligger kvar om du går tillbaka. Gör steg 1 två gånger per tenta: direkt efter tentan, så att problemfrågor kan hittas före betygssättningen, och en gång till när allt är rättat, då med nya filer från Inspera. Datafilen är minimerad, inte anonym. Varje rad är en students poängmönster och kan på en liten omtenta kännas igen av den som vet vilka som skrev. Behandla filen som tentamaterial och dela den bara med den som ska göra steg 2 och 3. Den innehåller också tentans frågor.</div>
+    <div id="prep-note" class="hidden"><ul>
+      <li>Filerna kombineras till <b>en datafil</b>. Spara den om någon annan ska göra steg 2 och 3, eller gå direkt till steg 2 eller 3. Filerna följer med när du byter steg.</li>
+      <li>Gör steg 1 två gånger per tenta: direkt efter tentan, för att hitta problemfrågor före betygssättningen, och en gång till när allt är rättat, då med nya filer från Inspera.</li>
+      <li>Datafilen är minimerad, inte anonym. Varje rad är en students poängmönster, och filen innehåller tentans frågor. Behandla den som tentamaterial.</li>
+    </ul></div>
     </div>
     <div id="log"></div>
   </div>
@@ -425,12 +434,12 @@
       <label class="gctl" id="gctl" title="Gränsen för godkänt i procent av maxpoängen. Styr betygen i Tentamensstatistiken och linjen i Diagram. Poänggränsen avrundas nedåt, och studentens poäng uppåt.">G-gräns
         <input type="text" inputmode="decimal" id="g-pct" size="3"> % <span id="g-pts"></span></label>
       <div class="exports" id="exports">
-        <button class="expbtn" id="exp-problems" title="Sida till betygskollegiet: frågorna att se över, exkluderade frågor och dina kommentarer. Bara sammanräknade resultat.">Problemfrågor</button>
-        <button class="expbtn" id="exp-html" title="Interaktiv rapport till temagrupperna: frågor i stället för åtgärder, bara sammanräknade resultat. Med ett filter valt innehåller den bara de frågor som syns.">Temarapport</button>
+        <button class="expbtn" id="exp-problems" title="Sida till betygskollegiet: frågorna att se över, exkluderade frågor och dina kommentarer. Öppnas för utskrift, där du väljer Spara som PDF. Bara sammanräknade resultat.">Problemfrågor (PDF)</button>
+        <button class="expbtn" id="exp-html" title="Interaktiv rapport till temagrupperna, sparas som en fil: samma observationer som här men utan uppmaningar, bara sammanräknade resultat. Med ett filter valt innehåller den bara de frågor som syns.">Temarapport (interaktiv)</button>
         <button class="expbtn" id="exp-temapdf" title="Samma rapport som PDF: öppnas i ett eget fönster och går till utskrift, där du väljer Spara som PDF. Följer filtret.">Temarapport (PDF)</button>
-        <button class="expbtn" id="exp-overview" title="Tabell med en rad per fråga, alla frågetyper, att skriva ut eller skicka vidare. Följer filtret.">Översiktstabell</button>
-        <button class="expbtn" id="exp-xlsx" title="Excel med samma flikar som den mall som tidigare fylldes i för hand: sammanfattning, resultat per student och uppgift, och resultat per tema. En rad per student, med löpnummer.">Tentamensstatistik</button>
-        <button class="expbtn" id="exp-charts" title="Sida att skriva ut: poängfördelningen och slutpoäng per student och studieort, med G-gränsen utritad.">Diagram</button>
+        <button class="expbtn" id="exp-overview" title="Tabell med en rad per fråga, alla frågetyper, alla frågetyper. Öppnas för utskrift, där du väljer Spara som PDF. Följer filtret.">Översiktstabell (PDF)</button>
+        <button class="expbtn" id="exp-xlsx" title="Excel med samma flikar som den mall som tidigare fylldes i för hand: sammanfattning, resultat per student och uppgift, och resultat per tema. En rad per student, med löpnummer.">Tentamensstatistik (Excel)</button>
+        <button class="expbtn" id="exp-charts" title="Poängfördelningen och slutpoäng per student och studieort, med G-gränsen utritad. Öppnas för utskrift, där du väljer Spara som PDF.">Diagram (PDF)</button>
       </div>
     </div>
     <div class="modehint" id="modehint"></div>
@@ -562,7 +571,7 @@ const VIEWS = [
     modes:[{id:"action",label:"Att se över"},{id:"edu",label:"Alla flervalsfrågor"}] },
   // Hela rapporten är en sida med alla frågetyper (Kajsa 20 nov 2026). Frågetyp väljs i filtret, och översikten
   // i tabellform är en egen export (exportOverview).
-  { id:"final",     label:"Hela rapporten",  criterion:"whole", layout:"all",   needsFullyGraded:true,
+  { id:"final",     label:"Alla frågor",  criterion:"whole", layout:"all",   needsFullyGraded:true,
     modes:[{id:"edu",label:"Med observationer"},{id:"simple",label:"Bara mätvärden"}] },
 ];
 function activeView(){ return VIEWS.find(v=>v.id===state.view) || VIEWS[0]; }
@@ -617,18 +626,29 @@ function extractEmbedded(text){
   try{ if(isPackage(JSON.parse(cand))) return cand; }catch(_){}
   throw new Error("Det här är inte en datafil från steg 1. Välj filen som heter datafil_….json.");
 }
-async function loadDataFile(text, name){
+/* Eget arbete som går förlorat när en ny fil läses in eller sidan stängs: kommentarer och egna exkluderingar. */
+function hasWork(){
+  return (state.comments && state.comments.size>0) || [...(state.excluded||new Map()).values()].some(r=>r!==INSPERA_REASON);
+}
+/* opts.saved: filen valdes som sparad datafil (annars kommer datan direkt ur filerna i steg 1 och är inte sparad).
+   opts.stay: filen valdes i steg 1, och sidan står kvar där tills användaren väljer steg 2 eller 3. */
+async function loadDataFile(text, name, opts){
+  opts=opts||{};
+  if(hasWork() && typeof confirm==="function" && !confirm("Dina kommentarer och exkluderingar försvinner när en ny fil läses in. Vill du fortsätta?")) return false;
   try{
     const json=extractEmbedded(text);
     state.json=null; state.step=null;
     state.jsonFiles=[{name:name||"datafilen", text: async()=>json}];
     state.pdfMcqs=null; state.pdfFromPackage=false; state.tagsFile=null; state.excluded=new Map(); state.comments=new Map(); state.commentOpen=null;
     state.facets={}; state.activeTags={}; state.patternKey=null; state.patternSeqs=null; state.vm=null;
+    state.fromDataFile=!!opts.saved; state.dataSaved=!!opts.saved;
     { const sb=$("#search"); if(sb) sb.value=""; }
     await tryRun();
-    if(state.json){ collapseUpload(); setStep("choose"); }
+    if(state.json && opts.stay && state.prep){ refreshPrep(); renderStepBar(); renderFileLine(); }
+    else if(state.json){ if(state.prep) setPrep(false); else { collapseUpload(); setStep("choose"); } }
     else setStep(null);                                      // filen gick inte att läsa: inga gamla resultat kvar
   }catch(e){ setStep(null); log("Fel: "+e.message); }
+  return true;
 }
 function setStep(step){
   const res=$("#results");
@@ -637,9 +657,6 @@ function setStep(step){
   const ungraded = !!(state.json && !state.json.fullyGraded);
   if(step==="report" && ungraded) step="triage";
   state.step=step||null;
-  { const b=$("#step-report"), n=$("#step-report-note");
-    if(b) b.disabled=ungraded;
-    if(n) n.textContent = ungraded ? `Steg 3 kräver färdig rättning. Cirka ${+(state.json.ungradedPts||0).toFixed(1)} p är inte rättade ännu.` : ""; }
   if(step!=="report"){ const gn=$("#gradenote"); if(gn) gn.innerHTML=""; }
   if(!step){ if(res) res.classList.add("hidden"); renderStepBar(); return; }
   state.want=step;
@@ -648,11 +665,27 @@ function setStep(step){
   renderStepBar();
 }
 /* Stegraden: 1 Förbered filer, 2 Hitta problemfrågor, 3 Skapa rapporter. Vilket steg som är valt, och adressen. */
+/* Finns det filer att arbeta med: en inläst tenta, eller filer valda i steg 1. Steg 2 och 3 är gråa tills dess. */
+function filesReady(){ return !!state.json || (state.prepFiles || state.jsonFiles || []).some(f=>typeof f.text==="function"); }
+/* Är allt rättat? I steg 1 gäller filerna som är valda där (state.prepInfo), annars den inlästa tentan. */
+function gradeState(){
+  const p = (state.prep && state.prepInfo) ? state.prepInfo : state.json;
+  return {ungraded: !!(p && !p.fullyGraded), pts: p ? +(+(p.ungradedPts||0)).toFixed(1) : 0};
+}
 function renderStepBar(){
   const cur = state.prep ? "prep" : (state.step || state.want || "triage");
   [["#step-prep","prep"],["#step-triage","triage"],["#step-report","report"]].forEach(([sel,k])=>{ const b=$(sel); if(b) b.classList.toggle("on", cur===k); });
+  const ready=filesReady(), g=gradeState();
+  const why = g.ungraded ? `Steg 3 kräver färdig rättning. Cirka ${String(g.pts).replace(".",",")} p är inte rättade ännu.` : "";
+  { const b2=$("#step-triage"), b3=$("#step-report"), n=$("#step-report-note");
+    if(b2) b2.disabled=!ready; if(b3) b3.disabled=!ready || g.ungraded;
+    if(n) n.textContent = (!state.prep && ready) ? why : "";
+    const g2=$("#prep-go2"), g3=$("#prep-go3"), gn=$("#prep-go3-note");
+    if(g2) g2.disabled=!ready; if(g3) g3.disabled=!ready || g.ungraded;
+    if(gn) gn.textContent = (state.prep && ready) ? why : ""; }
   const h=$("#stephint");
-  if(h) h.textContent = state.prep ? "Släpp Insperas filer. Spara sedan den kombinerade datafilen, eller gå vidare till steg 2." : (state.json ? "" : "Välj datafilen från steg 1.");
+  if(h) h.textContent = !state.prep ? "" : ready ? "Spara den kombinerade datafilen, eller gå till steg 2 eller 3. Filerna följer med."
+                      : "Släpp Insperas filer, eller välj en sparad datafil. Steg 2 och 3 tänds när filerna är inlästa.";
   try{ if(typeof history!=="undefined" && history.replaceState) history.replaceState(null, "", cur==="prep" ? "#forbered" : cur==="report" ? "#rapporter" : "#problemfragor"); }catch(_){}
 }
 /* Gå till steg 2 eller 3. Finns en fil öppen visas steget direkt, annars ber sidan om datafilen. */
@@ -660,11 +693,15 @@ async function goStep(which){
   state.want=which;
   // Från steg 1 med filer valda: analysen görs direkt ur dem, utan att datafilen sparas och väljs igen.
   // Datan går samma väg som en sparad datafil (buildPackage), så det finns fortfarande bara en väg in.
-  const hasFiles=(state.prepFiles || state.jsonFiles || []).some(f=>typeof f.text==="function");   // utan filer: fråga efter datafilen direkt
-  if(state.prep && hasFiles && (state.prepDirty || !state.json)){
+  if(!filesReady()){ if(!state.prep) setPrep(true); else renderStepBar(); return; }                  // utan filer finns inget att visa
+  const hasFiles=(state.prepFiles || state.jsonFiles || []).some(f=>typeof f.text==="function");
+  if(state.prep && hasFiles && !state.fromDataFile && (state.prepDirty || !state.json)){
     let text=null;
     try{ const inp=await prepInputs(); if(inp.jsonObjs.length){ prepReceipt(inp); text=JSON.stringify(buildPackage(inp)); keepPrepInputs(inp); } }catch(_){ text=null; }
-    if(text){ setPrep(false); await loadDataFile(text, "datafilen"); state.prepDirty=false; renderStepBar(); return; }
+    if(text){ const saved=state.dataSaved===true && !state.prepDirty;
+      state.prep=false; const ok=await loadDataFile(text, "datafilen");
+      if(!ok){ state.prep=true; renderStepBar(); return; }
+      setPrep(false); state.dataSaved=saved; state.prepDirty=false; renderStepBar(); renderFileLine(); return; }
   }
   if(state.prep) setPrep(false);
   else if(state.json) setStep(which);
@@ -689,7 +726,7 @@ function discLabel(r){
 }
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum. */
-const VERSION = "3.28.0";
+const VERSION = "3.29.0";
 const UPDATED = "2026-11-22";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
@@ -714,8 +751,16 @@ skäl att läsa frågan, inte ett bevis på att den är fel.</p>
 poäng, och hur väl poängen på frågan följer studentens poäng på resten av tentan (r). De finns
 bara i hela rapporten, eftersom de kräver färdig rättning.</p>
 </div></details>
-<details class="helpsec"><summary>Steg 2 och 3</summary><div class="body">
-<p>Med datafilen vald finns två steg, och du byter mellan dem i raden överst.</p>
+<details class="helpsec" data-step="triage report"><summary>Steg 2 och 3</summary><div class="body">
+<p>När filerna är inlästa byter du mellan stegen i raden överst. Raden högst upp på sidan visar
+vilken tenta som är inläst, och om datafilen är sparad.</p>
+<p><b>Lägena.</b> I steg 2 väljer du mellan frågorna <b>att se över</b> och <b>alla flervalsfrågor</b>.
+I steg 3 väljer du mellan <b>Med observationer</b> och <b>Bara mätvärden</b>, som döljer
+observationer och uppmaningar.</p>
+<p><b>G-gräns.</b> Fältet i steg 3 är gränsen för godkänt i procent av maxpoängen. Den styr betygen i
+Tentamensstatistiken och linjen i Diagram. Bredvid står vad gränsen blir i poäng.</p>
+<p><b>Kontrollen mot Inspera.</b> Datafilen bär med sig Insperas totalpoäng och betyg. Skiljer de sig
+från det verktyget räknar fram står en varning överst i steg 3, med antalet studenter det gäller.</p>
 <p><b>2 Hitta problemfrågor</b> – flervalsfrågor som kan behöva rättas i facit
 eller exkluderas, med diskriminering mot flervalsdelens poäng. Går att göra innan essäfrågorna
 är rättade. Vyn öppnar på frågorna <b>att se över</b>, alltså dem som statistiken pekar ut.
@@ -732,12 +777,13 @@ flervalsfrågorna. Härifrån skapas <b>Temarapporten</b> till temagrupperna, <b
 med samma flikar som den mall som tidigare fylldes i för hand, och <b>Diagram</b> med poängfördelningen. Kräver färdig rättning.</p>
 <p><b>Temarapporten följer filtret.</b> Med ett filter valt, till exempel ett tema, innehåller
 rapporten bara de frågor som syns, och den säger vilket filter det var. Så skapas en rapport per tema.
-<b>Temarapport</b> ger den interaktiva sidan, och <b>Temarapport (PDF)</b> öppnar samma rapport för
-utskrift, där du väljer Spara som PDF.</p>
+<b>Temarapport (interaktiv)</b> sparar den interaktiva sidan som en fil. Exporterna som heter
+<b>(PDF)</b> öppnas för utskrift, där du väljer Spara som PDF. Med ett filter valt står antalet
+frågor på knappen.</p>
 <p><b>Kommentarer.</b> Med <b>Lägg till kommentar</b> på ett kort skriver du en fråga eller synpunkt
 till kollegorna. Den följer med i Problemfrågor och i Temarapporten, där mottagaren kan lägga till
-egna. Det står inte vem som skrev. Kommentarerna finns bara så länge filen är öppen, så skapa
-exporten innan du stänger.</p>
+egna. Det står inte vem som skrev. Kommentarerna finns bara så länge sidan är öppen, så skapa
+exporten innan du stänger. Verktyget frågar innan kommentarer och exkluderingar försvinner.</p>
 <p><b>Problemfrågor</b> finns före betygssättning och är en sida till betygskollegiet: frågorna att se
 över, exkluderade frågor och dina kommentarer.</p>
 <p>Godkäntstatistik visas inte i vyerna.</p>
@@ -767,23 +813,32 @@ diskriminering ändras. De ändrar bara märkningar och vilka kort som får en k
 mätvärdena. Avviker en gräns från standard står det överst på sidan, och temarapporten bär med
 sig dina gränser.</p>
 </div></details>
-<details class="helpsec"><summary>De tre stegen</summary><div class="body">
+<details class="helpsec" data-step="prep"><summary>De tre stegen</summary><div class="body">
 <p>Verktyget används i tre steg, som väljs i raden överst. Sidan öppnar på steg 1.</p>
 <p><b>1 Förbered filer.</b> Släpp resultatfilerna från Inspera, tentans PDF och taggfilen om den
-finns. De kombineras till <b>en datafil</b>, som inte är analyserad än. Spara den, eller gå vidare direkt. Det görs två gånger per tenta: direkt efter tentan, och en
+finns. De kombineras till <b>en datafil</b>, som inte är analyserad än. Spara den, eller gå direkt till steg 2 eller 3. Det görs två gånger per tenta: direkt efter tentan, och en
 gång till när allt är rättat, då med nya filer från Inspera. Studenternas skrivna svar, rättarnamn,
 tider, extratid och alla id tas bort, och kandidatnumren ersätts av löpnummer. Insperas slutbetyg
 och totalpoäng följer med, så att rättningen kan kontrolleras i steg 3. Inga resultat visas i
 steg 1. Utan tentans PDF saknas frågetexterna, och utan taggfil filtret på tema.</p>
-<p><b>2 Hitta problemfrågor</b> och <b>3 Skapa rapporter</b> börjar med att datafilen väljs.
-Den som har gjort steg 1 går i stället direkt vidare med knappen <b>Gå vidare till steg 2</b>, utan att spara filen.</p>
+<p><b>2 Hitta problemfrågor</b> och <b>3 Skapa rapporter</b> tänds när filerna är inlästa. Den som
+har fått en sparad datafil väljer den i steg 1, under filrutorna. Filerna följer med när du byter
+steg, och raden högst upp säger om datafilen är sparad.</p>
 <p>Vem som gör vilket steg bestämmer ni själva. I Linköping gör kurssamordnaren steg 1, eftersom
 det är hen som hämtar filerna ur Inspera, och examinatorn steg 2 och 3.</p>
 <p>Datafilen är minimerad, inte anonym: varje rad är en students poängmönster. Behandla den som
 tentamaterial och skicka den inte vidare.</p>
 </div></details>`;
 
-function openHelp(){ const m=document.getElementById("helpModal"); if(m) m.classList.remove("hidden"); }
+/* Hjälpen öppnar på avsnittet för det steg man står i (data-step på avsnittet). */
+function openHelp(){
+  const m=document.getElementById("helpModal"); if(!m) return;
+  m.classList.remove("hidden");
+  const step = (typeof isTemaPage==="function" && isTemaPage()) ? null : state.prep ? "prep" : state.step;
+  const secs = m.querySelectorAll ? [...m.querySelectorAll("details.helpsec")] : [];
+  const hit = step ? secs.find(d=>String(d.getAttribute("data-step")||"").split(" ").includes(step)) : null;
+  if(hit){ secs.forEach(d=>{ d.open = d===hit; }); if(hit.scrollIntoView) hit.scrollIntoView(); }
+}
 function closeHelp(){ const m=document.getElementById("helpModal"); if(m) m.classList.add("hidden"); }
 function wireHelp(){
   const body=document.getElementById("helpBody"); if(body && !body.innerHTML.trim()) body.innerHTML=HELP_HTML;
@@ -827,7 +882,7 @@ function exportProblems(){
     + `Sidan innehåller bara sammanräknade resultat, aldrig enskilda studenters svar.</p>`
     + (cards || `<div class="panel">Statistiken pekar inte ut någon fråga, och ingen fråga är exkluderad eller kommenterad.</div>`)
     + `</div></body></html>`;
-  downloadText(`problemfragor_${stamp()}.html`, html, "text/html;charset=utf-8");
+  printHtml(`problemfragor_${stamp()}.html`, html);
 }
 const INSPERA_REASON = "Viktad till 0 % i Inspera";      // exkluderingen kommer ur exporten, inte från ett val här
 const LOCAL_EXCL_NOTE = "Gäller bara här. Väg ner frågan till 0 % i Inspera, så följer exkluderingen med i filen efter rättningen.";
@@ -2346,8 +2401,9 @@ function overviewHtml(payload, rows, filt, credit){
   const h=payload.head;
   const body=rows.map(r0=>{
     const r=Object.assign({}, r0, {info:thInfo(r0.info, r0.r)});
+    const kom=x=>String(+(+x).toFixed(2)).replace(".",",");
     const diff = r.isSingle ? `${r.diffPc.toFixed(0)} % rätt`
-      : `${(+r.diffMean.toFixed(2))} / ${r.max} <span class="mut">(${r.diffPct.toFixed(0)} %)</span>`;
+      : `${kom(r.diffMean)} / ${kom(r.max)} <span class="mut">(${r.diffPct.toFixed(0)} %)</span>`;
     return `<tr class="${r.excluded?'trexcl':'tr'}"><td class="num">${esc(String(r.num))}</td>`
       +`<td>${esc(r.title||String(r.num))}${r.excluded?` <span class="ex">exkluderad${r.reason?` · ${esc(r.reason)}`:""}</span>`:""}</td>`
       +`<td>${esc(r.typeLabel)}</td><td class="num">${r.max}</td><td>${diff}</td>`
@@ -2376,7 +2432,7 @@ function exportOverview(){
   if(!payload) return;
   let rows=payload.rows;
   if(filtersActive()){ const vis=new Set(pageItems().map(it=>it.seq)); rows=rows.filter(r=>vis.has(String(r.num))); }
-  downloadText(`oversiktstabell_${stamp()}.html`, overviewHtml(payload, rows, filterText(), tema ? EMBED.credit : creditText()), "text/html;charset=utf-8");
+  printHtml(`oversiktstabell_${stamp()}.html`, overviewHtml(payload, rows, filterText(), tema ? EMBED.credit : creditText()));
 }
 
 function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
@@ -2566,6 +2622,7 @@ function drawCards(){
         ? `<div class="panel">✓ Statistiken pekar inte ut någon fråga. Under <b>Alla flervalsfrågor</b> finns överblicken över svårighet och diskriminering.</div>`
         : `<div class="panel">Inga frågor matchar ${isPre() ? "sökningen" : "filtret"}.</div>`);
   updateClearBtn();
+  if(!isTemaPage() && typeof renderExportLabels==="function") renderExportLabels();
 }
 
 /* Orsaken till att ett PDF-alternativ blev okopplat – delas av kortet och alla exporter så att
@@ -2881,7 +2938,7 @@ function statsChartsHtml(d){
 }
 function exportCharts(){
   const d=statsData(); if(!d) return;
-  downloadText(`tentamensstatistik_diagram_${stamp()}.html`, statsChartsHtml(d), "text/html;charset=utf-8");
+  printHtml(`tentamensstatistik_diagram_${stamp()}.html`, statsChartsHtml(d));
 }
 function stamp(){ const d=new Date(); const p=n=>String(n).padStart(2,"0");
   return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`; }
@@ -2949,7 +3006,8 @@ function xExportInit(){
   document.addEventListener("toggle", e=>{ const d=e.target; if(!d || !d.dataset || !d.dataset.k) return; if(d.open) state.open.add(d.dataset.k); else state.open.delete(d.dataset.k); }, true);
   if(EMBED.autoPrint) setTimeout(()=>{ try{ xExportPrint(); }catch(_){} }, 500);
   { const a=$("#sel-all"), c=$("#sel-clear"), sv=$("#sel-save");
-    if(a) a.addEventListener("click", selAllVisible); if(c) c.addEventListener("click", selClear); if(sv) sv.addEventListener("click", saveSubset); }
+    if(a) a.addEventListener("click", selAllVisible); if(c) c.addEventListener("click", selClear); if(sv) sv.addEventListener("click", saveSubset);
+    const ds=$("#dlsave"); if(ds) ds.addEventListener("click", savePage); }
   renderSelBar();
   xExportRender();
 }
@@ -3016,7 +3074,8 @@ facit stämmer, eller om en distraktor går att försvara som rätt.</p>
 <details class="helpsec"><summary>Kommentarer och utskrift</summary><div class="body">
 <p>Med <b>Lägg till kommentar</b> skriver du en fråga eller synpunkt på ett kort. Det står inte vem
 som skrev, så skriv det själv om det behövs. Kommentaren följer med när du sparar en sida med
-valda frågor och när du skriver ut.</p>
+valda frågor, när du väljer <b>Spara sidan med kommentarer</b> och när du skriver ut. Stänger du
+sidan utan att spara försvinner kommentarerna.</p>
 <p><b>Skriv ut / PDF</b> skriver ut sidan som den visas: med filtret, kommentarerna och de
 utfällningar som är öppna. Välj Spara som PDF i utskriftsrutan för att få en fil.</p>
 </div></details>
@@ -3132,6 +3191,8 @@ function selAllVisible(){ selVisible().forEach(x=>state.sel.add(x)); selRedraw()
 function selClear(){ state.sel.clear(); selRedraw(); }
 /* Rapportens data så som den är nu: med de kommentarer som skrivits sedan den öppnades. */
 function temaSource(){ return Object.assign({}, EMBED, {comments:[...state.comments.entries()].filter(c=>c[1]), autoPrint:false}); }
+/* Hela sidan som den är, med kommentarerna: knappen syns alltid, så att en kommentar inte går förlorad. */
+function savePage(){ downloadText(`temarapport_${stamp()}.html`, buildTemaReport(temaSource()), "text/html;charset=utf-8"); }
 function saveSubset(){
   if(!state.sel.size) return;
   downloadText(`temarapport_urval_${stamp()}.html`, buildTemaReport(subsetEmbed(temaSource(), state.sel, state.th)), "text/html;charset=utf-8");
@@ -3221,7 +3282,7 @@ function temaFns(){
              patternSummary,renderPatterns,togglePattern,
              scoreQuestions,scorePatterns,scoredVisible,scoreCard,activePatternRows,filterText,overviewHtml,exportOverview,
              lathundKontrollInit,splitStem,formFindings,renderForm,isForebild,
-             subsetEmbed,selVisible,renderSelBar,selRedraw,selAllVisible,selClear,saveSubset,
+             subsetEmbed,selVisible,renderSelBar,selRedraw,selAllVisible,selClear,saveSubset,savePage,printHtml,
              fileLineText,temaSource,xExportRender,xExportPrint,openHelp,closeHelp,wireHelp,xExportInit];
 }
 function temaConsts(){
@@ -3276,7 +3337,8 @@ function buildTemaReport(EMBED){
         </div>
         <div id="dlctrls" class="exports">
           <button id="dlprint" class="btn-ghost" title="Skriv ut eller spara som PDF, så som sidan visas: med filter, kommentarer och öppnade utfällningar.">Skriv ut / PDF</button>
-          <button id="dloverview" class="btn-ghost" title="Sparar en tabell med en rad per fråga, att skriva ut eller skicka vidare. Följer filtret.">Översiktstabell</button>
+          <button id="dloverview" class="btn-ghost" title="Tabell med en rad per fråga. Öppnas för utskrift, där du väljer Spara som PDF. Följer filtret.">Översiktstabell (PDF)</button>
+          <button id="dlsave" class="btn-ghost" title="Sparar hela sidan som en ny fil, med de kommentarer som står på korten just nu.">Spara sidan med kommentarer</button>
         </div>
       </div>
       <div class="nnote" id="nnote"></div>
@@ -3315,6 +3377,21 @@ function buildTemaReport(EMBED){
   return `<!DOCTYPE html><html lang="sv"><head><meta charset="utf-8">`
     + `<meta name="viewport" content="width=device-width, initial-scale=1"><title>Temarapport</title>`
     + fonts + `<style>${css}</style></head><body>${body}<script>${js}<\/script></body></html>`;
+}
+/* Exporterna som heter (PDF): sidan öppnas i ett eget fönster och går direkt till utskrift, där "Spara som PDF"
+   väljs. Sidan själv har inget skript. Går fönstret inte att öppna sparas sidan som en fil i stället. */
+function printHtml(name, html){
+  const w=(typeof window!=="undefined" && typeof window.open==="function") ? window.open("","_blank") : null;
+  if(!w){ downloadText(name, html, "text/html;charset=utf-8"); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+  setTimeout(()=>{ try{ w.focus(); w.print(); }catch(_){} }, 400);
+}
+/* Antalet frågor på de exportknappar som följer filtret, när ett filter är valt. */
+function renderExportLabels(){
+  const on=filtersActive() && state.step==="report";
+  const n=on ? pageItems().length : 0, all=on ? state.vm.view.length + (state.scored||[]).length : 0;
+  [["#exp-html","Temarapport (interaktiv)"],["#exp-temapdf","Temarapport (PDF)"],["#exp-overview","Översiktstabell (PDF)"]].forEach(([sel,label])=>{
+    const b=$(sel); if(b) b.textContent = on ? `${label} · ${n} av ${all} frågor` : label; });
 }
 function downloadText(name, text, type){
   const blob=new Blob([text],{type:type||"text/plain;charset=utf-8"});
@@ -3386,12 +3463,11 @@ async function tryRun(){
 function setPrep(on){
   state.prep=!!on;
   const tog=(sel,hide)=>{ const e=$(sel); if(e) e.classList.toggle("hidden", hide); };
-  tog("#prephead",!on); tog("#prep-save",!on); tog("#prep-next",!on); tog("#prep-receipt",!on); tog("#prep-note",!on);
-  tog("#drops",!on); tog("#databox",on);
+  tog("#prephead",!on); tog("#prep-save",!on); tog("#prep-go2",!on); tog("#prep-go3",!on); tog("#prep-receipt",!on); tog("#prep-note",!on);
+  tog("#drops",!on); tog("#databox",false);
   tog("#settings-open",!!on); if(on){ tog("#settings",true); }      // gränserna gäller analysen, som inte syns i steg 1
   tog("#warnings",!!on);                                       // varningarna gäller analysen, inte filerna i steg 1
-  if(on){ $("#results").classList.add("hidden"); expandUpload(); log("");
-    const b=$("#step-report"), n=$("#step-report-note"); if(b) b.disabled=false; if(n) n.textContent=""; }
+  if(on){ $("#results").classList.add("hidden"); expandUpload(); log(""); }
   else if(state.json){ collapseUpload(); setStep(state.want||"triage"); }
   renderStepBar();
   refreshPrep();
@@ -3411,14 +3487,38 @@ async function prepInputs(){
   const tagRows = (tf && typeof tf.arrayBuffer==="function") ? readTagRows(await tf.arrayBuffer()) : null;
   return {jsonObjs, pdfMcqs, tagRows};
 }
+/* Det kvittot behöver veta om den kombinerade datafilen innan analysen visas: frågetyper, om allt är rättat och hur
+   många frågor taggfilen träffade. Räknas på samma minimerade data som sparas. */
+function prepAnalysis(inp){
+  const R=resolveInputs([buildPackage(inp)], {}), J=parseJSON(R.jsonObjs);
+  const T=R.tagRows ? parseTagsRows(R.tagRows) : null;
+  return Object.assign(examFacts(J, T), {examName:commonTitle(inp.jsonObjs.map(o=>o && o.ext_inspera_assessmentRunTitle).filter(Boolean)) || ""});
+}
+function examFacts(J, T){
+  const counts={single:0,text:0,multi:0}; J.qMeta.forEach(m=>{ counts[m.type==="single"?"single":m.type==="multi"?"multi":"text"]++; });
+  const hit = T ? J.qMeta.filter(m=>{ const t=J.qTitle ? J.qTitle[m.num] : "";
+    const v=T.byNum.get(String(m.num)) || (t ? T.byCode.get(String(t).toLowerCase()) : null); return !!v && v.some(Boolean); }).length : null;
+  return {candCount:J.candCount, counts, total:J.qMeta.length, fullyGraded:!!J.fullyGraded, ungradedPts:J.ungradedPts||0, tagHit:hit};
+}
+/* Kvittots två rader om rättning och taggar (Kajsa 21 nov 2026). */
+function receiptFacts(f){
+  return (f.counts.text ? `<br>${f.fullyGraded ? "Essäfrågorna är rättade." : "Essäfrågorna är inte rättade än."}` : "")
+       + (f.tagHit!==null ? `<br>${f.tagHit<f.total ? '<span class="warn">' : "<span>"}Taggfilen matchade ${f.tagHit} av ${f.total} frågor.</span>` : "");
+}
 async function refreshPrep(){
   const box=$("#prep-receipt"), b=$("#prep-save"); if(!state.prep || !box || !b) return;
+  if(state.fromDataFile && state.json){                       // en sparad datafil är vald: den är redan kombinerad
+    const f=examFacts(state.json, state.tags); state.prepInfo=Object.assign({examName:state.examName||""}, f);
+    b.disabled=true;
+    box.innerHTML = `<b>${esc(state.examName||"Tenta utan namn")}</b><br>${f.candCount} studenter · sparad datafil` + receiptFacts(f);
+    renderStepBar(); renderFileLine(); return;
+  }
   const ready = (state.prepFiles || state.jsonFiles).some(f=>typeof f.text==="function");
-  const nx=$("#prep-next");
-  b.disabled=!ready; if(nx) nx.disabled=!ready;
-  if(!ready){ box.innerHTML=""; return; }
+  b.disabled=!ready;
+  if(!ready){ box.innerHTML=""; state.prepInfo=null; renderStepBar(); renderFileLine(); return; }
   try{
-    const k=prepReceipt(await prepInputs());
+    const inp=await prepInputs(), k=prepReceipt(inp);
+    const f=prepAnalysis(inp); state.prepInfo=f;
     { const gj=$("#got-json"); if(gj) gj.textContent = `✓ ${k.nFiles} ${k.nFiles===1?"fil":"filer"} — ${k.candCount} studenter${k.orter.length?` (${k.orter.join(", ")})`:""}`;
       const gp=$("#got-pdf"); if(gp && k.mcqPdf!=null) gp.textContent = `✓ ${k.mcqPdf} flervalsfrågor${k.essays?` och ${k.essays} essäfrågor`:""} lästa`;
       const gt=$("#got-tags"); if(gt && k.hasTags) gt.textContent = `✓ ger filter på ${k.tagCols.join(", ") || "taggarna"}`; }
@@ -3426,15 +3526,18 @@ async function refreshPrep(){
       + `${k.candCount} studenter · `
       + (k.mcqPdf!=null ? `${k.mcqPdf} flervalsfrågor lästa ur PDF:en` : "ingen PDF") + " · "
       + (k.hasTags ? "taggfilen är med" : "ingen taggfil")
+      + receiptFacts(f)
       + (k.warning ? `<br><span class="warn">⚠ ${esc(k.warning)}</span>` : "");
-  }catch(e){ b.disabled=true; if(nx) nx.disabled=true; box.innerHTML=`<span class="warn">⚠ ${esc(e.message)}</span>`; }
+  }catch(e){ b.disabled=true; state.prepInfo=null; box.innerHTML=`<span class="warn">⚠ ${esc(e.message)}</span>`; }
+  renderStepBar(); renderFileLine();
 }
 /* Sparar den kombinerade datafilen som ren JSON. */
 async function saveDataFile(){
   try{
     const inp=await prepInputs(); prepReceipt(inp);
     downloadText(`datafil_${stamp()}.json`, JSON.stringify(buildPackage(inp)), "application/json;charset=utf-8");
-    log("Den kombinerade datafilen är sparad. Den väljs i steg 2 och 3.");
+    state.dataSaved=true; renderFileLine();
+    log("Den kombinerade datafilen är sparad.");
   }catch(e){ log("Fel: "+e.message); console.error(e); }
 }
 /* Raden överst när en fil är vald: tentan, antal studenter och frågor (för att se att filen lästs rätt), och i
@@ -3449,8 +3552,13 @@ function fileLineText(name, nStud, counts, nExcl, maxText){
 }
 function renderFileLine(){
   const el=$("#fileline"); if(!el) return;
-  const J=state.json;
-  if(!J || !J.qMeta || !document.body.classList.contains("compact")){ el.textContent=""; return; }
+  const sv=$("#filesave");
+  // I steg 1 gäller filerna som är valda där, annars den inlästa tentan. Raden syns i alla steg (Kajsa 21 nov 2026):
+  // den visar att filerna följer med när man byter steg, och om datafilen är sparad.
+  const P = state.prep ? state.prepInfo : null, J = state.prep ? null : state.json;
+  if(sv) sv.classList.toggle("hidden", !((P || (J && J.qMeta)) && !state.dataSaved));
+  if(P){ el.textContent = fileLineText(P.examName, P.candCount, P.counts, 0, ""); return; }
+  if(!J || !J.qMeta){ el.textContent=""; return; }
   const counts={single:0,text:0,multi:0}; J.qMeta.forEach(m=>{ counts[m.type==="single"?"single":m.type==="multi"?"multi":"text"]++; });
   const nExcl=J.qMeta.filter(m=>isExcluded(m.num)).length, f=x=>String(+x.toFixed(1)).replace(".",",");
   el.textContent = fileLineText(state.examName, J.candCount, counts, nExcl,
@@ -3474,35 +3582,43 @@ $("#pdf").addEventListener("change", async e=>{
   try{ state.pdfMcqs=await parsePDF(await f.arrayBuffer());
        $("#got-pdf").textContent=`✓ ${state.pdfMcqs.length} flervalsfrågor${(state.pdfMcqs.essays && state.pdfMcqs.essays.length)?` och ${state.pdfMcqs.essays.length} essäfrågor`:""} lästa`; }
   catch(err){ state.pdfMcqs=null; $("#got-pdf").textContent="✗ kunde inte läsa PDF"; log("PDF-fel: "+err.message); console.error(err); }
-  state.pdfFromPackage = false; state.prepPdf = state.pdfMcqs; state.prepDirty = true;
+  state.pdfFromPackage = false; state.prepPdf = state.pdfMcqs; state.prepDirty = true; if(!state.fromDataFile) state.dataSaved=false;
   checkExamMatch();
   refreshPrep();
 });
 $("#json").addEventListener("change", e=>{
-  state.jsonFiles=[...e.target.files]; state.prepFiles=state.jsonFiles; state.prepDirty=true;
+  state.jsonFiles=[...e.target.files]; state.prepFiles=state.jsonFiles; state.prepDirty=true; state.fromDataFile=false; state.dataSaved=false;
   $("#got-json").textContent=state.jsonFiles.length?`✓ ${state.jsonFiles.length} fil(er)`:""; checkExamMatch(); refreshPrep();
 });
 $("#tags").addEventListener("change", e=>{
-  state.tagsFile=e.target.files[0]; state.prepTags=state.tagsFile; state.prepDirty=true; state.activeTags={};
+  state.tagsFile=e.target.files[0]; state.prepTags=state.tagsFile; state.prepDirty=true; state.activeTags={}; if(!state.fromDataFile) state.dataSaved=false;
   $("#got-tags").textContent=state.tagsFile?`✓ ${state.tagsFile.name}`:""; refreshPrep();
 });
 $("#datafile").addEventListener("change", async e=>{
   const f=e.target.files && e.target.files[0]; if(!f) return;
   $("#got-data").textContent="läser …";
-  await loadDataFile(await f.text(), f.name);
-  $("#got-data").textContent = state.json ? `✓ ${f.name}` : "";
+  // En sparad datafil ersätter filerna som valts i steg 1. Sidan står kvar i det steg där filen valdes.
+  const ok=await loadDataFile(await f.text(), f.name, {saved:true, stay:state.prep});
+  if(ok){ state.prepFiles=null; state.prepPdf=undefined; state.prepTags=null; state.prepDirty=false;
+    ["#got-json","#got-pdf","#got-tags"].forEach(s=>{ const g=$(s); if(g) g.textContent=""; }); refreshPrep(); }
+  $("#got-data").textContent = (ok && state.json) ? `✓ ${f.name}` : "";
 });
 $("#step-triage").addEventListener("click", ()=>{ goStep("triage"); });
 $("#step-report").addEventListener("click", ()=>{ goStep("report"); });
 $("#step-prep").addEventListener("click", ()=>{ if(!state.prep) setPrep(true); });
 $("#prep-save").addEventListener("click", saveDataFile);
-$("#prep-next").addEventListener("click", ()=>goStep("triage"));
+$("#prep-go2").addEventListener("click", ()=>goStep("triage"));
+$("#prep-go3").addEventListener("click", ()=>goStep("report"));
+$("#fileline-save").addEventListener("click", saveDataFile);
+// Varna innan sidan stängs, men bara när det finns kommentarer eller egna exkluderingar att förlora.
+if(typeof window!=="undefined" && typeof window.addEventListener==="function")
+  window.addEventListener("beforeunload", e=>{ if(hasWork()){ e.preventDefault(); e.returnValue=""; } });
 $("#reopen").addEventListener("click", expandUpload);
 {
   const emb=readEmbedded();
   if(emb){
     // Äldre HTML-fil med datan inbäddad: tentan finns redan i filen. Öppna direkt i analysen, utan steg 1.
-    state.embedded=true;
+    state.embedded=true; state.dataSaved=true;
     state.jsonFiles=[{name:"datafilen", text: async()=>emb.text}];
     { const rp=$("#step-prep"); if(rp) rp.classList.add("hidden"); }      // en öppnad datafil har steg 2 och 3
     state.embeddedReady = tryRun().then(()=>{

@@ -6,6 +6,25 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.29.0
+Tredje etappen efter genomgången: flödet mellan stegen och exporterna (Kajsas beslut 21 nov 2026).
+- **Filraden syns i alla tre stegen** så snart filer är inlästa, och säger "Datafilen är inte sparad" med länken
+  Spara tills den är sparad. Filerna följer med när man byter steg.
+- **Steg 2 och 3 är gråa tills filer finns.** En sparad datafil väljs i steg 1, under filrutorna, och sidan står
+  kvar där tills ett steg väljs. Knappen "Gå vidare till steg 2" är ersatt av valen "2 Hitta problemfrågor" och
+  "3 Skapa rapporter" bredvid spara-knappen. Steg 3 är grått med skälet utskrivet när rättningen inte är klar.
+- **Kvittot i steg 1** säger om essäfrågorna är rättade och hur många frågor taggfilen matchade.
+- **Den gula rutan i steg 1** är tre korta punkter.
+- **Exportknapparna säger formatet:** Problemfrågor (PDF), Temarapport (interaktiv), Temarapport (PDF),
+  Översiktstabell (PDF), Tentamensstatistik (Excel), Diagram (PDF). De som heter PDF öppnas för utskrift i
+  stället för att sparas som HTML. Går fönstret inte att öppna sparas sidan som fil.
+- **Antalet frågor står på knappen** när ett filter är valt, för de exporter som följer filtret.
+- **Temarapporten har knappen "Spara sidan med kommentarer"**, som alltid syns.
+- **Verktyget frågar innan kommentarer och egna exkluderingar försvinner** när en ny fil läses in, och varnar
+  när sidan stängs.
+- **Hjälpen öppnar på avsnittet för aktuellt steg** och beskriver lägena, G-gränsen och kontrollen mot Insperas
+  betyg. Vyn i steg 3 heter "Alla frågor". Översiktstabellen har decimalkomma.
+
 ## 3.28.0
 Andra etappen efter genomgången: ett kort överallt, och essäfrågornas återkoppling (Kajsas beslut 21 och 22 nov 2026).
 - **Uppmaningar finns bara där ett beslut ska fattas före betygssättning:** "Dubbelkolla facit" och "Se över

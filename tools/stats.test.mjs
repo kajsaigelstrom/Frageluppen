@@ -64,9 +64,9 @@ test("diagramsidan har poängfördelningen och poäng per student och ort, med G
   assert.equal((h.match(/<circle/g) || []).length, a.ev("state.json.candCount"));
   assert.ok(!/<script/.test(h));
 });
-test("knapparna heter Tentamensstatistik och Diagram, och finns bara i hela rapporten", async () => {
-  assert.match(STATIC, /id="exp-xlsx"[^>]*>Tentamensstatistik</);
-  assert.match(STATIC, /id="exp-charts"[^>]*>Diagram</);
+test("knapparna heter Tentamensstatistik (Excel) och Diagram (PDF), och finns bara i steg 3", async () => {
+  assert.match(STATIC, /id="exp-xlsx"[^>]*>Tentamensstatistik \(Excel\)</);
+  assert.match(STATIC, /id="exp-charts"[^>]*>Diagram \(PDF\)</);
   const a = await two();
   (a.el("#exp-charts").listeners.click || []).forEach(f => f({}));
   assert.match(a.downloads[a.downloads.length - 1].parts.join(""), /<h1>Poängfördelning<\/h1>/);
