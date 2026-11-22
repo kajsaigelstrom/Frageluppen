@@ -6,6 +6,15 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.32.0
+- **En fjärde frågetyp, Övrig** (Kajsas beslut 22 nov 2026, efter prov på en T1-tenta): automaträttade frågor
+  som varken är flervals- eller flersvarsfrågor, till exempel markera i en bild, välja i löptext eller para
+  ihop. Förut räknades de som essäfrågor. De har eget kort ("Övrig, automaträttad"), eget filterval och egen
+  uppgift i filraden. Vid tydligt negativ diskriminering gäller uppmaningen facit och poängregeln, inte
+  bedömningsmallen. De räknas i hela tentans reliabilitet men inte i essädelen. Frågetexten läses inte.
+  Typen känns igen på att frågan saknar valrutor, har autopoäng och att färre än hälften av studenterna har
+  manuell poäng.
+
 ## 3.31.1
 Efter prov på en T1-tenta (22 nov 2026).
 - **Utan tentans PDF körs ingen formkontroll och ingen fråga märks som förebild.** Platshållaren för

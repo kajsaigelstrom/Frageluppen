@@ -124,6 +124,12 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
 - **Steg 3 är EN sida med kort för alla frågetyper**: MCQ-korten ur `state.vm.view`, essä- och
   flersvarskorten ur `state.scored` (`scoredItems`, `scoreCard`), blandade av `pageItems`. Lägg
   inte tillbaka flikar per frågetyp.
+- **Fyra frågetyper** (`qMeta[].type`, bestäms i `parseJSON` ur svarsformen, eftersom exporten saknar
+  typfält): `single` (MCQ), `multi` (flersvar), `text` (essä, manuellt rättad) och `auto` (övrig:
+  automaträttad utan valrutor, till exempel markera i bild eller välja i löptext; Kajsas beslut
+  22 nov 2026). `auto` = ingen valruta, autopoäng hos någon, och manuell poäng hos färre än hälften.
+  En orättad essäfråga har ingen autopoäng och förblir `text`. `auto` får uppmaningen om facit och
+  poängregeln, räknas inte i essädelen och har ingen frågetext.
 - **Kontrollraden** (sök, sortering, filter, mönster, färgförklaring) finns en gång,
   `controlsHtml`, och delas med temarapporten. Detsamma gäller `wireComments`.
 - **Filterraden** (`FACETS`, `filterGroups`, `buildTagbar`) består av riktiga knappar med

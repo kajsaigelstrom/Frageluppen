@@ -699,7 +699,7 @@ function discLabel(r){
 }
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum. */
-const VERSION = "3.31.1";
+const VERSION = "3.32.0";
 const UPDATED = "2026-11-22";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
@@ -720,6 +720,9 @@ förklaring. Före betygssättningen räknas totalpoängen på
 flervalsdelen, i steg 3 på hela tentan.</p>
 <p><b>Enstaka varningar.</b> Med många frågor uppstår enstaka varningar av slump. En varning är ett
 skäl att läsa frågan, inte ett bevis på att den är fel.</p>
+<p><b>Övrig</b> är automaträttade frågor som varken är flervals- eller flersvarsfrågor, till exempel
+markera i en bild, välja i löptext eller para ihop. De har samma slags kort som essäfrågorna, utan
+frågetext, och räknas i hela tentan men inte i essädelen.</p>
 <p><b>Essä- och flersvarsfrågor.</b> Korten visar medelpoäng av max, hur många som fick varje
 poäng, och hur väl poängen på frågan följer studentens poäng på resten av tentan (r). De finns
 bara i steg 3, eftersom de kräver färdig rättning.</p>
@@ -1419,7 +1422,7 @@ function parseJSON(jsonObjs){
   // 'multi' = fler-svars-val (partiell poäng); 'text' = konstruerat svar (ingen valruta, auto- el. manuellt rättat).
   const qtype = a => !a.anyChoice ? "text" : (a.maxSel>1 ? "multi" : "single");
   const qMeta = order.map(qn=>{ const a=agg[qn]; return {num:qn, title:titleOf[qn]||"", max:(a.max||0), type:qtype(a)}; });
-  const anyManual = order.map(()=>false);
+  const anyManual = order.map(()=>false), manualN = order.map(()=>0);
   const anyAuto   = order.map(()=>false);   // någon kandidat har autoScore > 0 → frågan är auto-rättad
   const cohortScores = cands.map(c=>{
     const qd={}; for(const q of c.ext_inspera_questions) qd[q.ext_inspera_questionNumber]=q;
@@ -1429,13 +1432,19 @@ function parseJSON(jsonObjs){
       if(auto>0) anyAuto[i]=true;
       let s = auto;
       const ms=q.ext_inspera_manualScores;
-      if(Array.isArray(ms)) for(const m of ms){ if(typeof m.ext_inspera_manualScore==="number"){ s+=m.ext_inspera_manualScore; anyManual[i]=true; } }
+      let man=false;
+      if(Array.isArray(ms)) for(const m of ms){ if(typeof m.ext_inspera_manualScore==="number"){ s+=m.ext_inspera_manualScore; anyManual[i]=true; man=true; } }
+      if(man) manualN[i]++;
       return s;
     });
   });
   // Orättad fråga = konstruerat svar (ej MCQ) med poäng men VARKEN manuell rättning NÅGONSTANS
   // NI nollskild auto-poäng. Auto-rättade inmatnings-/partiellpoängsfrågor (autoScore>0 hos någon)
   // räknas som rättade – tidigare anyManual-heuristik flaggade dem felaktigt som orättade.
+  // Fjärde frågetypen (Kajsa 22 nov 2026): ett konstruerat svar som är automaträttat (markera i bild, välj i löptext,
+  // para ihop) är inte en essäfråga. Kännetecken: ingen valruta, autopoäng hos någon, och manuell poäng hos färre än
+  // hälften av studenterna (enstaka manuella justeringar förekommer). En orättad essäfråga har ingen autopoäng.
+  qMeta.forEach((m,i)=>{ if(m.type==="text" && anyAuto[i] && manualN[i] < cands.length/2) m.type="auto"; });
   const ungraded = order.map((qn,i)=> !mcqSet.has(qn) && agg[qn].max>0 && !anyManual[i] && !anyAuto[i]);
   let ungradedPts=0; order.forEach((qn,i)=>{ if(ungraded[i]) ungradedPts+=agg[qn].max; });
   const fullyGraded = ungradedPts===0;
@@ -2274,7 +2283,7 @@ function render(){
     } else if(pdfExtra.length){
       note.className="advnote";
       note.innerHTML = `${pdfExtra.length} fråga(or) ser i PDF:en ut som flervalsfrågor men är det inte enligt resultaten `+
-        `(${pdfExtra.map(x=>esc(x.seq)+": "+esc(x.type==="multi"?"flersvar":x.type==="text"?"essä":x.type)).join(", ")}). `+
+        `(${pdfExtra.map(x=>esc(x.seq)+": "+esc(x.type==="multi"?"flersvar":x.type==="text"?"essä":x.type==="auto"?"övrig":x.type)).join(", ")}). `+
         `De visas som essä- eller flersvarskort i steg 3.`;
     } else note.innerHTML="";
   }
@@ -2312,7 +2321,7 @@ function scoredItems(disc, neutral){
   const pdf=Array.isArray(state.pdfMcqs) ? state.pdfMcqs : [], essays=(state.pdfMcqs && state.pdfMcqs.essays) || [];
   const out=[];
   J.qMeta.forEach((m,i)=>{
-    if((m.type!=="text" && m.type!=="multi") || !(m.max>0)) return;
+    if((m.type!=="text" && m.type!=="multi" && m.type!=="auto") || !(m.max>0)) return;
     const scores=J.cohortScores.map(row=>row[i]), n=scores.length, r=disc ? disc[m.num] : null;
     const mean=n?scores.reduce((a,b)=>a+b,0)/n:0;
     const bucket=new Map(); scores.forEach(x=>{ const k=Math.round(x*100)/100; bucket.set(k,(bucket.get(k)||0)+1); });
@@ -2331,7 +2340,7 @@ function overviewPayload(){
   const J=state.json; if(!J || !J.qMeta || !J.cohortScores) return null;
   const disc=computeDiscrimination(J,{criterion:'whole',excluded:state.excluded});
   const n=J.candCount;
-  const TYPE={single:"MCQ",multi:"Flersvar",text:"Essä"};
+  const TYPE={single:"MCQ",multi:"Flersvar",text:"Essä",auto:"Övrig"};
   // Samma etikett som på kortet: kortets underlag (med distraktorernas diskriminering) används när det finns.
   const byCard=new Map();
   if(activeView().criterion==="whole" && state.vm && state.vm.view) state.vm.view.forEach(v=>byCard.set(String(v.seq), v));
@@ -2408,7 +2417,7 @@ function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",
    mellan grupper smalnar de av (och). Varje knapp räknar frågorna givet de ANDRA gruppernas val, så att siffran
    säger vad ett klick ger. Gränserna för Lätt, Svår och God är de under Inställningar. */
 const FACETS = [
-  {key:"typ",   label:"Frågetyp",       values:[["single","MCQ"],["text","Essä"],["multi","Flersvar"]]},
+  {key:"typ",   label:"Frågetyp",       values:[["single","MCQ"],["text","Essä"],["multi","Flersvar"],["auto","Övrig"]]},
   {key:"svar",  label:"Svårighet",      values:[["latt","Lätt"],["medel","Medel"],["svar","Svår"]]},
   {key:"disk",  label:"Diskriminering", values:[["neg","Negativ"],["lag","Låg"],["mellan","Mellan"],["god","God"],["na","Ej mätbar"]]},
   {key:"titta", label:"Att titta på",   values:[["fraga",""],["forebild","Förebild"],["excl","Exkluderad"]]}
@@ -3014,7 +3023,7 @@ function xExportRender(){
   const nExcl=(view.length-scored.length) + sc.filter(e=>e.excluded).length;
   { const fl=$("#fileline");
     if(fl) fl.textContent = fileLineText(EMBED.exam||"", EMBED.candCount,
-      {single:view.length, text:sc.filter(e=>e.typ==="text").length, multi:sc.filter(e=>e.typ==="multi").length}, nExcl, ""); }
+      {single:view.length, text:sc.filter(e=>(e.typ||"text")==="text").length, multi:sc.filter(e=>e.typ==="multi").length, auto:sc.filter(e=>e.typ==="auto").length}, nExcl, ""); }
   { const rb=$("#relbox"); if(rb) rb.innerHTML = relBoxHtml(EMBED.rel, !!EMBED.subset); }
   $("#nnote").innerHTML = state.smallN ? '<div class="advnote">Litet underlag: '+EMBED.candCount+' studenter. Tolka enskilda procenttal försiktigt.</div>' : "";
   const modes=(spec.modes&&spec.modes.length)?spec.modes:[{id:"edu",label:"Alla frågor"}];
@@ -3154,6 +3163,8 @@ har någon observation på kortet och inte gav några fynd i formkontrollen.</p>
 <p><b>Essä</b> – ett kort per essäfråga: medelpoäng av max, hur väl poängen på frågan följer
 studentens poäng på resten av tentan (r), och hur många som fick varje poäng. Vid tydligt negativ diskriminering står en observation på kortet, med möjliga orsaker i bedömningsmallen och rättningen.</p>
 <p><b>Flersvar</b> – samma slags kort för frågor med flera rätta svar.</p>
+<p><b>Övrig</b> – automaträttade frågor av andra slag, till exempel markera i en bild, välja i löptext
+eller para ihop. Samma slags kort, utan frågetext.</p>
 <p><b>Översiktstabell</b> sparar en tabell med en rad per fråga, att skriva ut eller skicka vidare.
 Med ett filter valt kommer bara de frågor som syns med.</p>
 </div></details>
@@ -3273,7 +3284,7 @@ function scoreQuestions(e){
   if(e.excluded || !(e.n>=MIN_N) || e.r===null || e.r===undefined) return [];
   const top=(e.dist||[]).reduce((m,d)=>Math.max(m,d.count),0);
   if(e.n-top<10 || !(e.r < -2/Math.sqrt(e.n))) return [];
-  const key=e.typ==="multi" ? "facit" : "mall", t=SCORE_TEXT[key];
+  const key=(e.typ==="multi" || e.typ==="auto") ? "facit" : "mall", t=SCORE_TEXT[key];
   return [Object.assign({key, text:t.obs+" "+t.todo}, t)];
 }
 function scorePatterns(list){
@@ -3313,7 +3324,7 @@ function scoreCard(e){
   const exclCtrl = (isApp && !e.excluded && !simple) ? `<div class="exclctrl"><button type="button" class="card-exclude" data-qnum="${seq}">Exkludera frågan</button></div>` : "";
   return `<div class="q ftcard${e.excluded?" excluded":""}" id="card-${seq}">
     <div class="top">
-      <div class="code">${sel}Fråga ${esc(String(e.num))}${nm}<span class="pts">${fmt(e.max)} p</span><span class="fttag">${e.typ==="multi"?"Flersvar":"Essä"}</span>${tags}</div>
+      <div class="code">${sel}Fråga ${esc(String(e.num))}${nm}<span class="pts">${fmt(e.max)} p</span><span class="fttag">${e.typ==="multi"?"Flersvar":e.typ==="auto"?"Övrig, automaträttad":"Essä"}</span>${tags}</div>
       <div class="metrics">
         <div class="pc">medel ${fmt(e.mean)} av ${fmt(e.max)} <small>(${e.pct.toFixed(0)} %, n=${e.n})</small></div>
         <div class="rpb ${info.cls}" title="${esc(info.tip||"")}">${esc(info.value)}${info.label?` · ${esc(info.label)}${info.note?` (${esc(info.note)})`:""}`:""}</div>
@@ -3531,7 +3542,7 @@ function prepAnalysis(inp){
   return Object.assign(examFacts(J, T), {examName:commonTitle(inp.jsonObjs.map(o=>o && o.ext_inspera_assessmentRunTitle).filter(Boolean)) || ""});
 }
 function examFacts(J, T){
-  const counts={single:0,text:0,multi:0}; J.qMeta.forEach(m=>{ counts[m.type==="single"?"single":m.type==="multi"?"multi":"text"]++; });
+  const counts=typeCounts(J);
   const hit = T ? J.qMeta.filter(m=>{ const t=J.qTitle ? J.qTitle[m.num] : "";
     const v=T.byNum.get(String(m.num)) || (t ? T.byCode.get(String(t).toLowerCase()) : null); return !!v && v.some(Boolean); }).length : null;
   return {candCount:J.candCount, counts, total:J.qMeta.length, fullyGraded:!!J.fullyGraded, ungradedPts:J.ungradedPts||0, tagHit:hit};
@@ -3578,9 +3589,14 @@ async function saveDataFile(){
 }
 /* Raden överst när en fil är vald: tentan, antal studenter och frågor (för att se att filen lästs rätt), och i
    hela rapporten exkluderade frågor och maxpoäng. */
+function typeCounts(J){
+  const counts={single:0,text:0,multi:0,auto:0}; J.qMeta.forEach(m=>{ counts[counts[m.type]!==undefined ? m.type : "text"]++; });
+  return counts;
+}
 function fileLineText(name, nStud, counts, nExcl, maxText){
-  const nq=counts.single+counts.text+counts.multi;
+  const nq=counts.single+counts.text+counts.multi+(counts.auto||0);
   const kinds=[]; if(counts.single) kinds.push(`${counts.single} MCQ`); if(counts.text) kinds.push(`${counts.text} essä`); if(counts.multi) kinds.push(`${counts.multi} flersvar`);
+  if(counts.auto) kinds.push(`${counts.auto} ${counts.auto===1?"övrig":"övriga"}`);
   const parts=[]; if(name) parts.push(name);
   parts.push(`${nStud} studenter`, `${nq} ${nq===1?"fråga":"frågor"}${kinds.length?": "+kinds.join(", "):""}`);
   if(nExcl) parts.push(`${nExcl} exkluderad${nExcl===1?"":"e"}${maxText?", "+maxText:""}`);
@@ -3595,7 +3611,7 @@ function renderFileLine(){
   if(sv) sv.classList.toggle("hidden", !((P || (J && J.qMeta)) && !state.dataSaved));
   if(P){ el.textContent = fileLineText(P.examName, P.candCount, P.counts, 0, ""); return; }
   if(!J || !J.qMeta){ el.textContent=""; return; }
-  const counts={single:0,text:0,multi:0}; J.qMeta.forEach(m=>{ counts[m.type==="single"?"single":m.type==="multi"?"multi":"text"]++; });
+  const counts=typeCounts(J);
   const nExcl=J.qMeta.filter(m=>isExcluded(m.num)).length, f=x=>String(+x.toFixed(1)).replace(".",",");
   el.textContent = fileLineText(state.examName, J.candCount, counts, nExcl,
     state.step==="report" ? `maxpoäng ${f(reducedMax(J))} av ${f(J.maxTotal)}` : "");
