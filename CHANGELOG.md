@@ -6,6 +6,13 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.31.1
+Efter prov på en T1-tenta (22 nov 2026).
+- **Utan tentans PDF körs ingen formkontroll och ingen fråga märks som förebild.** Platshållaren för
+  frågetexten räknades förut som en riktig frågetext, så att formfynd och förebilder kunde visas utan att
+  frågan hade lästs.
+- Två texter sa "hela rapporten" i stället för "steg 3".
+
 ## 3.31.0
 Femte och sista etappen efter genomgången: tillgänglighet och städning (Kajsas beslut 21 nov 2026).
 - **Filterknapparna är riktiga knappar** och nås med tangentbord. Fokus står kvar på knappen efter ett val, och

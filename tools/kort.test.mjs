@@ -117,3 +117,11 @@ test("tal visas med decimalkomma, och ej mätbar r säger skälet utan värderin
   const src = ev("rpbInfo.toString() + polyInfo.toString()");
   assert.ok(!/tak ≈|för lätt|för svår|starka|svaga/i.test(src));
 });
+test("utan tentans PDF finns ingen frågetext: ingen formkontroll och ingen förebild", () => {
+  const { ev, evj } = fresh();
+  const v = `mk({n:90, counts:[65,9,8,8], rpb:0.35, stem:NO_STEM, opts:["Ett mycket långt och utförligt rätt svar som sticker ut tydligt från alla de andra alternativen","Kort b","Kort c","Kort d"]})`;
+  assert.deepEqual(evj(`formFindings(${v})`), []);
+  assert.equal(ev(`isForebild(${v})`), false);
+  assert.equal(ev(`synthMcqsFromJson({mcqSeqs:["1"], agg:{"1":{max:1, slotN:new Map([["a",3]]), slotText:new Map([["a","Alfa"]])}}})[0].stem`), ev("NO_STEM"));
+  assert.match(ev("temaConsts()"), /const NO_STEM=/);
+});

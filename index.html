@@ -699,7 +699,7 @@ function discLabel(r){
 }
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum. */
-const VERSION = "3.31.0";
+const VERSION = "3.31.1";
 const UPDATED = "2026-11-22";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
@@ -722,7 +722,7 @@ flervalsdelen, i steg 3 på hela tentan.</p>
 skäl att läsa frågan, inte ett bevis på att den är fel.</p>
 <p><b>Essä- och flersvarsfrågor.</b> Korten visar medelpoäng av max, hur många som fick varje
 poäng, och hur väl poängen på frågan följer studentens poäng på resten av tentan (r). De finns
-bara i hela rapporten, eftersom de kräver färdig rättning.</p>
+bara i steg 3, eftersom de kräver färdig rättning.</p>
 </div></details>
 <details class="helpsec" data-step="triage report"><summary>Steg 2 och 3</summary><div class="body">
 <p>När filerna är inlästa byter du mellan stegen i raden överst. Raden högst upp på sidan visar
@@ -1506,6 +1506,9 @@ function tagMatchCount(){
 // och blir mildare än med PDF. Alternativ utan text (specialtecken) tas inte med som rader;
 // de fångas av den befintliga orphan-logiken i buildView, precis som i PDF-läget när
 // elimination inte räcker. slotOf kopplar rad→slot så att textmatchningen kan hoppas över.
+/* Platshållaren för frågetexten när tentans PDF inte är med. Utan riktig text körs ingen formkontroll, och ingen
+   fråga märks som förebild. */
+const NO_STEM = "Frågetext ej tillgänglig utan tentans PDF. Alternativen nedan är de som valdes, flest svar först.";
 function synthMcqsFromJson(J){
   const out=[];
   for(const qn of J.mcqSeqs){
@@ -1515,7 +1518,7 @@ function synthMcqsFromJson(J){
         || String(a.slotText.get(s1)).localeCompare(String(a.slotText.get(s2)),"sv"));
     out.push({seq:qn, code:String(qn),
       pts:(a.max!=null?String(a.max).replace(".",",")+" p":null),
-      stem:"Frågetext ej tillgänglig utan tentans PDF. Alternativen nedan är de som valdes, flest svar först.",
+      stem:NO_STEM,
       opts:slots.map(s=>a.slotText.get(s)), slotOf:slots});
   }
   out.jsonMode=true;
@@ -2137,7 +2140,7 @@ function splitStem(text){
   return m ? {vinjett:m[1].trim(), stam:m[2].trim()} : {vinjett:"", stam:t};
 }
 function formFindings(v){
-  if(typeof KONTROLL==="undefined" || !v || !(v.correctIdx>=0) || !v.stem || !v.opts || v.opts.length<2) return [];
+  if(typeof KONTROLL==="undefined" || !v || !(v.correctIdx>=0) || !v.stem || v.stem===NO_STEM || !v.opts || v.opts.length<2) return [];
   const sp=splitStem(v.stem);
   const ratt=String(v.opts[v.correctIdx]), ds=v.opts.filter((_,i)=>i!==v.correctIdx).map(String);
   try{ return KONTROLL.kor({kontroll:{regler:FORM_REGLER}}, {vinjett:sp.vinjett, stam:sp.stam, ratt, distraktorer:ds}); }
@@ -2155,7 +2158,7 @@ function renderForm(f, cls){
    svårighet är inget kvalitetskriterium (Kajsa 21 nov 2026). Utan frågetext går formen inte att kontrollera, och då
    märks ingen förebild. */
 function isForebild(v){
-  if(!v || isExcluded(v.seq) || !v.stem || !(v.correctIdx>=0)) return false;
+  if(!v || isExcluded(v.seq) || !v.stem || v.stem===NO_STEM || !(v.correctIdx>=0)) return false;
   const minority=Math.min(v.ncorr, v.n-v.ncorr), sig=v.n?2/Math.sqrt(v.n):2;
   if(!(v.rpb!=null && v.n>=MIN_N && minority>=10 && v.rpb>=state.th.goodDisc && v.rpb>sig)) return false;
   const a=v.advice||advice(v);
@@ -2272,7 +2275,7 @@ function render(){
       note.className="advnote";
       note.innerHTML = `${pdfExtra.length} fråga(or) ser i PDF:en ut som flervalsfrågor men är det inte enligt resultaten `+
         `(${pdfExtra.map(x=>esc(x.seq)+": "+esc(x.type==="multi"?"flersvar":x.type==="text"?"essä":x.type)).join(", ")}). `+
-        `De visas som essä- eller flersvarskort i hela rapporten.`;
+        `De visas som essä- eller flersvarskort i steg 3.`;
     } else note.innerHTML="";
   }
   const modeCount = m => !isPre() ? "" : ` · ${m.id==="action" ? nAction : view.length}`;   // före betygssättning: vad ett klick ger
@@ -3346,7 +3349,7 @@ function temaFns(){
 function temaConsts(){
   return `const MIN_N=${MIN_N};const R_LOW=${R_LOW};const TH_DEFAULT=${JSON.stringify(TH_DEFAULT)};const TH_RANGE=${JSON.stringify(TH_RANGE)};const TH_LABEL=${JSON.stringify(TH_LABEL)};const PSY=${JSON.stringify(PSY)};`
     + `const FORM_META=${JSON.stringify(FORM_META)};const FORM_REGLER=${JSON.stringify(FORM_REGLER)};const FORM_CUE=${JSON.stringify(FORM_CUE)};const FORM_EXPLAINS=${JSON.stringify(FORM_EXPLAINS)};`
-    + `const REL_CAVEAT=${JSON.stringify(REL_CAVEAT)};const FACETS=${JSON.stringify(FACETS)};const SCORE_TEXT=${JSON.stringify(SCORE_TEXT)};const EXCL_REASONS=${JSON.stringify(EXCL_REASONS)};const INSPERA_REASON=${JSON.stringify(INSPERA_REASON)};const LOCAL_EXCL_NOTE=${JSON.stringify(LOCAL_EXCL_NOTE)};const ASK_TEXT=${JSON.stringify(ASK_TEXT)};`
+    + `const NO_STEM=${JSON.stringify(NO_STEM)};const REL_CAVEAT=${JSON.stringify(REL_CAVEAT)};const FACETS=${JSON.stringify(FACETS)};const SCORE_TEXT=${JSON.stringify(SCORE_TEXT)};const EXCL_REASONS=${JSON.stringify(EXCL_REASONS)};const INSPERA_REASON=${JSON.stringify(INSPERA_REASON)};const LOCAL_EXCL_NOTE=${JSON.stringify(LOCAL_EXCL_NOTE)};const ASK_TEXT=${JSON.stringify(ASK_TEXT)};`
     + `const HELP_HTML=${JSON.stringify(HELP_TEMA_HTML)};const HELP_TEMA_HTML=HELP_HTML;`;
 }
 /* Bygger hela den fristående temarapporten som en HTML-sträng. Använder bara embed, funktionslistan
