@@ -115,3 +115,17 @@ test("en tenta utan essäfrågor har inga essäkort och ingen Essä i filtret", 
   assert.equal(page.ev("EMBED.views[0].scored.filter(e => e.typ === 'text').length"), 0);
   assert.doesNotMatch(page.el("#tagbar").innerHTML, /data-val="text"/);
 });
+test("översiktstabellen ger aldrig en essäfråga etiketten god, och skriver maxpoängen med decimalkomma", () => {
+  const a = loadApp(); a.ev("setPrep(false); loadSynthetic(); setStep('report');");
+  const p = "overviewPayload()";
+  const essays = a.evj(`${p}.rows.filter(r => !r.isSingle).map(r => [String(r.num), thInfo(r.info, r.r).label])`);
+  assert.ok(essays.length > 5);
+  assert.deepEqual(essays.filter(e => e[1] === "god"), []);
+  assert.ok(a.evj(`${p}.rows.filter(r => r.isSingle).map(r => thInfo(r.info, r.r).label)`).includes("god"));     // flervalsfrågor har den kvar
+  const html = a.ev(`(p => overviewHtml(p, p.rows, "", ""))(${p})`);
+  assert.ok(!/<td>Essä<\/td>[^\n]*?<span class="mut">god<\/span>/.test(html.split("</tr>").filter(r => r.includes("<td>Essä</td>")).join("\n")));
+  assert.ok(!/<td class="num">\d+\.\d+<\/td>/.test(html));
+  // kortet och tabellen säger samma sak om samma essäfråga
+  const cards = new Map(a.evj("state.scored.map(e => [String(e.seq), thInfo(e.info, e.r).label])"));
+  for (const [seq, label] of essays) assert.equal(label, cards.get(seq), seq);
+});

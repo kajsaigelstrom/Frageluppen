@@ -6,6 +6,12 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.32.2
+- **Översiktstabellen gav essäfrågor etiketten "god"**, fast korten inte gör det. Tabellen tappade uppgiften
+  om att etiketten inte gäller essä- och flersvarsfrågor. Nu säger tabellen och kortet samma sak, och
+  maxpoängen skrivs med decimalkomma. Hittat när skärmbilderna i README togs om.
+- Nya skärmbilder i README, tagna på den syntetiska tentan.
+
 ## 3.32.1
 Två rättningar i kvittot i steg 1, efter prov på en T1-tenta (22 nov 2026).
 - **Flervalsfrågor och flersvarsfrågor räknas var för sig**, till exempel "47 flervalsfrågor och 5

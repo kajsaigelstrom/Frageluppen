@@ -699,7 +699,7 @@ function discLabel(r){
 }
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum. */
-const VERSION = "3.32.1";
+const VERSION = "3.32.2";
 const UPDATED = "2026-11-22";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
@@ -2357,7 +2357,7 @@ function overviewPayload(){
       diffMean: mean, diffPct: isSingle?null:(m.max?mean/m.max*100:0),
       excluded:isExcluded(m.num), reason:exclReason(m.num),
       r:(r===null||r===undefined)?null:r,
-      info:neutralInfo({cls:info.cls,value:info.value,label:info.label,tip:info.tip}, r)};
+      info:neutralInfo({cls:info.cls,value:info.value,label:info.label,tip:info.tip,note:info.note,noGood:info.noGood}, r)};
   });
   const nExcl=J.qMeta.filter(m=>isExcluded(m.num)).length;
   return {head:{exam:state.examName||"", n, nq:J.qMeta.length, nExcl, maxRed:+reducedMax(J).toFixed(1), maxTotal:+J.maxTotal.toFixed(1)}, rows};
@@ -2380,7 +2380,7 @@ function overviewHtml(payload, rows, filt, credit){
       : `${kom(r.diffMean)} / ${kom(r.max)} <span class="mut">(${r.diffPct.toFixed(0)} %)</span>`;
     return `<tr class="${r.excluded?'trexcl':'tr'}"><td class="num">${esc(String(r.num))}</td>`
       +`<td>${esc(r.title||String(r.num))}${r.excluded?` <span class="ex">exkluderad${r.reason?` · ${esc(r.reason)}`:""}</span>`:""}</td>`
-      +`<td>${esc(r.typeLabel)}</td><td class="num">${r.max}</td><td>${diff}</td>`
+      +`<td>${esc(r.typeLabel)}</td><td class="num">${kom(r.max)}</td><td>${diff}</td>`
       +`<td>${esc(r.info.value)} <span class="mut">${esc(r.info.label||"")}</span></td></tr>`;
   }).join("");
   const sub=(h.exam?[h.exam]:[]).concat([`${h.n} studenter`, rows.length===h.nq ? `${h.nq} frågor` : `${rows.length} av ${h.nq} frågor`])

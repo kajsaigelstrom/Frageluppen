@@ -77,15 +77,31 @@ tentans frågor fungerade och innehåller bara sammanräknade resultat.
 
 ## Så här ser det ut
 
-Skärmbilderna nedan är från en äldre version av verktyget och visar inte dagens tre steg:
+**Steg 1, förbered filer.** Insperas filer släpps i rutorna, och kvittot under dem säger vad som lästes in.
 
-![Frågeluppen – MCQ-vy med sammanfattning](docs/shot-cards.png)
+![Steg 1: filrutorna, kvittot och valen av nästa steg](docs/shot-steg1.png)
 
-Översikten över hela tentan, varje frågas svårighet och diskriminering, är numera exporten Översiktstabell:
+**Steg 2, hitta problemfrågor.** De flervalsfrågor som statistiken pekar ut före betygssättningen.
 
-![Frågeluppen – totalrapport](docs/shot-total.png)
+![Steg 2: frågorna att se över före betygssättning](docs/shot-steg2.png)
 
-*(Skärmbilderna visar syntetiska, avidentifierade data och en äldre version av verktyget.)*
+**Steg 3, skapa rapporter.** Exporterna, filtret och det som gäller flera frågor på samma sätt.
+
+![Steg 3: exportknappar, filter och mönster i frågorna](docs/shot-rapport.png)
+
+**Ett kort per fråga.** Svarsfördelning, andel rätt och diskriminering, med uppmaning och observationer där svaren följer ett mönster.
+
+![Frågekort med uppmaning och observation](docs/shot-cards.png)
+
+**Temarapporten** till temagrupperna, med tentans reliabilitet överst.
+
+![Temarapporten](docs/shot-tema.png)
+
+**Översiktstabellen**, en rad per fråga.
+
+![Översiktstabellen](docs/shot-total.png)
+
+*(Skärmbilderna visar en syntetisk tenta utan riktiga svar eller frågetexter, version 3.32.)*
 
 ---
 
