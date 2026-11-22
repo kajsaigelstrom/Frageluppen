@@ -6,6 +6,14 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.32.1
+Två rättningar i kvittot i steg 1, efter prov på en T1-tenta (22 nov 2026).
+- **Flervalsfrågor och flersvarsfrågor räknas var för sig**, till exempel "47 flervalsfrågor och 5
+  flersvarsfrågor lästa ur PDF:en". Förut kallades alla frågor med svarsalternativ flervalsfrågor.
+- **En PDF som inte hör till resultaten ger en varning också när den saknar tentans namn i sidhuvudet.**
+  Kontrollen ser på innehållet: om frågornas nummer finns i resultaten, och om studenternas valda svar känns
+  igen bland PDF:ens alternativ.
+
 ## 3.32.0
 - **En fjärde frågetyp, Övrig** (Kajsas beslut 22 nov 2026, efter prov på en T1-tenta): automaträttade frågor
   som varken är flervals- eller flersvarsfrågor, till exempel markera i en bild, välja i löptext eller para

@@ -699,7 +699,7 @@ function discLabel(r){
 }
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum. */
-const VERSION = "3.32.0";
+const VERSION = "3.32.1";
 const UPDATED = "2026-11-22";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
@@ -3539,7 +3539,35 @@ async function prepInputs(){
 function prepAnalysis(inp){
   const R=resolveInputs([buildPackage(inp)], {}), J=parseJSON(R.jsonObjs);
   const T=R.tagRows ? parseTagsRows(R.tagRows) : null;
-  return Object.assign(examFacts(J, T), {examName:commonTitle(inp.jsonObjs.map(o=>o && o.ext_inspera_assessmentRunTitle).filter(Boolean)) || ""});
+  return Object.assign(examFacts(J, T), {pdf:pdfFit(J, R.pdfMcqs), examName:commonTitle(inp.jsonObjs.map(o=>o && o.ext_inspera_assessmentRunTitle).filter(Boolean)) || ""});
+}
+/* Passar PDF:en resultaten? Tentans namn i sidhuvudet finns inte i alla utskrifter, så kontrollen ser också på
+   innehållet: hur många av PDF:ens frågor med svarsalternativ som finns som flervals- eller flersvarsfrågor i
+   resultaten, och om studenternas valda svar känns igen bland PDF:ens alternativ (samma jämförelse och tröskel som
+   när svaren kopplas till korten). single/multi/other = PDF:ens frågor efter typ i resultaten. */
+function pdfFit(J, pdf){
+  if(!pdf || !pdf.length || !J || !J.qMeta) return null;
+  const typ=new Map(J.qMeta.map(m=>[String(m.num), m.type]));
+  const nSingle=pdf.filter(q=>typ.get(String(q.seq))==="single").length, nMulti=pdf.filter(q=>typ.get(String(q.seq))==="multi").length;
+  const choiceN=J.qMeta.filter(m=>m.type==="single" || m.type==="multi").length, both=nSingle+nMulti;
+  let textN=0, textOk=0;
+  for(const q of pdf){
+    if(typ.get(String(q.seq))!=="single") continue;
+    const a=J.agg && J.agg[q.seq], texts=a && a.slotText ? [...a.slotText.values()].filter(Boolean) : [];
+    if(!texts.length || !(q.opts||[]).length) continue;
+    textN++; if(texts.some(t=>q.opts.some(o=>optSim(t,o)>=0.34))) textOk++;
+  }
+  let warning=null;
+  if(textN>=5 && textOk/textN<0.5)
+    warning=`PDF:en verkar inte höra till den här tentan. Svarsalternativen stämmer med resultaten för bara ${textOk} av ${textN} frågor. Kontrollera att rätt PDF är vald.`;
+  else if(both/Math.max(pdf.length, choiceN, 1)<0.8)
+    warning=`PDF:en verkar inte höra till den här tentan. PDF:en har ${pdf.length} frågor med svarsalternativ, resultaten har ${choiceN}, och ${both} av dem har samma nummer. Kontrollera att rätt PDF är vald.`;
+  return {single:nSingle, multi:nMulti, other:pdf.length-both, textN, textOk, warning};
+}
+function pdfCountText(f){
+  const n=(k,en,fl)=>`${k} ${k===1?en:fl}`;
+  const parts=[n(f.single,"flervalsfråga","flervalsfrågor")]; if(f.multi) parts.push(n(f.multi,"flersvarsfråga","flersvarsfrågor"));
+  return parts.join(" och ")+" lästa ur PDF:en"+(f.other?`, och ${f.other} som inte har svarsalternativ i resultaten`:"");
 }
 function examFacts(J, T){
   const counts=typeCounts(J);
@@ -3567,14 +3595,15 @@ async function refreshPrep(){
     const inp=await prepInputs(), k=prepReceipt(inp);
     const f=prepAnalysis(inp); state.prepInfo=f;
     { const gj=$("#got-json"); if(gj) gj.textContent = `✓ ${k.nFiles} ${k.nFiles===1?"fil":"filer"} — ${k.candCount} studenter${k.orter.length?` (${k.orter.join(", ")})`:""}`;
-      const gp=$("#got-pdf"); if(gp && k.mcqPdf!=null) gp.textContent = `✓ ${k.mcqPdf} flervalsfrågor${k.essays?` och ${k.essays} essäfrågor`:""} lästa`;
+      const gp=$("#got-pdf"); if(gp && f.pdf) gp.textContent = `✓ ${pdfCountText(f.pdf).replace(" lästa ur PDF:en","")}${k.essays?`, ${k.essays} essäfrågor`:""} lästa`;
       const gt=$("#got-tags"); if(gt && k.hasTags) gt.textContent = `✓ ger filter på ${k.tagCols.join(", ") || "taggarna"}`; }
     box.innerHTML = `<b>${esc(k.examName||"Tenta utan namn")}</b><br>`
       + `${k.candCount} studenter · `
-      + (k.mcqPdf!=null ? `${k.mcqPdf} flervalsfrågor lästa ur PDF:en` : "ingen PDF") + " · "
+      + (f.pdf ? pdfCountText(f.pdf) : "ingen PDF") + " · "
       + (k.hasTags ? "taggfilen är med" : "ingen taggfil")
       + receiptFacts(f)
-      + (k.warning ? `<br><span class="warn">⚠ ${esc(k.warning)}</span>` : "");
+      + (k.warning ? `<br><span class="warn">⚠ ${esc(k.warning)}</span>` : "")
+      + ((!k.warning && f.pdf && f.pdf.warning) ? `<br><span class="warn">⚠ ${esc(f.pdf.warning)}</span>` : "");
   }catch(e){ b.disabled=true; state.prepInfo=null; box.innerHTML=`<span class="warn">⚠ ${esc(e.message)}</span>`; }
   renderStepBar(); renderFileLine();
 }
@@ -3633,7 +3662,7 @@ $("#pdf").addEventListener("change", async e=>{
   const f=e.target.files[0]; if(!f) return;
   $("#got-pdf").textContent="läser …";
   try{ state.pdfMcqs=await parsePDF(await f.arrayBuffer());
-       $("#got-pdf").textContent=`✓ ${state.pdfMcqs.length} flervalsfrågor${(state.pdfMcqs.essays && state.pdfMcqs.essays.length)?` och ${state.pdfMcqs.essays.length} essäfrågor`:""} lästa`; }
+       $("#got-pdf").textContent=`✓ ${state.pdfMcqs.length} frågor med svarsalternativ${(state.pdfMcqs.essays && state.pdfMcqs.essays.length)?` och ${state.pdfMcqs.essays.length} essäfrågor`:""} lästa`; }
   catch(err){ state.pdfMcqs=null; $("#got-pdf").textContent="✗ kunde inte läsa PDF"; log("PDF-fel: "+err.message); console.error(err); }
   state.pdfFromPackage = false; state.prepPdf = state.pdfMcqs; state.prepDirty = true; if(!state.fromDataFile) state.dataSaved=false;
   checkExamMatch();
