@@ -11,6 +11,8 @@ inte dokumenterad här.
   om att etiketten inte gäller essä- och flersvarsfrågor. Nu säger tabellen och kortet samma sak, och
   maxpoängen skrivs med decimalkomma. Hittat när skärmbilderna i README togs om.
 - Nya skärmbilder i README, tagna på den syntetiska tentan.
+- Den syntetiska tentan i `tools/` har rimligare poäng för essä- och flersvarsfrågorna (r 0,1–0,6 i stället för
+  0,8–0,9), och skärmbilderna är tagna på den. Verktyget självt är oförändrat.
 
 ## 3.32.1
 Två rättningar i kvittot i steg 1, efter prov på en T1-tenta (22 nov 2026).
