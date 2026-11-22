@@ -6,6 +6,17 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.30.0
+Fjärde etappen efter genomgången: reliabilitet (Kajsas beslut 21 nov 2026).
+- **Cronbachs alfa för hela tentan, flervalsdelen och essädelen**, med medeldiskrimineringen per del bredvid,
+  som inte beror på antalet frågor. Exkluderade frågor räknas inte. Frågor i samma fall räknas som fristående,
+  och det står vid essädelen.
+- **Tentamensstatistikens flik Sammanfattning** har de tre värdena, mätfelet i poäng för hela tentan och antalet
+  studenter inom ett mätfel från G-gränsen.
+- **Temarapporten** visar alfa för de tre delarna överst, utan mätfel och antal nära gränsen. En sida med ett
+  urval av frågor säger att värdena gäller hela tentan.
+- **Vid G-fältet** står "godkänd från X p" i stället för "= X p".
+
 ## 3.29.0
 Tredje etappen efter genomgången: flödet mellan stegen och exporterna (Kajsas beslut 21 nov 2026).
 - **Filraden syns i alla tre stegen** så snart filer är inlästa, och säger "Datafilen är inte sparad" med länken

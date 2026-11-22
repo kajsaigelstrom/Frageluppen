@@ -232,6 +232,9 @@
   .patsub{font-size:12.5px;color:var(--muted);margin-top:3px}
   .askhead2{margin-top:12px}
   .patbtn{flex:none;white-space:nowrap}
+  .relbox{margin-bottom:12px} .reltable{border-collapse:collapse;font-size:13.5px;margin:4px 0 6px}
+  .reltable th{font-weight:600;font-size:12px;color:var(--muted);text-align:right;padding:2px 14px 2px 0}
+  .reltable td{padding:2px 14px 2px 0;text-align:right} .reltable td:first-child{text-align:left}
   @media print{ .patbtn{display:none!important} }
   .askform{margin-top:6px;padding:7px 10px;border-left:3px solid #c9b06a;background:#fff;font-size:13px;line-height:1.5}
   .formrub{font-weight:600}
@@ -726,7 +729,7 @@ function discLabel(r){
 }
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum. */
-const VERSION = "3.29.0";
+const VERSION = "3.30.0";
 const UPDATED = "2026-11-22";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
@@ -758,7 +761,10 @@ vilken tenta som är inläst, och om datafilen är sparad.</p>
 I steg 3 väljer du mellan <b>Med observationer</b> och <b>Bara mätvärden</b>, som döljer
 observationer och uppmaningar.</p>
 <p><b>G-gräns.</b> Fältet i steg 3 är gränsen för godkänt i procent av maxpoängen. Den styr betygen i
-Tentamensstatistiken och linjen i Diagram. Bredvid står vad gränsen blir i poäng.</p>
+Tentamensstatistiken och linjen i Diagram. Bredvid står från vilken poäng man är godkänd.</p>
+<p><b>Reliabilitet.</b> Tentamensstatistikens flik Sammanfattning har Cronbachs alfa för hela tentan,
+flervalsdelen och essädelen, mätfelet i poäng och antalet studenter inom ett mätfel från G-gränsen.
+Temarapporten visar alfa för de tre delarna överst.</p>
 <p><b>Kontrollen mot Inspera.</b> Datafilen bär med sig Insperas totalpoäng och betyg. Skiljer de sig
 från det verktyget räknar fram står en varning överst i steg 3, med antalet studenter det gäller.</p>
 <p><b>2 Hitta problemfrågor</b> – flervalsfrågor som kan behöva rättas i facit
@@ -2802,6 +2808,48 @@ function card(v){
   </div>`;
 }
 
+/* ---------- Reliabilitet ----------
+   Cronbachs alfa på råpoängen, för hela tentan, flervalsdelen och essädelen (Kajsa 21 nov 2026). Exkluderade
+   frågor räknas inte. Frågor i samma fall räknas som fristående, vilket kan ge ett något för högt värde för
+   essädelen. Bredvid alfa står medeldiskrimineringen (r mot hela tentan), som inte beror på antalet frågor.
+   rows = en rad per student, cols = frågornas kolumner. null = går inte att räkna. */
+const REL_CAVEAT = "Frågor i samma fall räknas som fristående, vilket kan ge ett något för högt värde.";
+function sampleVar(xs){
+  const n=xs.length; if(n<2) return 0;
+  const m=xs.reduce((a,b)=>a+b,0)/n; return xs.reduce((s,x)=>s+(x-m)*(x-m),0)/(n-1);
+}
+function alphaOf(rows, cols){
+  const k=cols.length; if(k<2 || rows.length<2) return null;
+  const vt=sampleVar(rows.map(r=>cols.reduce((s,c)=>s+(+r[c]||0),0)));
+  if(!(vt>0)) return null;
+  const vi=cols.reduce((s,c)=>s+sampleVar(rows.map(r=>+r[c]||0)),0);
+  return k/(k-1)*(1-vi/vt);
+}
+/* {parts:[{label,k,alpha,meanR}], sem, near}: mätfelet i poäng för hela tentan (SD·√(1−alfa)) och antalet studenter
+   vars totalpoäng ligger inom ett mätfel från G-gränsen. */
+function reliability(){
+  const J=state.json; if(!J || !J.qMeta || !J.cohortScores) return null;
+  const rows=J.cohortScores, keep=[]; J.qMeta.forEach((m,i)=>{ if(!isExcluded(m.num)) keep.push(i); });
+  const disc=computeDiscrimination(J,{criterion:'whole',excluded:state.excluded});
+  const part=(label, cols)=>{ const rs=cols.map(i=>disc[J.qMeta[i].num]).filter(r=>r!==null && r!==undefined && !isNaN(r));
+    return {label, k:cols.length, alpha:alphaOf(rows, cols), meanR: rs.length ? rs.reduce((a,b)=>a+b,0)/rs.length : null}; };
+  const parts=[part("Hela tentan", keep), part("Flervalsdelen", keep.filter(i=>J.qMeta[i].type==="single")), part("Essädelen", keep.filter(i=>J.qMeta[i].type==="text"))];
+  const totals=rows.map(r=>keep.reduce((s,i)=>s+(+r[i]||0),0)), a=parts[0].alpha;
+  const sem = (a===null) ? null : Math.sqrt(sampleVar(totals))*Math.sqrt(Math.max(0,1-a));
+  const gThr=gLimit(keep.reduce((s,i)=>s+J.qMeta[i].max,0));
+  return {parts, sem, near: sem===null ? null : totals.filter(t=>Math.abs(t-gThr)<=sem).length};
+}
+/* Rutan överst i temarapporten: alfa och medeldiskriminering per del. Mätfel och antal nära G-gränsen står bara i
+   Tentamensstatistiken. På en urvalssida sägs att värdena gäller hela tentan. */
+function relBoxHtml(rel, isSubset){
+  if(!rel || !rel.parts || !rel.parts.some(p=>p.alpha!==null)) return "";
+  const f=x=>(x===null||x===undefined) ? "–" : dk(x,2);
+  return `<div class="patbox relbox"><div class="pattitle">Tentans reliabilitet</div>`
+    + `<table class="reltable"><thead><tr><th></th><th>Cronbachs alfa</th><th>Medeldiskriminering (r)</th><th>Antal frågor</th></tr></thead><tbody>`
+    + rel.parts.map(p=>`<tr><td>${esc(p.label)}</td><td>${f(p.alpha)}</td><td>${f(p.meanR)}</td><td>${p.k}</td></tr>`).join("")
+    + `</tbody></table><div class="patnote">Essädelen: ${esc(REL_CAVEAT)}${isSubset?" Värdena gäller hela tentan, inte urvalet.":""}</div></div>`;
+}
+
 /* ---------- Tentamensstatistik ----------
    Liknar den Excel-mall kurssamordnarna fyller i för hand (flikarna Sammanfattning, Resultat per sektion och
    Resultat per fall), så att den känns igen. Bara statistik: löpnummer i stället för Insperas id. Exkluderade
@@ -2823,7 +2871,7 @@ function statsData(){
   const names=[...new Set(questions.map(q=>q.tema).filter(Boolean))];
   const themes=names.map(t=>{ const qs=questions.filter(q=>q.tema===t);
     return {name:t, nums:qs.map(q=>q.num), max:qs.reduce((s,q)=>s+q.max,0), mean:qs.reduce((s,q)=>s+q.mean,0)}; });
-  return {exam:state.examName||"", max:+max.toFixed(2), gThr, passPct:state.th.pass, questions, students, themes, excluded,
+  return {exam:state.examName||"", max:+max.toFixed(2), gThr, passPct:state.th.pass, questions, students, themes, excluded, rel:reliability(),
           orter:[...new Set(students.map(x=>x.ort).filter(Boolean))]};
 }
 /* Jämför verktygets uträkning med Insperas egen totalpoäng och slutbetyg, student för student. Skillnader betyder
@@ -2855,7 +2903,7 @@ function renderGLimit(d){
   const inp=$("#g-pct"), out=$("#g-pts"); if(!inp) return;
   inp.value=thFmt("pass");
   d = (state.step==="report") ? (d||statsData()) : null;
-  if(out) out.textContent = d ? `= ${d.gThr} p` : "";
+  if(out) out.textContent = d ? `godkänd från ${d.gThr} p` : "";
 }
 /* "nr 1-7, 10-18" av en lista frågenummer. */
 function numRanges(nums){
@@ -2888,6 +2936,11 @@ function statsSheets(d){
                  ["Antal U enligt Inspera", d.students.filter(x=>x.inspGrade && x.inspGrade.toUpperCase()==="U").length]] : []),
     ["Registrerade innevarande termin: antal G och U", "", "Fylls i för hand. Uppgiften finns inte i Inspera."],
     ["Registrerade tidigare terminer: antal G och U", "", "Fylls i för hand. Uppgiften finns inte i Inspera."],[""]];
+  if(d.rel){ const r3=x=>(x===null||x===undefined) ? "" : +(+x).toFixed(3);
+    sum.push(["Reliabilitet","Cronbachs alfa","Medeldiskriminering (r)","Antal frågor"]);
+    d.rel.parts.forEach((p,i)=>sum.push([p.label, r3(p.alpha), r3(p.meanR), p.k, ...(i===2 ? [REL_CAVEAT] : [])]));
+    sum.push(["Mätfel i poäng (hela tentan)", d.rel.sem===null ? "" : r2(d.rel.sem), "Standardavvikelsen gånger roten ur (1 − alfa)."],
+             ["Studenter inom ett mätfel från G-gränsen", d.rel.near===null ? "" : d.rel.near, "Räknat med G-gränsen vid exporten. Följer inte med om gränsen ändras här i Excel."],[""]); }
   d.orter.forEach(o=>{ const xs=d.students.filter(x=>x.ort===o), g=xs.filter(x=>x.g).length, r0=sum.length+1;   // r0 = ortens rad
     sum.push([o],["Antal tentander", xs.length],
       ["Antal G", {v:g, f:`COUNTIFS(${bet},"G",${ortR},"${o.replace(/"/g,'""')}")`}, {v:pc(g,xs.length)||0, f:`ROUND(B${r0+2}/B${r0+1}*100,2)`}, "%"],
@@ -2958,6 +3011,7 @@ function xExportRender(){
   { const fl=$("#fileline");
     if(fl) fl.textContent = fileLineText(EMBED.exam||"", EMBED.candCount,
       {single:view.length, text:sc.filter(e=>e.typ==="text").length, multi:sc.filter(e=>e.typ==="multi").length}, nExcl, ""); }
+  { const rb=$("#relbox"); if(rb) rb.innerHTML = relBoxHtml(EMBED.rel, !!EMBED.subset); }
   $("#nnote").innerHTML = state.smallN ? '<div class="advnote">Litet underlag: '+EMBED.candCount+' studenter. Tolka enskilda procenttal försiktigt.</div>' : "";
   const modes=(spec.modes&&spec.modes.length)?spec.modes:[{id:"edu",label:"Alla frågor"}];
   if(!modes.some(m=>m.id===state.mode)) state.mode=modes[0].id;
@@ -3056,6 +3110,12 @@ och Svår. Siffran på en knapp säger hur många frågor ett klick ger, med de 
 Gränserna för Lätt, Svår och God diskriminering är de under
 Inställningar.</p>
 </div></details>
+<details class="helpsec"><summary>Tentans reliabilitet</summary><div class="body">
+<p>Överst står Cronbachs alfa för hela tentan, flervalsdelen och essädelen. Alfa stiger med antalet
+frågor, så delarna jämförs bättre med <b>medeldiskrimineringen</b> bredvid, som inte beror på
+antalet. Frågor i samma fall räknas som fristående, vilket kan ge ett något för högt värde för
+essädelen. På en sida med ett urval av frågor gäller värdena fortfarande hela tentan.</p>
+</div></details>
 <details class="helpsec"><summary>Mönster i frågorna</summary><div class="body">
 <p>Överst står det som gäller flera frågor på samma sätt: hur många som var mycket lätta och i hur
 många ett alternativ valdes av nästan ingen. Varje rad står en gång,
@@ -3146,6 +3206,7 @@ function temaEmbed(){
   // Godkäntstatistiken följer inte med i temarapporten.
   return { kind:"tema", subset:null, exam:state.examName||"", credit:creditText(), generated:new Date().toLocaleDateString('sv-SE'),
                   views, viewIdx:0, candCount: J.candCount, smallN: !!state.smallN, tags,
+                  rel: (r=>r ? {parts:r.parts} : null)(reliability()),     // bara alfa per del; mätfel och antal nära G-gränsen följer inte med
                   excluded: [...state.excluded.entries()], comments: [...state.comments.entries()].filter(c=>c[1]), mode: "ask", th: Object.assign({},state.th) };
 }
 /* Urval: en kopia av rapportens data med bara de valda frågorna. Helhetssiffror (maxpoäng, antal exkluderade)
@@ -3280,7 +3341,7 @@ function temaFns(){
              setThreshold,thresholdsCustom,resetThresholds,thFmt,thresholdsText,settingsHtml,renderThCustom,wireSettings,thInfo,neutralInfo,
              temaFns,temaConsts,buildTemaReport,downloadText,stamp,
              patternSummary,renderPatterns,togglePattern,
-             scoreQuestions,scorePatterns,scoredVisible,scoreCard,activePatternRows,filterText,overviewHtml,exportOverview,
+             scoreQuestions,scorePatterns,scoredVisible,scoreCard,activePatternRows,relBoxHtml,filterText,overviewHtml,exportOverview,
              lathundKontrollInit,splitStem,formFindings,renderForm,isForebild,
              subsetEmbed,selVisible,renderSelBar,selRedraw,selAllVisible,selClear,saveSubset,savePage,printHtml,
              fileLineText,temaSource,xExportRender,xExportPrint,openHelp,closeHelp,wireHelp,xExportInit];
@@ -3288,7 +3349,7 @@ function temaFns(){
 function temaConsts(){
   return `const MIN_N=${MIN_N};const R_LOW=${R_LOW};const TH_DEFAULT=${JSON.stringify(TH_DEFAULT)};const TH_RANGE=${JSON.stringify(TH_RANGE)};const TH_LABEL=${JSON.stringify(TH_LABEL)};const PSY=${JSON.stringify(PSY)};`
     + `const FORM_META=${JSON.stringify(FORM_META)};const FORM_REGLER=${JSON.stringify(FORM_REGLER)};const FORM_CUE=${JSON.stringify(FORM_CUE)};const FORM_EXPLAINS=${JSON.stringify(FORM_EXPLAINS)};`
-    + `const FACETS=${JSON.stringify(FACETS)};const SCORE_TEXT=${JSON.stringify(SCORE_TEXT)};const EXCL_REASONS=${JSON.stringify(EXCL_REASONS)};const INSPERA_REASON=${JSON.stringify(INSPERA_REASON)};const LOCAL_EXCL_NOTE=${JSON.stringify(LOCAL_EXCL_NOTE)};const ASK_TEXT=${JSON.stringify(ASK_TEXT)};`
+    + `const REL_CAVEAT=${JSON.stringify(REL_CAVEAT)};const FACETS=${JSON.stringify(FACETS)};const SCORE_TEXT=${JSON.stringify(SCORE_TEXT)};const EXCL_REASONS=${JSON.stringify(EXCL_REASONS)};const INSPERA_REASON=${JSON.stringify(INSPERA_REASON)};const LOCAL_EXCL_NOTE=${JSON.stringify(LOCAL_EXCL_NOTE)};const ASK_TEXT=${JSON.stringify(ASK_TEXT)};`
     + `const HELP_HTML=${JSON.stringify(HELP_TEMA_HTML)};const HELP_TEMA_HTML=HELP_HTML;`;
 }
 /* Bygger hela den fristående temarapporten som en HTML-sträng. Använder bara embed, funktionslistan
@@ -3359,6 +3420,7 @@ function buildTemaReport(EMBED){
         </div>
         <div class="tagbar" id="tagbar"></div>
       </div>
+      <div id="relbox"></div>
       <div id="patterns"></div>
       <div id="count"></div>
       <div class="legend">

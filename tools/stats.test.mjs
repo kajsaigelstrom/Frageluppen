@@ -79,12 +79,12 @@ test("G-gränsen i procent ändras direkt på rapportsidan och styr statistiken"
   assert.equal(a.el("#g-pct").value, "65");
   assert.equal(a.el("#gctl").classList.contains("hidden"), false);
   const max = a.ev("statsData().max");
-  assert.match(a.el("#g-pts").textContent, new RegExp("= " + Math.floor(0.65 * max + 1e-9) + " p"));
+  assert.match(a.el("#g-pts").textContent, new RegExp("godkänd från " + Math.floor(0.65 * max + 1e-9) + " p"));
   const change = v => { a.el("#g-pct").value = v; (a.el("#g-pct").listeners.change || []).forEach(f => f({ target: a.el("#g-pct") })); };
   change("70");
   assert.equal(a.ev("state.th.pass"), 70);
   assert.equal(a.ev("statsData().gThr"), Math.floor(0.70 * max + 1e-9));
-  assert.match(a.el("#g-pts").textContent, new RegExp("= " + Math.floor(0.70 * max + 1e-9) + " p"));
+  assert.match(a.el("#g-pts").textContent, new RegExp("godkänd från " + Math.floor(0.70 * max + 1e-9) + " p"));
   change("abc");                                                    // ogiltigt värde: gränsen står kvar
   assert.equal(a.ev("state.th.pass"), 70);
   assert.equal(a.el("#g-pct").value, "70");
