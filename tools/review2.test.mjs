@@ -36,11 +36,11 @@ test("filter, sökning och urval följer inte med till nästa fil", async () => 
   assert.deepEqual(a.evj("[state.facets, state.activeTags]"), [{}, {}]);
   assert.equal(a.el("#search").value, "");
 });
-test("temarapportens urvalsetikett har aldrig appens åtgärdsord", () => {
+test("urvalsetiketten säger Med observation, samma ord som filtret", () => {
   const a = loadApp(); a.ev("setPrep(false); loadSynthetic(); setStep('report'); toggleFacet('titta','fraga');");
   const label = a.ev("temaEmbedFiltered().subset.label");
   assert.ok(!/Att se över/.test(label));
-  assert.match(label, /Fråga på kortet/);
+  assert.match(label, /Med observation/);
 });
 test("steg 1 visar inga varningar från förra analysen och låser inte steg 3", async () => {
   const a = fresh();
@@ -63,7 +63,7 @@ test("en fråga som ingen fick rätt på pekas ut, och kallas inte 'för få sva
   assert.equal(a.ev("rpbInfo(Z).label"), "ej mätbar");
   assert.equal(a.ev("rpbInfo(Object.assign({}, Z, {n:12})).label"), "för få svar");
   a.ev("state.mode = 'ask'");
-  assert.deepEqual(a.evj("askQuestions(Z).map(q => q.key)"), ["facit"]);
+  assert.match(a.ev("card(Z)"), /Att fråga sig[\s\S]*Stämmer facit\?/);
 });
 test("temarapporten och översiktstabellen säger vilken tenta de gäller", () => {
   const a = loadApp(); a.ev("setPrep(false); loadSynthetic(); state.examName = 'T5 VT26 ordinarie'; setStep('report');");

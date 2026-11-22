@@ -54,10 +54,12 @@ test("vyn före betygssättning talar om flervalsdelen, och säger varför", () 
   assert.match(el("#modeseg").innerHTML, /Att se över/);
   assert.match(ev("rpbInfo({n:100, ncorr:60, rpb:0.25, bestDistIdx:-1, bestDistPbis:null}).tip"), /studentens poäng på flervalsdelen/);
 });
-test("hjälpen i appen förklarar alla frågetyper och ordparet starka och svaga", () => {
+test("hjälpen i appen förklarar alla frågetyper, förbehållet om målrelaterat prov och slumpen", () => {
   const h = loadApp().ev("HELP_HTML");
   assert.match(h, /Essä- och flersvarsfrågor/);
-  assert.match(h, /starka[\s\S]{0,80}höga totalpoäng|höga totalpoäng[\s\S]{0,120}starka/);
+  assert.match(h, /På ett målrelaterat\s+prov är det inget fel i sig/);
+  assert.match(h, /Med många frågor uppstår enstaka varningar av slump\. En varning är ett\s+skäl att läsa frågan, inte ett bevis på att den är fel\./);
+  assert.ok(!/starka|svaga|r<sub>pb|Distraktorfärger|gör sitt jobb|överväg omskrivning|medelsvåra/.test(h));
   assert.ok(!/fliken Examinator/.test(h));
 });
 test("temarapportens hjälp talar till mottagaren", () => {
@@ -65,10 +67,11 @@ test("temarapportens hjälp talar till mottagaren", () => {
   assert.ok(!h.includes("taggfilen"), "mottagaren har aldrig sett någon taggfil");
   assert.ok(!h.includes("godkäntandel"), "ingen godkäntandel finns i rapporten");
   assert.match(h, /distraktor[\s\S]{0,40}felaktigt svarsalternativ|felaktigt svarsalternativ[\s\S]{0,40}distraktor/i);
-  assert.match(h, /starka[\s\S]{0,120}höga totalpoäng|höga totalpoäng[\s\S]{0,160}starka/);
+  assert.ok(!/starka|svaga|r<sub>pb|Färgerna på alternativen|Att fråga sig<\/summary>/.test(h));
+  assert.match(h, /På ett målrelaterat\s+prov är det inget fel i sig/);
   assert.match(h, /frågetexterna och rätt svar/);
   assert.match(h, /poängfördelning/);
-  assert.match(h, /Fråga på kortet/);
+  assert.match(h, /Med observation/);
 });
 test("temarapporten räknar studenter, inte kandidater", () => {
   const { html } = tema();

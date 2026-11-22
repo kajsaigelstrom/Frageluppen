@@ -40,15 +40,15 @@ test("inget kort i temarapporten innehåller åtgärdsord, inte heller i utfäll
 });
 test("kort utan mönster har ingen ruta", () => {
   const { ev } = fresh();
-  ev("state.mode = 'ask'; globalThis.vOk = VIEW.find(v => askQuestions(v).length === 0 && !advice(v).note);");
+  ev("state.mode = 'ask'; globalThis.vOk = VIEW.find(v => advice(v).l1.length + advice(v).l2.length === 0 && !advice(v).note);");
   assert.ok(!ev("card(vOk)").includes("Att fråga sig"));
-  assert.ok(!ev("card(vOk)").includes("askbox"));
+  assert.ok(!ev("card(vOk)").includes("advbox"));
 });
 test("utfällningen Mer om måttet har förklaringen men ingen åtgärd", () => {
   const { ev } = fresh();
   ev("state.mode = 'ask'; globalThis.vD = VIEW.find(v => advice(v).l1.some(a => a.psy === 'dist-pos'));");
   const html = ev("card(vD)");
-  assert.match(html, /<details class="askmore"[^>]*><summary>Mer om måttet<\/summary><div class="askpsy">Varje svarsalternativ får ett eget r/);
+  assert.match(html, /<details class="askmore"[^>]*><summary>Mer om måttet<\/summary><div class="askpsy">Varje svarsalternativ har ett eget samband med totalpoängen/);
   assert.doesNotMatch(html, ACTION_WORDS);
 });
 test("ofärdig rättning ger ingen temarapport", () => {

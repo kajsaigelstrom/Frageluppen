@@ -68,11 +68,11 @@ test("essä och flersvar följer samma regel som flervalsfrågor", () => {
   assert.equal(lab(7, -0.5), "osäker");
   assert.equal(lab(20, -0.15), "låg");            // inom bruset (−2/√100 = −0,20)
   assert.equal(lab(20, -0.25), "negativ");
-  assert.equal(lab(20, 0.35), "god");
+  assert.equal(lab(20, 0.35), "");                // essäfrågor får aldrig etiketten god (Kajsa 22 nov 2026)
   assert.equal(lab(20, 0.2), "");
   assert.equal(a.ev(`polyInfo(sc(10, 0).slice(0, 25), 0.4, 1, "text").label`), "för få svar");
   // spridda poäng räknas som mätbara även när få har full poäng
-  assert.equal(a.ev(`polyInfo(Array.from({length:100}, (_, i) => i < 3 ? 2 : i % 4 * 0.5), 0.35, 2, "text").label`), "god");
+  assert.equal(a.ev(`polyInfo(Array.from({length:100}, (_, i) => i < 3 ? 2 : i % 4 * 0.5), 0.35, 2, "text").cls`), "rpb-mid");
   const q = (dev, r) => a.evj(`scoreQuestions({n:100, r:${r}, typ:"text", excluded:false, dist:[{pts:0, count:${dev}}, {pts:1, count:${100 - dev}}]}).map(x => x.key)`);
   assert.deepEqual(q(3, -0.5), []);
   assert.deepEqual(q(20, -0.25), ["mall"]);

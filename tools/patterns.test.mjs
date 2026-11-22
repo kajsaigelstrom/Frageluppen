@@ -18,12 +18,14 @@ const fresh = () => { const a = loadApp(); setupDemoView(a.ev);
                       mk({seq:"3", counts:[65,15,10,10], rpb:0.35}) ];
     globalThis.row = (view, key) => patternSummary(view).find(r => r.key === key) || null;`); return a; };
 
-test("korten får bara frågor som är specifika för just den frågan", () => {
-  const { evj } = fresh();
-  assert.deepEqual(evj("ASK_SUMMARY"), ["latt", "ledtrad", "distraktor"]);
-  assert.deepEqual(evj("cardQuestions(mk({n:80, counts:[76,2,1,1], rpb:0.05})).map(q => q.key)"), []);
-  assert.deepEqual(evj("cardQuestions(mk({rpb:-0.4, counts:[50,20,15,15]})).map(q => q.key)"), ["facit"]);
-  assert.deepEqual(evj("cardQuestions(mk({rpb:0.05, counts:[28,25,24,23]})).map(q => q.key)"), ["tydlig"]);
+test("mönsterraderna finns också hos examinatorn i steg 3, men inte i steg 2 eller i läget Bara mätvärden", () => {
+  const a = loadApp(); a.ev("setPrep(false); loadSynthetic(); setStep('report');");
+  assert.ok(a.el("#patterns"));
+  assert.equal(a.ev("activePatternRows().length > 0"), a.el("#patterns").innerHTML.includes("Mönster i de här frågorna"));
+  a.ev("state.mode = 'simple'; drawCards();");
+  assert.equal(a.el("#patterns").innerHTML, "");
+  a.ev("setStep('triage');");
+  assert.equal(a.el("#patterns").innerHTML, "");
 });
 test("en mycket lätt fråga har ingen ruta på kortet men behåller märkningen", () => {
   const { ev } = fresh();
@@ -31,12 +33,12 @@ test("en mycket lätt fråga har ingen ruta på kortet men behåller märkningen
   assert.ok(!html.includes("Att fråga sig") && !html.includes("askbox"));
   assert.ok(html.includes("badge easy"));
 });
-test("mycket lätta frågor sammanfattas en gång, med nivåfrågan", () => {
+test("mycket lätta frågor sammanfattas en gång, med möjliga orsaker", () => {
   const { ev, evj } = fresh();
   const r = evj("row(V3, 'latt')");
   assert.equal(r.head, "2 av 3 MCQ-frågor klarades av minst 90 %.");
   assert.deepEqual(r.seqs, ["1", "2"]);
-  assert.equal(r.ask, "Är det väntat för de här målen, eller prövar frågorna något enklare än ni avsåg?");
+  assert.match(r.more, /^Frågan kan pröva kunskap som alla förväntas ha, vilket är rimligt på ett målrelaterat prov\./);
   ev("setThreshold('easy', 96)");
   assert.equal(evj("row(V3, 'latt')"), null);
 });
@@ -45,7 +47,7 @@ test("alternativ som nästan ingen valde sammanfattas en gång", () => {
   const r = evj("row([mk({seq:'1', counts:[70,20,9,1]}), mk({seq:'2'}), mk({seq:'3'})], 'distraktor')");
   assert.equal(r.head, "I 1 av 3 MCQ-frågor valdes minst ett alternativ av färre än 5 %.");
   assert.deepEqual(r.seqs, ["1"]);
-  assert.equal(r.ask, "Var alternativen rimliga svar för en student som inte kan området?");
+  assert.equal(r.more, "Alternativet kan vara uppenbart fel för den som kan området. Det kan också gå att avfärda på formen utan ämneskunskap.");
 });
 test("sammanfattningen har bara de statistiska mönstren, med antal som har en möjlig förklaring i formen", () => {
   const { evj } = fresh();

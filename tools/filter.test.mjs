@@ -73,13 +73,13 @@ test("essä- och flersvarskorten filtreras på svårighet och diskriminering", (
   assert.equal(vis.length, page.ev("EMBED.views[0].scored.filter(e => e.typ === 'text' && e.pct >= 90).length"));
   assert.match(page.el("#count").textContent, new RegExp(`Visar ${vis.length} av \\d+ frågor`));
 });
-test("att titta på: fråga på kortet, förebild och exkluderad", () => {
+test("att titta på: med observation, förebild och exkluderad", () => {
   const { ev, page } = tema();
   const g = group(page, "titta");
   const labels = Object.fromEntries(g.values.map(v => [v.val, v.label]));
-  assert.equal(labels.fraga, "Fråga på kortet");
+  assert.equal(labels.fraga, "Med observation");
   page.ev("toggleFacet('titta','fraga')");
-  assert.ok(page.evj("selVisible()").length === page.ev("EMBED.views[0].view.filter(v => cardQuestions(v).length).length"));
+  assert.ok(page.evj("selVisible()").length === page.ev("EMBED.views[0].view.filter(v => { const a = advice(v); return !isExcluded(v.seq) && a.l1.length + a.l2.length > 0; }).length"));
   page.ev("clearFilters(); toggleFacet('titta','forebild')");
   assert.equal(page.ev("selVisible().length"), page.ev("EMBED.views[0].view.filter(isForebild).length"));
 });
@@ -118,7 +118,7 @@ test("filterraden i examinatorns rapportvy", () => {
   const { ev, el } = fresh();
   ev("setPrep(false); loadSynthetic(); setStep('report');");
   assert.match(el("#tagbar").innerHTML, /Svårighet/);
-  assert.match(el("#tagbar").innerHTML, /Att se över/);              // appens kort har "Att se över", inte frågor
+  assert.match(el("#tagbar").innerHTML, /Med observation/);          // samma ord som i temarapporten
   assert.match(el("#tagbar").innerHTML, /Frågetyp/);
   ev("toggleFacet('svar','svar')");
   assert.ok(ev("currentView().every(v => v.pcorr < 60)"));

@@ -41,11 +41,11 @@ test("utan frågetext eller facit körs ingen kontroll", () => {
   assert.deepEqual(evj("rules(mk({stem:''}))"), []);
   assert.deepEqual(evj("rules(mk({correctIdx:-1, counts:[70,10,10,10]}))".replace("correctIdx:-1", "correctIdx:0, opts:['Järnbrist']")), []);
 });
-test("formfyndet visas som förklaring under en fråga på kortet", () => {
+test("formfyndet visas som möjlig förklaring under observationen på kortet", () => {
   const { ev } = fresh();
   // nära gissningsnivå utan diskriminering + negation i stammen: frågan om tydlighet får fyndet som förklaring
   const html = ev(`card(mk({rpb:0.05, counts:[28,25,24,23], stem:"Vilket av följande är inte ett symtom vid anemi?"}))`);
-  assert.ok(html.includes("Att fråga sig"));
+  assert.ok(html.includes("Nära gissningsnivå"));
   assert.ok(html.includes('class="askform"'));
   assert.ok(html.split('class="askform"')[1].split("</details>")[0].includes("Ur MCQ-lathunden"));
 });
@@ -64,13 +64,12 @@ test("formkontrollen körs bara på frågor med en svaghet och på tänkbara fö
 test("en mycket lätt fråga får formfyndet som möjlig förklaring på kortet", () => {
   const { ev } = fresh();
   const html = ev(`card(mk({n:80, counts:[76,2,1,1], rpb:0.05, opts:[${JSON.stringify(LONG)},"Hypotyreos","Depression","Sömnapné"]}))`);
-  assert.ok(html.includes("Möjlig förklaring"));
-  assert.ok(html.includes("Nästan alla svarade rätt."));
+  assert.ok(html.includes("Mycket lätt fråga"));
   assert.ok(html.includes("Rätt svar sticker ut."));
   assert.match(html, /tecken, den längsta distraktorn/);
   assert.ok(!html.includes("Att fråga sig"));
   // utan formfynd: ingen ruta alls
-  assert.ok(!ev("card(mk({n:80, counts:[76,2,1,1], rpb:0.05}))").includes("askbox"));
+  assert.ok(!ev("card(mk({n:80, counts:[76,2,1,1], rpb:0.05}))").includes("advbox"));
 });
 test("regler som bara är tips används aldrig som förklaring", () => {
   const { evj } = fresh();
@@ -81,7 +80,7 @@ test("regler som bara är tips används aldrig som förklaring", () => {
   // väl uppbyggda parallella alternativ (2 × 2) ger ingen förklaring trots att tipsregeln "ojämna inledningar" slår
   const sym = `mk({n:80, counts:[76,2,1,1], rpb:0.05, stem:"Vilken dos är lämpligast?", opts:["1000 mg 2 gånger per dygn","1000 mg 3 gånger per dygn","1500 mg 3 gånger per dygn","1500 mg 2 gånger per dygn"]})`;
   assert.ok(evj(`rules(${sym})`).includes("inledning2"));
-  assert.deepEqual(evj(`formFor(${sym}, askQuestions(${sym}))`), {});
+  assert.deepEqual(evj(`advice(${sym}).l2`), []);
 });
 test("ett fynd visas bara under en fråga det kan förklara", () => {
   const { evj } = fresh();
@@ -89,19 +88,20 @@ test("ett fynd visas bara under en fråga det kan förklara", () => {
   const STEM = "Vilket av följande är inte ett symtom vid anemi?";
   const easy = `mk({n:80, counts:[76,2,1,1], rpb:0.05, stem:${JSON.stringify(STEM)}})`;
   assert.ok(evj(`rules(${easy})`).includes("negstam"));
-  assert.deepEqual(evj(`askQuestions(${easy}).map(q => q.key)`), ["latt"]);
-  assert.deepEqual(evj(`formFor(${easy}, askQuestions(${easy}))`), {});
+  assert.deepEqual(evj(`advice(${easy}).l2`), []);
   const hard = `mk({rpb:0.05, counts:[28,25,24,23], stem:${JSON.stringify(STEM)}})`;
-  const shown = evj(`formFor(${hard}, askQuestions(${hard}))`);
-  assert.deepEqual(Object.keys(shown), ["tydlig"]);
-  assert.ok(shown.tydlig.some(f => f.regel === "negstam"));
+  const shown = evj(`advice(${hard}).l1`);
+  assert.deepEqual(shown.map(a => a.psy), ["hard"]);
+  assert.ok(shown[0].form.some(f => f.regel === "negstam"));
 });
-test("högst tre formfynd per kort", () => {
+test("högst två formfynd per observation", () => {
   const { evj } = fresh();
   const many = `mk({n:80, counts:[76,2,1,1], rpb:0.05, stem:"En patient har hjärtsvikt. Vilken behandling är bäst?",
     opts:["Både behandling av hjärtsvikt och samtidigt alltid noggrann uppföljning av patienten; dessutom kontroll","Aldrig a","Endast b","Inga c"]})`;
   assert.ok(evj(`rules(${many})`).length > 3);
-  assert.ok(evj(`Object.values(formFor(${many}, askQuestions(${many}))).flat().length`) <= 3);
+  const a = evj(`advice(${many})`);
+  assert.ok(a.l1.concat(a.l2).some(x => x.form.length > 0));
+  assert.ok(a.l1.concat(a.l2).every(x => (x.form || []).length <= 2));
 });
 test("förebild: skiljer väl, inget på kortet och utan fynd i formkontrollen; svårigheten är inget krav", () => {
   const { ev } = fresh();
@@ -126,11 +126,11 @@ test("kortet har ingen kopiera-knapp och ingen formkontroll-ruta", () => {
     assert.ok(!/copyq|formall|Kopiera frågan|Formkontroll och/.test(ev(`card(${v})`)), v);
   assert.equal(ev("typeof questionAsText"), "undefined");
 });
-test("appens egna kort påverkas inte", () => {
+test("examinatorns kort har samma formfynd som temarapportens", () => {
   const { ev } = fresh();
-  ev("state.mode = 'edu'");
+  ev("state.mode = 'edu'; state.view = 'final'");
   const html = ev(`card(mk({n:80, counts:[76,2,1,1], rpb:0.05, opts:[${JSON.stringify(LONG)},"Hypotyreos","Depression","Sömnapné"]}))`);
-  assert.ok(!html.includes("askform") && !html.includes("formall") && !html.includes("förebild"));
+  assert.ok(html.includes("askform") && html.includes("Rätt svar sticker ut.") && !html.includes("formall") && !html.includes("förebild"));
 });
 test("den exporterade rapporten och en urvalssida har formkontrollen med sig", () => {
   const { ev } = fresh();
@@ -139,7 +139,7 @@ test("den exporterade rapporten och en urvalssida har formkontrollen med sig", (
       E.views[0].view[iE].opts[E.views[0].view[iE].correctIdx] = ${JSON.stringify(LONG)};`);
   const page = runHtml(ev("buildTemaReport(E)"));
   assert.equal(page.ev("typeof KONTROLL.kor"), "function");
-  assert.ok(page.el("#cards").innerHTML.includes("Möjlig förklaring"));
+  assert.ok(page.el("#cards").innerHTML.includes("Mycket lätt fråga"));
   assert.ok(page.el("#cards").innerHTML.includes("Rätt svar sticker ut."));
   assert.ok(!page.el("#cards").innerHTML.includes("formall"));
   const child = runHtml(page.ev("buildTemaReport(subsetEmbed(EMBED, [String(EMBED.views[0].view[" + ev("iE") + "].seq)], state.th))"));
@@ -157,8 +157,8 @@ test("kontrollen i Frågeluppen är densamma som i MCQ-lathunden", { skip: !proc
 test("ett alternativ som nästan ingen valde får en förklaring bara när formen ger en", () => {
   const { ev } = fresh();
   const dead = "n:100, rpb:0.3, counts:[70,20,9,1]";
-  assert.ok(!ev(`card(mk({${dead}}))`).includes("Möjlig förklaring"));
+  assert.ok(!ev(`card(mk({${dead}}))`).includes("askform"));
   const html = ev(`card(mk({${dead}, opts:["Järnbrist","Hypotyreos","Depression","Alltid sömnapné"]}))`);
-  assert.ok(html.includes("Möjlig förklaring") && html.includes("Ett alternativ valdes av nästan ingen."));
+  assert.ok(html.includes("askform") && html.includes("Sällan valda alternativ") && html.includes("«Alltid sömnapné» valdes av 1 % av studenterna."));
   assert.equal(ev("typeof ASK_NEEDS_FORM"), "undefined");
 });

@@ -73,11 +73,10 @@ test("uppmaningar till examinatorn syns inte för temarapportens läsare", () =>
   const page = runHtml(ev("buildTemaReport(temaEmbed())"));
   assert.doesNotMatch(page.el("#cards").innerHTML, /Bekräfta att det beror|återanvänder/);
   ev("state.mode = 'ask'");
-  assert.doesNotMatch(ev("card(Object.assign({}, VIEW[0], {n: 12, advice: undefined}))"), /bedöm utifrån/);
-  assert.match(ev("card(Object.assign({}, VIEW[0], {n: 12, advice: undefined}))"), /För få svar \(n=12\)/);
+  assert.match(ev("card(Object.assign({}, VIEW[0], {n: 12, advice: undefined}))"), /Kortet visar bara mätvärdena eftersom färre än 30 svarade \(n=12\)\./);
   assert.doesNotMatch(ev("card(Object.assign({}, VIEW[0], {unmatched: 3, advice: undefined}))"), /kontrollera att rätt PDF/);
-  ev("state.mode = 'edu'");                              // appen är oförändrad
-  assert.match(ev("card(Object.assign({}, VIEW[0], {n: 12, advice: undefined}))"), /bedöm utifrån/);
+  ev("state.mode = 'edu'");                              // samma rad hos examinatorn
+  assert.match(ev("card(Object.assign({}, VIEW[0], {n: 12, advice: undefined}))"), /Kortet visar bara mätvärdena eftersom färre än 30 svarade \(n=12\)\./);
   assert.match(ev("card(Object.assign({}, VIEW[0], {unmatched: 3, advice: undefined}))"), /kontrollera att rätt PDF/);
 });
 test("från steg 1 tillbaka till steg 2 eller 3: resultaten visas igen", () => {

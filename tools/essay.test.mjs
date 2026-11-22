@@ -32,21 +32,26 @@ test("essäkortet visar medel, diskriminering och poängfördelning", () => {
   assert.ok(!html.includes("askbox"));
   assert.ok(ev("scoreCard(me({typ:'multi'}))").includes(">Flersvar<"));
 });
-test("poäng som inte följer resten av tentan ger en fråga om bedömningsmallen, eller om facit för flersvar", () => {
+test("tydligt negativ diskriminering ger essäkortets enda uppmaning, om bedömningsmallen eller om facit för flersvar", () => {
   const { ev, evj } = fresh();
   assert.deepEqual(evj("scoreQuestions(me({r:-0.25})).map(q => q.key)"), ["mall"]);
-  assert.equal(evj("scoreQuestions(me({r:-0.25}))[0].text"), "Poängen på frågan följer inte resten av tentan. Bedömer mallen det ni avsåg att pröva?");
-  assert.equal(evj("scoreQuestions(me({r:-0.25, typ:'multi'}))[0].text"), "Poängen på frågan följer inte resten av tentan. Stämmer facit och poängregeln?");
+  assert.equal(evj("scoreQuestions(me({r:-0.25}))[0].text"), "Studenter med hög totalpoäng fick lägre poäng på frågan än övriga. Kontrollera bedömningsmallen och rättningen före betygssättningen.");
+  assert.equal(evj("scoreQuestions(me({r:-0.25, typ:'multi'}))[0].text"), "Studenter med hög totalpoäng fick lägre poäng på frågan än övriga. Kontrollera facit och poängregeln före betygssättningen.");
   assert.deepEqual(evj("scoreQuestions(me({r:0.05}))"), []);
   assert.deepEqual(evj("scoreQuestions(me({r:-0.25, n:12}))"), []);                 // för litet underlag
   assert.deepEqual(evj("scoreQuestions(me({r:-0.25, excluded:true}))"), []);
-  assert.ok(ev("scoreCard(me({r:-0.25, info:{cls:'rpb-bad', value:'r -0.25', label:'negativ', tip:''}}))").includes("Att fråga sig"));
+  const h = ev("scoreCard(me({r:-0.25, info:{cls:'rpb-bad', value:'r −0,25', label:'negativ', tip:''}}))");
+  assert.match(h, /Att se över[\s\S]*Kontrollera bedömningsmallen och rättningen[\s\S]*Mer om måttet[\s\S]*rättningen varit ojämn/);
+  assert.ok(!h.includes("Att fråga sig"));
 });
-test("flersvarsfrågans förklaring pekar på facit, inte på bedömningsmallen", () => {
+test("essäkort har inga brickor för Lätt och Svår, och aldrig etiketten god", () => {
   const { ev } = fresh();
-  const tip = t => ev(`polyInfo(Array.from({length:40}, (_, i) => i % 3), -0.4, 2, '${t}').tip`);
-  assert.match(tip("multi"), /facit och poängregeln/);
-  assert.match(tip("text"), /bedömningsmallen/);
+  assert.ok(!/badge (easy|hard)/.test(ev("scoreCard(me({pct:95, mean:3.8}))") + ev("scoreCard(me({pct:30, mean:1.2}))")));
+  const lab = r => ev(`polyInfo(Array.from({length:40}, (_, i) => i % 3), ${r}, 2, 'text').label`);
+  assert.equal(lab(0.45), ""); assert.equal(lab(0.05), "låg"); assert.equal(lab(-0.4), "negativ");
+  assert.equal(ev("thInfo(polyInfo(Array.from({length:40}, (_, i) => i % 3), 0.45, 2, 'text'), 0.45).label"), "");
+  assert.equal(ev("thInfo(rpbInfo({n:100, ncorr:50, rpb:0.45}), 0.45).label"), "god");
+  assert.ok(!/Granska|bedömningsmallen|poängregeln/.test(ev("polyInfo.toString()")));     // tipset beskriver, uppmaningen står på kortet
 });
 test("essäfrågor som nästan alla fick full poäng på sammanfattas en gång", () => {
   const { ev, evj } = fresh();
@@ -55,7 +60,7 @@ test("essäfrågor som nästan alla fick full poäng på sammanfattas en gång",
   assert.equal(r.length, 1);
   assert.equal(r[0].key, "elatt");
   assert.equal(r[0].head, "2 av 3 essäfrågor hade ett medel på minst 90 % av maxpoängen.");
-  assert.equal(r[0].ask, "Är det väntat för de här målen, eller skiljer bedömningsmallen för lite mellan svaren?");
+  assert.equal(r[0].more, "Stoffet kan vara väl inövat, frågan kan vara känd sedan tidigare, eller så ger bedömningsmallen full poäng för många olika svar.");
   assert.deepEqual(r[0].seqs, ["1", "2"]);
   ev("setThreshold('easy', 96)");
   assert.deepEqual(evj(`scorePatterns(${list})`), []);

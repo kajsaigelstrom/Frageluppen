@@ -5,11 +5,11 @@ import { loadApp, INDEX } from "./harness.mjs";
 const STATIC = fs.readFileSync(INDEX, "utf8").split("<script>")[0];
 const rep = () => { const a = loadApp(); a.ev("setPrep(false); loadSynthetic(); setStep('report');"); return a; };
 
-test("lägena heter Med råd och Bara mätvärden", () => {
+test("lägena heter Med observationer och Bara mätvärden", () => {
   const { evj, el } = rep();
-  assert.deepEqual(evj("activeView().modes.map(m => m.label)"), ["Med råd", "Bara mätvärden"]);
+  assert.deepEqual(evj("activeView().modes.map(m => m.label)"), ["Med observationer", "Bara mätvärden"]);
   assert.ok(!/Utbildningsläge|Förenklad vy/.test(fs.readFileSync(INDEX, "utf8")));
-  assert.match(el("#modehint").textContent, /råd/);
+  assert.match(el("#modehint").textContent, /observationer/);
 });
 test("ingen lista över förebilder ovanför korten; de väljs i filtret i stället", () => {
   const { ev, el } = rep();

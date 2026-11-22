@@ -177,7 +177,6 @@
   .opt.eff   .txt::after{content:"effektiv";color:var(--eff-ink);font-weight:600}
   .opt.ineff .txt::after{content:"mindre effektiv";color:var(--ineff-ink);font-weight:600}
   .opt.trap  .txt::after{content:"vanligare än rätt svar";color:var(--trap-ink);font-weight:600}
-  .opt.zero .txt::after{content:"ineffektiv";color:var(--ineff0);font-weight:600}
   .opt.unmapped .pct{color:var(--faint)}
   .opt.unmapped .txt{color:var(--muted)}
   .opt.unmapped .discmark{background:#eceae3;color:#7a7568;font-style:italic}
@@ -447,20 +446,21 @@
           <option value="doc">Tentans ordning</option>
           <option value="pc-asc">Andel rätt – lägst först</option>
           <option value="pc-desc">Andel rätt – högst först</option>
-          <option value="trap-desc">Starkaste distraktor först</option>
-          <option value="rpb-asc">Diskriminering (r_pb) – lägst först</option>
+          <option value="trap-desc">Mest valda distraktor först</option>
+          <option value="rpb-asc">Diskriminering (r), lägst först</option>
           <option value="code">Frågans namn</option>
           <option value="tag">Tema, sedan frågans namn</option>
         </select>
       </div>
       <div class="tagbar" id="tagbar"></div>
     </div>
+    <div id="patterns"></div>
     <div id="count"></div>
     <div class="legend">
       <span class="sw"><i style="background:var(--correct-bar)"></i>Rätt svar</span>
-      <span class="sw"><i style="background:var(--eff)"></i>Distraktor – effektiv (≥ 5 %)</span>
-      <span class="sw"><i style="background:var(--ineff)"></i>Distraktor – mindre effektiv (&lt; 5 %)</span>
-      <span class="sw"><i style="background:var(--ineff0)"></i>Distraktor – ineffektiv (0 %, ingen valde)</span>
+      <span class="sw"><i style="background:var(--eff)"></i>Distraktor ≥ 5 %</span>
+      <span class="sw"><i style="background:var(--ineff)"></i>Distraktor &lt; 5 %</span>
+      <span class="sw"><i style="background:var(--ineff0)"></i>Distraktor 0 %</span>
       <span class="sw"><i style="background:var(--trap)"></i>Vanligare än rätt svar</span>
     </div>
     <div id="cards"></div>
@@ -547,11 +547,11 @@ function wireSettings(withPass, onChange){
 function isPre(){ return typeof EMBED==="undefined" && activeView().id==="pre-mcq"; }
 function modeHint(m){
   const pre=" Diskrimineringen räknas mot poängen på flervalsdelen, eftersom essäfrågorna inte är rättade än.";
-  return m==="ask" ? "Hur varje fråga fungerade. Där svaren följer ett mönster står en eller två frågor att ställa sig."
+  return m==="ask" ? "Hur varje fråga fungerade. Där svaren följer ett mönster står en observation på kortet, med möjliga orsaker."
     : m==="action" ? "Frågor som statistiken pekar ut: tecken på fel i facit, eller mycket svåra frågor som inte skiljer mellan studenter." + pre
-    : m==="simple" ? "Bara korten med mätvärden. Tolkningar och råd är dolda. Diskrimineringen räknas mot poängen på hela tentan."
+    : m==="simple" ? "Bara korten med mätvärden. Observationer och uppmaningar är dolda. Diskrimineringen räknas mot poängen på hela tentan."
     : isPre() ? "Alla flervalsfrågor med mätvärden, för överblick över svårighet och diskriminering." + pre
-    : "Alla frågor efter rättningen, med tolkningar och råd där statistiken ger anledning. Diskrimineringen räknas mot poängen på hela tentan."; }
+    : "Alla frågor efter rättningen, med observationer där svaren följer ett mönster. Diskrimineringen räknas mot poängen på hela tentan."; }
 
 /* ---------- De två vyerna ----------
    En vy per steg: steg 2 visar "pre-mcq" och steg 3 visar "final" (setStep väljer). Varje vy är ren konfiguration;
@@ -563,7 +563,7 @@ const VIEWS = [
   // Hela rapporten är en sida med alla frågetyper (Kajsa 20 nov 2026). Frågetyp väljs i filtret, och översikten
   // i tabellform är en egen export (exportOverview).
   { id:"final",     label:"Hela rapporten",  criterion:"whole", layout:"all",   needsFullyGraded:true,
-    modes:[{id:"edu",label:"Med råd"},{id:"simple",label:"Bara mätvärden"}] },
+    modes:[{id:"edu",label:"Med observationer"},{id:"simple",label:"Bara mätvärden"}] },
 ];
 function activeView(){ return VIEWS.find(v=>v.id===state.view) || VIEWS[0]; }
 /* I temarapporten finns activeView() också (rapportens wrapper ger den inbakade vyn), så samma kod gäller där. */
@@ -579,27 +579,27 @@ function scoreMinority(scores){
 }
 function polyInfo(scores, r, max, typ){
   const n=scores.length, minority=scoreMinority(scores), sig=n?2/Math.sqrt(n):2;
-  const fmt=(r===null||r===undefined)?"–":((r>=0?"+":"")+r.toFixed(2));
+  const fmt=rFmt(r);
   if(n<MIN_N)
-    return {cls:"rpb-na",value:"r –",label:"för få svar",
+    return {cls:"rpb-na",value:"r –",label:"för få svar",noGood:true,
       tip:`För få svar (n=${n}) för att mäta diskriminering. Det krävs minst ${MIN_N}.`};
   if(minority===0 || r===null || r===undefined)
-    return {cls:"rpb-na",value:"r –",label:"ingen spridning",
+    return {cls:"rpb-na",value:"r –",label:"ingen spridning",noGood:true,
       tip:`Alla fick samma poäng, så det finns inget att korrelera mot.`};
   if(minority<5)
-    return {cls:"rpb-na",value:"r –",label:"ej mätbar",
+    return {cls:"rpb-na",value:"r –",label:"ej mätbar",note:`bara ${minority} fick en annan poäng`,noGood:true,
       tip:`Diskrimineringen går inte att mäta eftersom bara ${minority} fick en annan poäng än de övriga. (Beräknat värde ${fmt}, men opålitligt.)`};
   if(minority<10)
-    return {cls:"rpb-lowconf",value:`r ${fmt}`,label:"osäker",
-      tip:`Osäkert mått: bara ${minority} fick en annan poäng än de övriga (n=${n}). Värdet kan svänga mycket.`};
+    return {cls:"rpb-lowconf",value:`r ${fmt}`,label:"osäker",note:`bara ${minority} fick en annan poäng`,noGood:true,
+      tip:`Osäkert mått eftersom bara ${minority} fick en annan poäng än de övriga (n=${n}). Värdet kan svänga mycket.`};
   if(r < -sig)
-    return {cls:"rpb-bad",value:`r ${fmt}`,label:"negativ",
-      tip: typ==="multi"
-        ? `Tydligt negativt (under −${sig.toFixed(2)}): studenter med hög totalpoäng fick lägre poäng på frågan. Granska facit och poängregeln. n=${n}.`
-        : `Tydligt negativt (under −${sig.toFixed(2)}): studenter med hög totalpoäng fick lägre poäng på frågan. Granska bedömningsmallen och rättningen. n=${n}.`};
-  const d=discLabel(r);
-  return {cls:d.cls,value:`r ${fmt}`,label:d.label,
-    tip:`Korrelation mellan poängen på frågan och studentens ${critLabel()} utan frågan. n=${n}.`};
+    return {cls:"rpb-bad",value:`r ${fmt}`,label:"negativ",noGood:true,
+      tip:`Tydligt negativ (under ${dk(-sig,2)}). Studenter med hög totalpoäng fick lägre poäng på frågan än övriga. n=${n}.`};
+  // Essä- och flersvarsfrågor får inte etiketten "god" (Kajsa 22 nov 2026): gränsen kommer från flervalsfrågor, och
+  // fler poängsteg och frågor i samma fall ger högre r utan att frågan är bättre.
+  const d=discLabel(r), keep=d.label!=="god";
+  return {cls:keep?d.cls:"rpb-mid",value:`r ${fmt}`,label:keep?d.label:"",noGood:true,
+    tip:`Sambandet mellan poängen på frågan och studentens ${critLabel()} utan frågan. n=${n}.`};
 }
 /* Rubriken över korten: vilket steg som visas. Stegen har var sin vy, så det finns inga flikar att välja mellan. */
 function renderViewTabs(){
@@ -681,13 +681,16 @@ function keepPrepInputs(inp){
    R_LOW är den fasta gränsen för etiketten "låg"; gränsen för "god" är justerbar (state.th.goodDisc). */
 const MIN_N = 30;
 const R_LOW = 0.10;
+/* Tal så som de visas: decimalkomma och riktigt minustecken. */
+function dk(x, d){ return (+x).toFixed(d).replace(".",",").replace("-","−"); }
+function rFmt(r){ return (r===null||r===undefined) ? "–" : (r>=0?"+":"")+dk(r,2); }
 function discLabel(r){
   return r>=state.th.goodDisc ? {label:"god", cls:"rpb-good"} : r<R_LOW ? {label:"låg", cls:"rpb-bad"} : {label:"", cls:"rpb-mid"};
 }
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum. */
-const VERSION = "3.27.0";
-const UPDATED = "2026-11-21";
+const VERSION = "3.28.0";
+const UPDATED = "2026-11-22";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
    modal (rena <details>-sektioner, ingen extern kod). Tolkningsdelen först eftersom den är
@@ -697,18 +700,16 @@ const HELP_HTML = `
 <p><b>Andel rätt (svårighetsgrad).</b> Hur stor andel som svarade rätt. Lågt = svår fråga,
 högt = lätt. Nästan alla rätt säger lite om hur frågan skiljer studenter åt; nästan ingen
 rätt kan tyda på fel i facit eller missvisande formulering.</p>
-<p><b>Diskriminering (r<sub>pb</sub>).</b> Sambandet mellan att ha rätt på frågan och att ha
-hög totalpoäng – hur väl frågan skiljer studenter med höga totalpoäng från studenter med låga.
-I verktyget kallas de kort starka och svaga studenter. <b>Positivt och högt</b>
-är bra. <b>Nära noll</b> = skiljer inte åt. <b>Negativt</b> = svaga klarar den oftare än starka,
-ett varningstecken – kontrollera facit, formulering och distraktorer. Håll muspekaren över
-värdet för tolkning. Före betygssättningen räknas totalpoängen på flervalsdelen, i hela
-rapporten på hela tentan.</p>
-<p><b>Distraktorfärger.</b> För varje alternativ visas andelen som valde det:
-rätt svar; <b>effektiv</b> distraktor (≥ 5 %, gör sitt jobb); <b>mindre effektiv</b> (&lt; 5 %)
-och <b>ineffektiv</b> (0 %, ingen valde) – knappt lockande, överväg omskrivning;
-<b>vanligare än rätt svar</b> – fler valde en distraktor än det rätta alternativet, undersök
-om det är en vanlig missuppfattning eller ett fel i frågan.</p>
+<p><b>Diskriminering (r).</b> Sambandet mellan att ha rätt på frågan och att ha hög totalpoäng,
+alltså hur väl frågan skiljer studenter med höga totalpoäng från studenter med låga. Positivt och
+högt betyder att frågan skiljer väl. Nära noll betyder att den inte skiljer. På ett målrelaterat
+prov är det inget fel i sig, eftersom en fråga som nästan alla klarar inte kan skilja studenter åt
+men ändå kan pröva det den ska. Tydligt negativt betyder att studenter med låga totalpoäng oftare
+svarade rätt, och då ska facit och formulering kontrolleras. Håll muspekaren över värdet för en
+förklaring. Före betygssättningen räknas totalpoängen på
+flervalsdelen, i steg 3 på hela tentan.</p>
+<p><b>Enstaka varningar.</b> Med många frågor uppstår enstaka varningar av slump. En varning är ett
+skäl att läsa frågan, inte ett bevis på att den är fel.</p>
 <p><b>Essä- och flersvarsfrågor.</b> Korten visar medelpoäng av max, hur många som fick varje
 poäng, och hur väl poängen på frågan följer studentens poäng på resten av tentan (r). De finns
 bara i hela rapporten, eftersom de kräver färdig rättning.</p>
@@ -719,7 +720,7 @@ bara i hela rapporten, eftersom de kräver färdig rättning.</p>
 eller exkluderas, med diskriminering mot flervalsdelens poäng. Går att göra innan essäfrågorna
 är rättade. Vyn öppnar på frågorna <b>att se över</b>, alltså dem som statistiken pekar ut.
 <b>Alla flervalsfrågor</b> ger överblick över svårighet och diskriminering, och sökrutan hittar
-vilken fråga som helst. Råden till nästa gång står inte här utan i hela rapporten.
+vilken fråga som helst. Observationerna om hur svaren fördelar sig står inte här utan i steg 3.
 En fråga exkluderas med knappen på kortet, och allt räknas då om. Exkluderingen gäller bara
 i verktyget tills frågan också är viktad till 0 % i Inspera. Då följer den med i filen efter
 rättningen, och verktyget räknar frågan som exkluderad utan att du behöver göra något.</p>
@@ -743,8 +744,8 @@ exporten innan du stänger.</p>
 </div></details>
 <details class="helpsec"><summary>Filtrera</summary><div class="body">
 <p>Filterraden har en rad knappar per grupp: <b>tema</b> (ur taggfilen, om den lades
-med i steg 1), <b>frågetyp</b>, <b>svårighet</b>, <b>diskriminering</b> och <b>att titta på</b> (frågor att
-se över och exkluderade frågor). Flera val i samma grupp breddar
+med i steg 1), <b>frågetyp</b>, <b>svårighet</b>, <b>diskriminering</b> och <b>att titta på</b> (frågor med
+observation, förebilder och exkluderade frågor). Flera val i samma grupp breddar
 urvalet, till exempel Lätt eller Svår. Val i olika grupper smalnar av det, till exempel ett tema
 och Svår. Siffran på en knapp säger hur många frågor ett klick ger, med de andra valen som de är.</p>
 <p>Valen står under knapparna och tas bort ett i taget med ✕, eller alla med <b>Rensa filter</b>.
@@ -753,8 +754,8 @@ Inställningar.</p>
 </div></details>
 <details class="helpsec"><summary>Temarapporten</summary><div class="body">
 <p>Temarapporten innehåller alla frågor på en sida, flervalsfrågor, essäfrågor och flersvarsfrågor,
-men ingen triage och inga åtgärdsförslag. Överst står det som gäller flera frågor på samma sätt, och korten har en
-ruta bara när något gäller just den frågan. Mottagaren kan bocka för frågor och spara en egen
+med samma observationer som i steg 3 men utan uppmaningar. Överst står det som gäller flera frågor på samma sätt, och korten har en
+ruta bara när svaren på just den frågan följer ett mönster. Mottagaren kan bocka för frågor och spara en egen
 sida med bara dem, att ge vidare till den som skrev frågorna. Rapporten innehåller bara
 sammanräknade resultat, aldrig enskilda studenters svar. Den innehåller också frågetexterna och rätt svar.</p>
 <p>Temarapporten är det som går till temagrupperna. Datafilen skickas aldrig
@@ -1610,41 +1611,38 @@ function distColor(pct, isTrap){
    5-9 = low confidence, <5 = not interpretable. Negative only flagged at full confidence. */
 function rpbInfo(v){
   const n=v.n||0, ncorr=v.ncorr||0, nwrong=n-ncorr, minority=Math.min(ncorr,nwrong);
-  const p=n?ncorr/n:0, q=1-p;
-  const cmax=Math.sqrt(Math.max(p*q,0));     // rough headroom for context only
-  const sig=n?2/Math.sqrt(n):2;              // ~2 standard errors above zero
-  const r=v.rpb;
-  const fmt=(r===null||r===undefined)?"–":((r>=0?"+":"")+r.toFixed(2));
+  const sig=n?2/Math.sqrt(n):2;              // ungefär två standardfel från noll
+  const r=v.rpb, fmt=rFmt(r);
   if(n<MIN_N)
-    return {state:"na",cls:"rpb-na",value:"r_pb –",label:"för få svar",badge:"",
+    return {state:"na",cls:"rpb-na",value:"r –",label:"för få svar",badge:"",
       tip:`För få svar (n=${n}) för att mäta diskriminering. Det krävs minst ${MIN_N}.`};
-  if(r===null||r===undefined)
-    return {state:"na",cls:"rpb-na",value:"r_pb –",label:"ej mätbar",badge:"",
-      tip:`Diskrimineringen går inte att mäta eftersom ${ncorr===0?"ingen svarade rätt":"alla svarade rätt"}. (n=${n}.)`};
-  if(minority<5){
-    const why = ncorr<nwrong ? `bara ${ncorr} rätt svar (för svår)` : `bara ${nwrong} fel svar (för lätt)`;
-    return {state:"na",cls:"rpb-na",value:"r_pb –",label:"ej mätbar",badge:"",
-      tip:`Diskriminering går inte att mäta: ${why}. När nästan alla svarar lika finns inget att korrelera mot. Bedöm utifrån fördelningen och innehållet. (Beräknat värde ${fmt}, men opålitligt; tak ≈ ${cmax.toFixed(2)}.)`};
+  if(r===null||r===undefined){
+    const why=ncorr===0?"ingen svarade rätt":"alla svarade rätt";
+    return {state:"na",cls:"rpb-na",value:"r –",label:"ej mätbar",note:why,badge:"",
+      tip:`Diskrimineringen går inte att mäta eftersom ${why}. n=${n}.`};
   }
+  const why = ncorr<nwrong ? `bara ${ncorr} svarade rätt` : `bara ${nwrong} svarade fel`;
+  if(minority<5)
+    return {state:"na",cls:"rpb-na",value:"r –",label:"ej mätbar",note:why,badge:"",
+      tip:`Diskrimineringen går inte att mäta eftersom ${why}. (Beräknat värde ${fmt}, men opålitligt.)`};
   if(minority<10)
-    return {state:"low",cls:"rpb-lowconf",value:`r_pb ${fmt}`,label:"osäker",badge:"",
-      tip:`Osäkert mått: bara ${minority} svar i minoritetsgruppen (n=${n}). Tolka försiktigt – värdet kan svänga mycket. Tak ≈ ${cmax.toFixed(2)}.`};
-  // full confidence (minority >= 10)
+    return {state:"low",cls:"rpb-lowconf",value:`r ${fmt}`,label:"osäker",note:why,badge:"",
+      tip:`Osäkert mått eftersom ${why} (n=${n}). Värdet kan svänga mycket.`};
   const distFlag = v.bestDistIdx>=0 && v.bestDistPbis!==null && v.bestDistPbis>sig && r<sig;
   if(r < -sig)
-    return {state:"miskey",cls:"rpb-bad",value:`r_pb ${fmt}`,label:"dubbelkolla facit",
+    return {state:"miskey",cls:"rpb-bad",value:`r ${fmt}`,label:"dubbelkolla facit",
       badge:`<span class="badge bad">Dubbelkolla facit</span>`,
-      tip:`Tydligt negativ korrelation (under −${sig.toFixed(2)}, ~2 standardfel): studenter med hög totalpoäng svarar oftare fel. Tyder på felregistrerat facit eller en vilseledande formulering. (${minority} i minoritetsgruppen, n=${n}.)`};
+      tip:`Tydligt negativ (under ${dk(-sig,2)}). Studenter med hög totalpoäng svarade oftare fel än övriga. n=${n}.`};
   if(distFlag)
-    return {state:"miskey",cls:"rpb-bad",value:`r_pb ${fmt}`,label:"dubbelkolla facit",
+    return {state:"miskey",cls:"rpb-bad",value:`r ${fmt}`,label:"dubbelkolla facit",
       badge:`<span class="badge bad">Dubbelkolla facit</span>`,
-      tip:`Rätt svar diskriminerar svagt (r_pb ${fmt}) medan en distraktor diskriminerar tydligt positivt (r_pb +${v.bestDistPbis.toFixed(2)}) – starka studenter väljer distraktorn. Vanligt tecken på felregistrerat facit eller att «rätt» svar är diskutabelt. (n=${n}.)`};
+      tip:`Rätt svar skiljer inte tydligt mellan studenter med höga och låga totalpoäng, medan en distraktor valdes oftare av studenter med högre totalpoäng. n=${n}.`};
   const {cls,label}=discLabel(r);
   const badge = label==="låg" ? `<span class="badge hard">Låg diskriminering</span>` : "";
-  const negNote=(r<0)?` Värdet är svagt negativt men inom bruset (ej under −${sig.toFixed(2)}), så det är inte ett tydligt tecken på felregistrerat facit – snarare ingen diskriminering.`:"";
-  const sigNote=(r>=0 && r<sig)?` Obs: under signifikansgränsen (~${sig.toFixed(2)} vid n=${n}) – inte säkert skilt från noll.`:"";
-  return {state:"ok",cls,label,value:`r_pb ${fmt}`,badge,
-    tip:`Korrelation mellan rätt på frågan och studentens ${critLabel()} (exkl. frågan). Mått på hur väl frågan skiljer starka från svaga studenter.${negNote}${sigNote} (n=${n}, tak ≈ ${cmax.toFixed(2)}.)`};
+  const negNote=(r<0)?` Värdet är svagt negativt men inom bruset (inte under ${dk(-sig,2)}).`:"";
+  const sigNote=(r>=0 && r<sig)?` Värdet ligger under ${dk(sig,2)} och är inte säkert skilt från noll.`:"";
+  return {state:"ok",cls,label,value:`r ${fmt}`,badge,
+    tip:`Sambandet mellan rätt på frågan och studentens ${critLabel()} utan frågan.${negNote}${sigNote} n=${n}.`};
 }
 /* sortable rpb: shown values sort by value; non-interpretable go last */
 function rpbSortVal(v){
@@ -1653,86 +1651,34 @@ function rpbSortVal(v){
   return v.rpb;
 }
 
-/* Expandable psychometric explanations (level 3, generic per advice type) */
+/* Texterna under "Mer om måttet": vad måttet betyder för uppmaningarna, och möjliga orsaker för observationerna.
+   Lydelserna för observationerna är godkända av Kajsa 21 nov 2026 (essä: 22 nov). */
 const PSY = {
-  "rpb-neg":"Punkt-biseriell korrelation (r_pb) mäter om de som svarar rätt på frågan också tenderar att ha hög poäng på tentan i stort. Ett tydligt negativt värde betyder det omvända: de starkaste studenterna svarar oftare fel. Det är ovanligt och pekar nästan alltid på att facit är felregistrerat eller att frågan är vilseledande – inte på att studenterna är dåliga. Gränsen för \"tydligt\" sätts till två standardfel under noll (≈ 2/√n), så enstaka slumpavvikelser flaggas inte.",
-  "dist-pos":"Varje svarsalternativ får ett eget r_pb. För rätt svar vill man ha ett positivt värde (starka väljer det). För en distraktor vill man tvärtom ha ett negativt värde – då lockar den främst svaga studenter, vilket är dess syfte. När en distraktor i stället har tydligt positivt r_pb väljer de starka studenterna den, vilket antyder att den kan vara försvarbart rätt eller att frågan är tvetydig.",
-  "hard":"Vid måltestning (kriterierelaterad bedömning) är låg andel rätt inte automatiskt ett fel – ribban kan vara medvetet högt satt. Det blir ett problem först när frågan dessutom inte skiljer starka från svaga studenter: då mäter den varken måluppfyllelse eller förmåga, och resultatet ligger nära ren gissning. En svår fråga med god diskriminering fungerar tvärtom väl.",
-  "misconception":"Att fler väljer ett visst felalternativ än rätt svar kan se alarmerande ut, men om de som valde det hade lägre totalpoäng är det troligen en genuin, utbredd missuppfattning snarare än ett fel i frågan. Sådana frågor är pedagogiskt värdefulla – de pekar ut exakt var undervisningen kan behöva förstärkas.",
-  "distractor-eff":"En distraktors uppgift är att locka studenter som inte behärskar stoffet. Ett alternativ som nästan ingen väljer (under 5 % av alla svarande) bidrar lite till frågans förmåga att skilja studenter åt. Det bedöms bara när minst åtta studenter svarat fel – annars ser en lätt fråga, där få överhuvudtaget svarar fel, alltid ut att ha svaga distraktorer. Det är inget fel i efterhand, men något att förbättra till nästa gång.",
-  "target-vs-norm":"Vid måltestning är målet att mäta om studenten nått ett kriterium, inte att rangordna studenter mot varandra (normbaserad bedömning). Därför är en lätt fråga som de flesta klarar helt legitim – den bekräftar att målet är uppnått. Låg diskriminering är väntad och oproblematisk här. Avvägningen läraren gör är mellan att mäta måluppfyllelse och att frågan ändå ger information; båda kan vara giltiga syften."
+  "rpb-neg":"Diskrimineringen (r) mäter om de som svarar rätt på frågan också har hög poäng på tentan i övrigt. Ett tydligt negativt värde betyder det omvända. Gränsen för tydligt är två standardfel under noll (ungefär 2/√n), så att enstaka slumpavvikelser inte ger en varning.",
+  "dist-pos":"Varje svarsalternativ har ett eget samband med totalpoängen. En distraktor väljs normalt oftare av studenter med lägre totalpoäng. När den i stället väljs oftare av studenter med högre totalpoäng kan den vara försvarbart rätt, eller så är frågan tvetydig.",
+  "hard":"På ett målrelaterat prov är låg andel rätt inget fel i sig, eftersom ribban kan vara medvetet högt satt. När frågan dessutom inte skiljer mellan studenter med höga och låga totalpoäng ligger resultatet nära gissning.",
+  "misconception":"Mönstret kan bero på en utbredd missuppfattning, på en frågestam som kan läsas på två sätt, på att undervisningen eller litteraturen ger stöd för alternativet, eller på att facit är fel. Statistiken kan inte skilja orsakerna åt.",
+  "distractor-eff":"Alternativet kan vara uppenbart fel för den som kan området. Det kan också gå att avfärda på formen utan ämneskunskap.",
+  "easy":"Frågan kan pröva kunskap som alla förväntas ha, vilket är rimligt på ett målrelaterat prov. Den kan också vara lätt för att rätt svar går att peka ut på formen, eller för att frågan är känd sedan tidigare. När nästan alla svarar rätt blir diskrimineringen låg eller omätbar, och det säger då inget om frågans kvalitet.",
+  "few-correct":"Ribban kan vara medvetet högt satt. Frågan kan också vara otydligt formulerad eller gälla stoff som undervisningen inte har täckt. Fel som samlas på ett alternativ talar för en bestämd missuppfattning eller tvetydighet. Jämnt spridda fel talar för gissning.",
+  "mall":"Bedömningsmallen kan belöna något annat än det frågan avsåg, eller så har rättningen varit ojämn.",
+  "poangregel":"Facit kan vara fel, eller så ger poängregeln poäng för något annat än det frågan avsåg.",
+  "eeasy":"Stoffet kan vara väl inövat, frågan kan vara känd sedan tidigare, eller så ger bedömningsmallen full poäng för många olika svar."
 };
-
-/* Testwiseness: cue checklists the teacher should look for in the question text itself */
-const TW = {
-  intro:"Testwiseness betyder att svaret går att hitta utan ämneskunskap, genom ledtrådar i hur frågan är formulerad. Datan kan inte avgöra om det skett – men mönstret nedan är förenligt med det. Granska frågetexten med dessa vanliga ledtrådar i åtanke:",
-  manyCorrect:[
-    "Är rätt svar längre, mer detaljerat eller mer reserverat (\"oftast\", \"kan\") än de andra?",
-    "Matchar rätt alternativ frågestammen grammatiskt bättre än distraktorerna?",
-    "Innehåller distraktorerna absoluta ord (\"alltid\", \"aldrig\", \"endast\") som gör dem lätta att avfärda?",
-    "Finns \"alla ovanstående\" eller överlappande alternativ som avslöjar svaret logiskt?",
-    "Upprepas nyckelord från frågestammen bara i rätt alternativ?"
-  ],
-  deadDistractor:[
-    "Är alternativet mycket kortare eller längre än de övriga?",
-    "Innehåller det ett absolut ord (\"alltid\", \"aldrig\") som gör det lätt att stryka?",
-    "Sticker det ut grammatiskt eller stilmässigt från de andra?",
-    "Är det uppenbart osannolikt på ytan, oberoende av ämneskunskap?"
-  ]
+/* Frågorna som temarapporten ställer i stället för uppmaningen "Dubbelkolla facit". */
+const ASK_TEXT = {
+  facit: "Stämmer facit? Kan frågan läsas på ett sätt som gör ett annat svar rätt?",
+  forsvar: "Går alternativet «X» att försvara som rätt eller delvis rätt?"
 };
-/* Asymmetriska formledtrådar ur frågetext + alternativtexter (oberoende av svarsdatan).
-   Asymmetrin är poängen: en ledtråd räknas bara när den låter en testklok student SKILJA
-   rätt svar från distraktorerna utan ämneskunskap (jfr D4.1, där rätt svar självt har
-   "endast" – ingen giveaway). Konservativa trösklar; hellre missa än flagga fel. */
-const CUE_ABS=["alltid","aldrig","endast","enbart","bara","samtliga","uteslutande","enda","varje","ingen","inga","inget","helt","måste","totalt"];
-const CUE_HEDGE=["kanske","ofta","oftast","vanligen","vanligtvis","ibland","sannolikt","troligen","möjligen","möjligtvis","tenderar","brukar"];
-function cueWords(s){ return String(s).toLowerCase().split(/[^a-zà-ÿ0-9]+/).filter(Boolean); }
-function cueHas(s,list){ const t=new Set(cueWords(s)); return list.filter(w=>t.has(w)); }
-function cueScan(v){
-  const ci=v.correctIdx, opts=v.opts||[];
-  const out={pickCorrect:[], dead:[]};
-  if(ci<0 || opts.length<3) return out;            // behöver facit + flera alternativ
-  const cut=s=>{ s=String(s); return s.length>40? s.slice(0,38)+"…":s; };
-  const len=opts.map(o=>String(o).length);
-  const di=opts.map((_,i)=>i).filter(i=>i!==ci);   // distraktorindex
-  const meanD=di.reduce((a,i)=>a+len[i],0)/di.length;
-  // --- ledtrådar som pekar mot RÄTT svar ---
-  if(len[ci]===Math.max(...len) && len[ci]>=1.4*meanD)
-    out.pickCorrect.push(`Rätt svar är det klart längsta (~${(len[ci]/meanD).toFixed(1)}× snittdistraktorn) – «välj det längsta» kan räcka.`);
-  const absC=cueHas(opts[ci],CUE_ABS);
-  const absD=di.filter(i=>cueHas(opts[i],CUE_ABS).length>0);
-  if(absC.length===0 && absD.length>=2)
-    out.pickCorrect.push(`${absD.length} distraktorer innehåller tvärsäkra ord (t.ex. «${cueHas(opts[absD[0]],CUE_ABS)[0]}») men inte rätt svar – lätta att stryka.`);
-  const hedgeC=cueHas(opts[ci],CUE_HEDGE);
-  if(hedgeC.length>0 && !di.some(i=>cueHas(opts[i],CUE_HEDGE).length>0))
-    out.pickCorrect.push(`Bara rätt svar är garderat («${hedgeC.join("», «")}») – «det försiktigaste svaret» pekar rätt.`);
-  const aboveRe=/(alla|inget|samtliga|ingen|båda)\s+(av\s+)?(ovan|ovanstående|alternativ)/i;
-  const ai=opts.findIndex(o=>aboveRe.test(String(o)));
-  if(ai>=0)
-    out.pickCorrect.push(`«${cut(opts[ai])}» kan avslöjas logiskt i stället för innehållsligt.`);
-  if(v.stem){
-    const cont=s=>new Set(cueWords(s).filter(w=>w.length>=4));
-    const jac=(a,b)=>{const A=cont(a),B=cont(b);if(!A.size||!B.size)return 0;let i=0;A.forEach(w=>{if(B.has(w))i++});return i/(A.size+B.size-i);};
-    const ovC=jac(v.stem,opts[ci]), ovD=Math.max(0,...di.map(i=>jac(v.stem,opts[i])));
-    if(ovC>=0.12 && ovC>=1.6*Math.max(ovD,0.0001))
-      out.pickCorrect.push(`Rätt svar delar fler nyckelord med frågetexten än distraktorerna gör – kan ge ett ordmatchningstips.`);
-  }
-  // konvergens: rätt svar delar innehållsord (≥5 tecken) med ≥2 distraktorer – kan trianguleras fram
-  const dW=di.map(i=>new Set(cueWords(opts[i])));
-  const conv=[...new Set(cueWords(opts[ci]).filter(w=>w.length>=5))].filter(w=>dW.filter(s=>s.has(w)).length>=2);
-  if(conv.length)
-    out.pickCorrect.push(`Rätt svar delar nyckelord (${conv.slice(0,2).map(w=>"«"+w+"»").join(", ")}) med flera distraktorer – kan trianguleras fram.`);
-  // --- varför döda distraktorer (< 2 %) är lätta att avfärda ---
-  for(const i of di){
-    if((v.n?v.counts[i]/v.n*100:0)>=2) continue;
-    const why=[];
-    if(len[i]<=0.6*meanD) why.push("mycket kortare än övriga");
-    else if(len[i]>=1.7*meanD) why.push("mycket längre än övriga");
-    const a=cueHas(opts[i],CUE_ABS); if(a.length) why.push(`tvärsäkert ord («${a[0]}»)`);
-    if(why.length) out.dead.push(`«${cut(opts[i])}» – ${why.join(", ")}`);
-  }
-  return out;
+/* Lathundens formfynd som kan förklara ett mönster (key = nyckel i FORM_EXPLAINS). Högst två. */
+function formPick(v, key){
+  const ok=(typeof FORM_EXPLAINS!=="undefined" && FORM_EXPLAINS[key]) || [];
+  return formFindings(v).filter(f=>ok.includes(f.regel)).slice(0,2);
 }
+/* Kortets uppmaningar (l1) och observationer (l2).
+   l1 finns bara där ett beslut ska fattas före betygssättning: "Dubbelkolla facit" och "Se över frågan". Varje post
+   har obs (det statistiken visar) och todo (uppmaningen); why är båda. Temarapporten visar obs utan todo.
+   l2 är observationer: en rad om vad som syns i svaren, med möjliga orsaker under "Mer om måttet" (PSY). */
 function advice(v){
   const out={l1:[], l2:[], note:""};
   const n=v.n, sig=v.sig, r=v.rpb, ci=v.correctIdx;
@@ -1740,124 +1686,103 @@ function advice(v){
   const minority=Math.min(v.ncorr, n-v.ncorr);
   const distOk = n>=MIN_N;        // underlag nog för observationer och uppmaningar
   const rpbOk = (distOk && r!==null && r!==undefined && minority>=10);
-  // distrOk: per-DISTRAKTOR-omdömen kräver dessutom att hela fördelningen är känd. När en eller flera
-  // slots inte kunde knytas till ett alternativ (specialtecken) är fördelningen ofullständig, så vi
-  // stänger av distraktor-tipsen men behåller svårighet/diskriminering som bygger på n/ncorr/r_pb.
+  // distrOk: observationer om enskilda alternativ kräver dessutom att hela fördelningen är känd. När en eller flera
+  // slots inte kunde knytas till ett alternativ (specialtecken) är fördelningen ofullständig.
   const distrOk = distOk && !v.slotAmbiguous;
   const correctCnt = ci>=0 ? v.counts[ci] : -1;
   const short=s=>{ s=String(s); return s.length>54? s.slice(0,52)+"…":s; };
+  const q=k=>`«${short(v.opts[k])}»`;
+  const pc=c=>{ const p=n?c/n*100:0; return c===0 ? "0 %" : p<1 ? "under 1 %" : `${Math.round(p)} %`; };
+  const FKEY={"none-correct":"facit","rpb-neg":"facit","dist-pos":"forsvar","hard":"tydlig"};   // vilka formfynd som kan förklara uppmaningen
+  const push1=o=>{ o.why=o.obs+" "+o.todo; o.form=formPick(v, FKEY[o.psy]); out.l1.push(o); };
 
-  // ===== Inför betygsättning (nu) – kräver fullt diskrimineringsunderlag (rpbOk ⇒ distOk) =====
+  // ===== Uppmaningar före betygssättning =====
   let facitDone=false;
+  const veryHard = P>0 && P < chance*1.25;
   if(n>0 && v.ncorr===0){                                      // ingen fick rätt: gäller oavsett antal svar
-    out.l1.push({cls:"adv-red", action:"Dubbelkolla facit", psy:"none-correct",
-      why:`Ingen svarade rätt. Det tyder på att facit är felregistrerat, eller att frågan inte går att besvara som den är ställd. Kontrollera facit före betygssättningen.`});
+    push1({cls:"adv-red", action:"Dubbelkolla facit", psy:"none-correct", ask:"facit",
+      obs:`Ingen svarade rätt. Det tyder på att facit är felregistrerat, eller att frågan inte går att besvara som den är ställd.`,
+      todo:`Kontrollera facit före betygssättningen.`});
     facitDone=true;
   }
   if(rpbOk && r < -sig){
-    out.l1.push({cls:"adv-red", action:"Dubbelkolla facit", psy:"rpb-neg",
-      why:`Studenter med hög totalpoäng svarade tydligt oftare fel än de med låg totalpoäng. Det är det starkaste tecknet på felregistrerat facit eller en vilseledande fråga. Överväg att rätta facit eller exkludera frågan innan du sätter betyg.`});
+    push1({cls:"adv-red", action:"Dubbelkolla facit", psy:"rpb-neg", ask:"facit",
+      obs: veryHard
+        ? `Andelen rätt ligger nära gissningsnivå, och studenter med hög totalpoäng svarade oftare fel än övriga. Det talar starkt för att facit är fel eller att frågan är vilseledande.`
+        : `Studenter med hög totalpoäng svarade oftare fel än övriga. Det kan bero på att facit är fel eller att frågan är vilseledande.`,
+      todo:`Kontrollera facit före betygssättningen, och rätta det eller exkludera frågan om felet bekräftas.`});
     facitDone=true;
   }
   if(!facitDone && rpbOk && v.bestDistIdx>=0 && v.bestDistPbis!==null && v.bestDistPbis>sig && r<sig){
-    const X=short(v.opts[v.bestDistIdx]);
+    const X=q(v.bestDistIdx);
     const moreOrEqual = correctCnt>=0 && v.counts[v.bestDistIdx]>=correctCnt;
-    out.l1.push({cls:"adv-red", action:"Dubbelkolla facit", psy:"dist-pos",
-      why: moreOrEqual
-        ? `Minst lika många valde «${X}» som det svar som rättats som rätt, och «${X}» samvarierar tydligare med hög totalpoäng än rätt svar gör. «${X}» kan vara försvarbart rätt, facit kan vara fel, eller frågan tvetydig. Överväg att godkänna «${X}» också, rätta facit, eller exkludera frågan.`
-        : `Färre valde «${X}» än rätt svar, men de som valde «${X}» var oftare starka studenter – ovanligt och värt att kontrollera. Överväg om «${X}» också kan vara rätt, eller om frågan är tvetydig.`});
+    push1({cls:"adv-red", action:"Dubbelkolla facit", psy:"dist-pos", ask:"forsvar", optIdx:v.bestDistIdx,
+      obs: moreOrEqual
+        ? `Minst lika många valde ${X} som rätt svar, och ${X} valdes oftare av studenter med högre totalpoäng. ${X} kan vara försvarbart rätt, facit kan vara fel, eller så är frågan tvetydig.`
+        : `${X} valdes oftare av studenter med högre totalpoäng, medan rätt svar inte skiljer tydligt mellan studenter med höga och låga totalpoäng. ${X} kan vara försvarbart rätt, eller så är frågan tvetydig.`,
+      todo:`Kontrollera facit före betygssättningen.`});
     facitDone=true;
   }
-  const veryHard = P>0 && P < chance*1.25;
   const goodDisc = rpbOk && r>=state.th.goodDisc;
   // Nära gissningsnivå: uppmaningen ges när r inte är säkert skild från noll (under 2/√n) eller inte går att mäta.
   if(distOk && veryHard && !facitDone && !(rpbOk && r>=sig)){
-    out.l1.push({cls:"adv-orange", action:"Se över frågan", psy:"hard", rState: rpbOk ? "low" : "na",
-      why:`Få svarade rätt – nära ren gissningsnivå – och frågan skiljer inte starka från svaga studenter. Den kan vara otydlig eller felaktig; överväg att exkludera den. (En svår fråga som ändå skiljer väl behålls.)`});
+    push1(rpbOk
+      ? {cls:"adv-orange", action:"Se över frågan", temaHead:"Nära gissningsnivå", psy:"hard", rState:"low",
+         obs:`Andelen rätt ligger nära gissningsnivå, och de som svarade rätt hade inte högre totalpoäng än övriga. Frågan kan vara otydlig, felaktig eller gälla stoff som inte har undervisats.`,
+         todo:`Överväg att exkludera den.`}
+      : {cls:"adv-orange", action:"Se över frågan", temaHead:"Nära gissningsnivå", psy:"hard", rState:"na",
+         obs:`Andelen rätt ligger nära gissningsnivå. Diskrimineringen går inte att mäta eftersom bara ${v.ncorr} svarade rätt.`,
+         todo:`Kontrollera frågan och facit före betygssättningen.`});
   }
 
-  // ===== Till nästa gång =====
-  // vanlig missuppfattning (populär distraktor, ej överdiskriminerande)
+  // ===== Observationer =====
+  // Vanligt felsvar: en distraktor som fler valde än rätt svar. Riktningen skrivs i ord, aldrig som tecken.
   let popD=-1, popMax=correctCnt;
   for(let k=0;k<v.counts.length;k++){ if(k!==ci && v.counts[k]>popMax){ popMax=v.counts[k]; popD=k; } }
-  if(distrOk && popD>=0){
-    const outDisc = v.optPbis[popD]!==null && v.counts[popD]>=10 && v.optPbis[popD]>sig;
-    if(!outDisc)
-      out.l2.push({cls:"adv-amber", action:"Ta upp i undervisningen", psy:"misconception",
-        why:`Fler valde «${short(v.opts[popD])}» än rätt svar, men de som valde det hade i snitt lägre totalpoäng – troligen en utbredd missuppfattning snarare än ett fel i frågan. Värd att adressera i undervisningen.`});
+  if(distrOk && popD>=0 && !out.l1.some(a=>a.psy==="dist-pos" && a.optIdx===popD)){
+    const pb=v.optPbis[popD], meas=pb!==null && pb!==undefined && v.counts[popD]>=10;
+    const dir = !meas ? "" : pb < -sig ? ` ${q(popD)} valdes oftare av studenter med lägre totalpoäng.`
+              : pb > sig ? ` ${q(popD)} valdes oftare av studenter med högre totalpoäng.` : "";
+    out.l2.push({cls:"adv-amber", action:"Vanligt felsvar", psy:"misconception",
+      why:`Fler valde ${q(popD)} än rätt svar (${pc(v.counts[popD])} mot ${pc(correctCnt)}).${dir}`});
   }
-  // ineffektiva distraktorer: ett alternativ nästan ingen väljer (< 5 %).
-  // Bedöms bara när minst 8 svarade fel – annars ser varje lätt fråga (få fel ⇒ låga
-  // procent) ut att ha svaga distraktorer. Andel av ALLA svar, inte av felen: 11 % är
-  // inte "nästan ingen" även om felen råkar samlas på en annan distraktor.
-  // Bedöms bara när andelen fel räcker för att ALLA distraktorer ska kunna nå 5 % (Kajsa 21 nov 2026): annars
-  // följer flaggan av svårigheten. Med fyra alternativ betyder det minst 15 % fel.
+  // Sällan valda alternativ: under 5 % av alla svar. Bedöms bara när minst åtta svarade fel och andelen fel räcker
+  // för att ALLA distraktorer ska kunna nå 5 % (Kajsa 21 nov 2026), annars följer observationen av svårigheten.
   const nWrong = v.counts.reduce((t,c,k)=> k===ci ? t : t+c, 0);
   if(distrOk && ci>=0 && nWrong>=8 && nWrong/n >= 0.05*(v.counts.length-1) - 1e-9){
-    const weakD=[]; let veryDead=false;
-    for(let k=0;k<v.counts.length;k++){ if(k===ci) continue;
-      const pct = n? v.counts[k]/n*100 : 0;
-      if(pct<5){ weakD.push(short(v.opts[k])); if(pct<2) veryDead=true; }
-    }
-    if(weakD.length){
-      const item={cls:"adv-blue", action:"Förbättra svarsalternativen", psy:"distractor-eff",
-        why:`${weakD.length===1?"Alternativet":"Alternativen"} ${weakD.map(x=>`«${x}»`).join(", ")} valdes av under 5 % och fyller knappt sin funktion som lockande felalternativ. Överväg mer plausibla alternativ i en framtida version.`};
-      if(veryDead) item.tw={title:"Kan det vara testwiseness?", kind:"dead", points:TW.deadDistractor,
-        lead:`Ett alternativ valdes av nästan ingen, trots att ${nWrong} svarade fel. Det kan bero på att studenterna kan ämnet – men också på att det gick att avfärda på formen, utan ämneskunskap.`,
-        found:cueScan(v).dead};
-      out.l2.push(item);
-    }
+    const weak=[]; for(let k=0;k<v.counts.length;k++){ if(k!==ci && (n?v.counts[k]/n*100:0)<5) weak.push(k); }
+    if(weak.length)
+      out.l2.push({cls:"adv-blue", action:"Sällan valda alternativ", psy:"distractor-eff", form:formPick(v,"distraktor"),
+        why: weak.map(k=> v.counts[k]===0 ? `${q(k)} valdes inte av någon.` : `${q(k)} valdes av ${pc(v.counts[k])} av studenterna.`).join(" ")});
   }
-  // lätt fråga: en farhåga bara om svaret verkar gå att gissa på formen.
-  // En lätt, ren fråga med levande distraktorer är en bekräftad must-know, inte ett problem.
-  if(distrOk && P>=state.th.easy/100 && !(rpbOk && r>=state.th.goodDisc)){
-    const cues=cueScan(v).pickCorrect;
-    if(cues.length){
-      out.l2.push({cls:"adv-green", action:"Se över – kan vara gissningsbar", psy:"target-vs-norm",
-        why:`Nästan alla svarade rätt och frågan skiljer svagt mellan starka och svaga. I sig kan det vara rimligt vid måltestning – men formen verkar avslöja svaret (se nedan), så den är värd att se över.`,
-        tw:{title:"Kan det vara testwiseness?", kind:"pick", points:TW.manyCorrect,
-            lead:`Väldigt många svarade rätt utan att frågan skiljer starka från svaga, och rätt svar går att peka ut på formen.`,
-            found:cues}});
-    }
+  // Mycket lätt fråga: märket Lätt och andelen rätt står redan på kortet. En rad läggs till bara när lathundens
+  // formkontroll hittar något som kan peka ut rätt svar.
+  if(distrOk && P>=state.th.easy/100){
+    const form=formPick(v,"latt");
+    if(form.length) out.l2.push({cls:"adv-green", action:"Mycket lätt fråga", psy:"easy", why:"", form});
   }
-  // måttligt svår – men inte om den ändå skiljer starka från svaga (då är den bra)
+  // Få svarade rätt, men över gissningsnivå och utan god diskriminering: hur felen fördelar sig.
   if(distOk && !goodDisc && P>=chance*1.25 && P<0.50){
-    let note;
+    let why;
     if(!distrOk){
-      note = `Felfördelningen kan inte beskrivas här eftersom några alternativ saknar text i exporten.`;
+      why = `Felfördelningen kan inte beskrivas eftersom några alternativ saknar text i exporten.`;
     } else {
-      const wrong=[]; for(let k=0;k<v.counts.length;k++){ if(k!==ci) wrong.push(v.counts[k]); }
-      const tot=wrong.reduce((a,b)=>a+b,0), mx=Math.max(0,...wrong);
-      note = (tot>0 && mx/tot>=0.6)
-        ? `Felen samlas på ett alternativ, vilket pekar mot en specifik missuppfattning.`
-        : `Felen sprids ganska jämnt över alternativen, vilket kan tyda på gissning.`;
+      let tot=0, mx=0, mk=-1;
+      for(let k=0;k<v.counts.length;k++){ if(k===ci) continue; tot+=v.counts[k]; if(v.counts[k]>mx){ mx=v.counts[k]; mk=k; } }
+      why = (tot>0 && mx/tot>=0.6) ? `Felen samlas på ${q(mk)}.` : `Felen är jämnt spridda över alternativen.`;
     }
-    out.l2.push({cls:"adv-amber", action:"Se över svårighetsgraden", psy:"hard",
-      why:`Få svarade rätt. Det kan vara en rimligt högt satt ribba, men också otydlig formulering eller otillräcklig undervisning. ${note}`});
+    out.l2.push({cls:"adv-amber", action:"Få svarade rätt", psy:"few-correct", why});
   }
 
-  // Visa bara EN testwiseness-ruta per fråga. När både "gissningsbar" och
-  // "förbättra svarsalternativen" slår till ger de annars dubbel testwiseness-feedback.
-  // Behåll de konkreta fynden från båda, men en checklista (den om att gissa sig till rätt svar).
-  const twItems=[...out.l1,...out.l2].filter(a=>a.tw);
-  if(twItems.length>1){
-    const primary = twItems.find(a=>a.tw.kind==="pick") || twItems[0];
-    for(const a of twItems){
-      if(a===primary) continue;
-      if(a.tw.found && a.tw.found.length)
-        primary.tw.found=[...new Set([...(primary.tw.found||[]), ...a.tw.found])];
-      delete a.tw;
-    }
-  }
-
-  // ===== litet underlag: var ärlig om att automatiken är avstängd =====
+  // ===== litet underlag eller ofullständig fördelning: säg det =====
   if(!distOk){
-    out.note = `För få svar (n=${n}) för automatiska omdömen – bedöm utifrån fördelningen ovan och frågans innehåll.`;
+    out.note = `Kortet visar bara mätvärdena eftersom färre än ${MIN_N} svarade (n=${n}).`;
   } else if(v.slotAmbiguous){
     const os=v.orphanSlots||[];
-    out.note = os.some(o=>o.hadText)
-      ? `Distraktoromdömen är avstängda: minst ett valt alternativ matchade inte något alternativ i den inlästa PDF:en (oftast fel/avvikande PDF), så fördelningen per alternativ är ofullständig. Svårighet och diskriminering (r_pb) bygger på poäng och är opåverkade.`
-      : `Distraktoromdömen är avstängda: minst ett svarsalternativ saknar text i Inspera-exporten (specialtecken), så fördelningen per alternativ är ofullständig. Svårighet och diskriminering (r_pb) bygger på poäng och är opåverkade.`;
+    out.note = (os.some(o=>o.hadText)
+      ? `Observationer om enskilda alternativ visas inte, eftersom minst ett valt alternativ inte matchade något alternativ i den inlästa PDF:en.`
+      : `Observationer om enskilda alternativ visas inte, eftersom minst ett svarsalternativ saknar text i Inspera-exporten (specialtecken).`)
+      + ` Andel rätt och diskriminering bygger på poäng och påverkas inte.`;
   }
   return out;
 }
@@ -2158,7 +2083,7 @@ const FORM_REGLER = {
 };
 /* </LATHUND-REGLER> */
 lathundKontrollInit();
-/* Vilka formfynd som är en TROLIG förklaring till vilket statistiskt mönster (nycklarna är ASK_ORDER).
+/* Vilka formfynd som är en TROLIG förklaring till vilket statistiskt mönster (latt och distraktor hör till observationerna, facit, forsvar och tydlig till uppmaningarna).
    Formkontrollen körs bara på frågor som har en svaghet i statistiken, och ett fynd visas bara där det kan
    förklara svagheten. Regler som i lathunden bara är tips används inte: de slår på välbyggda frågor också
    (t.ex. "ojämna inledningar" på parallella alternativ som 1000 mg … / 1500 mg …). Enda undantaget är
@@ -2187,21 +2112,6 @@ function formFindings(v){
   try{ return KONTROLL.kor({kontroll:{regler:FORM_REGLER}}, {vinjett:sp.vinjett, stam:sp.stam, ratt, distraktorer:ds}); }
   catch(_){ return []; }
 }
-/* Fördelar formfynden på kortets frågor: {nyckel: [fynd]}. Högst två per fråga och tre per kort, varje fynd en gång. */
-function formFor(v, qs){
-  const out={}, used=new Set(); let total=0;
-  if(!qs || !qs.length) return out;             // ingen svaghet i statistiken: kontrollen körs inte
-  const all=formFindings(v);
-  for(const q of (qs||[])){
-    const ok=FORM_EXPLAINS[q.key]||[];
-    for(const f of all){
-      if(total>=3 || (out[q.key]||[]).length>=2) break;
-      if(used.has(f) || !ok.includes(f.regel)) continue;
-      (out[q.key]||(out[q.key]=[])).push(f); used.add(f); total++;
-    }
-  }
-  return out;
-}
 function renderForm(f, cls){
   return `<div class="${cls}"><span class="formrub">${esc(f.rubrik||"")}</span>${f.fynd?` <span class="formfynd">${esc(f.fynd)}</span>`:""}`
     + ((f.text||f.varfor) ? `<details class="formrad"><summary>Ur MCQ-lathunden</summary>`
@@ -2221,76 +2131,40 @@ function isForebild(v){
   if(a.l1.length || a.l2.length) return false;
   return !formFindings(v).some(f=>f.prio!=="tips");
 }
-/* ---------- Att fråga sig (temarapporten) ----------
-   Samma villkor som advice(), men formulerade som frågor till den som skrev frågan – aldrig som
-   åtgärder. Högst två per kort, i ASK_ORDER. Lydelserna är samlade här så att de är lätta att ändra.
-   Raden "latt" (nivån som möjlig förklaring till en mycket lätt fråga) stängs av genom att nyckeln
-   tas ur ASK_ORDER. */
-const ASK_ORDER = ["facit","forsvar","tydlig","undervisning","ledtrad","distraktor","latt"];
-const ASK_TEXT = {
-  facit: "Stämmer facit? Kan frågan läsas på ett sätt som gör ett annat svar rätt?",
-  forsvar: "Går alternativet «X» att försvara som rätt eller delvis rätt?",
-  tydlig: "Var det tydligt vad som efterfrågades?",
-  undervisning: "Är det här en missuppfattning som undervisningen kan möta?",
-  ledtrad: "Finns det något i formuleringen som pekar ut svaret, eller prövar frågan något enklare än ni avsåg?",
-  distraktor: "Var alternativet ett rimligt svar för en student som inte kan området?",
-  latt: "Nästan alla svarade rätt. Är det väntat för det här målet, eller prövar frågan något enklare än ni avsåg?"
-};
-const ASK_PSY = { "none-correct":"facit", "rpb-neg":"facit", "dist-pos":"forsvar", "hard":"tydlig", "misconception":"undervisning",
-                  "target-vs-norm":"ledtrad", "distractor-eff":"distraktor" };
-function askQuestions(v){
-  if(isExcluded(v.seq) || !(v.n>=MIN_N)) return [];
-  const adv=v.advice||advice(v), hit={};      // render() och xExportRender() har redan räknat råden för korten
-  for(const a of adv.l1.concat(adv.l2)){
-    const k=ASK_PSY[a.psy]; if(!k || hit[k]) continue;
-    const q={key:k, psy:a.psy, text:ASK_TEXT[k]};
-    if(k==="forsvar"){ const X=String(v.opts[v.bestDistIdx]); q.text=q.text.replace("X", X.length>54 ? X.slice(0,52)+"…" : X); }
-    if(k==="ledtrad" && a.tw && a.tw.found && a.tw.found.length) q.fact=a.tw.found.join(" ");
-    hit[k]=q;
-  }
-  if(!hit.ledtrad && v.pcorr>=state.th.easy) hit.latt={key:"latt", psy:"target-vs-norm", text:ASK_TEXT.latt};
-  return ASK_ORDER.filter(k=>hit[k]).slice(0,2).map(k=>hit[k]);
-}
-
-/* ---------- Mönster i frågorna (temarapporten) ----------
-   Regler vars budskap är detsamma för varje fråga de träffar står EN gång överst, med antal och en knapp som
-   visar frågorna: mycket lätt, alternativ som nästan ingen valde, och återkommande formfynd. Korten behåller
-   bara det som måste läsas i frågans eget innehåll (facit, försvarbar distraktor, tydlighet, missuppfattning).
-   Sammanfattningen räknas på de frågor som visas, så den följer temafiltret och gäller urvalet på en urvalssida. */
-const ASK_SUMMARY = ["latt","ledtrad","distraktor"];
-const SUM_LEAD = { latt:"Nästan alla svarade rätt.", ledtrad:"Nästan alla svarade rätt.", distraktor:"Ett alternativ valdes av nästan ingen." };
-const SUM_TEXT = {
-  latt: "Är det väntat för de här målen, eller prövar frågorna något enklare än ni avsåg?",
-  distraktor: "Var alternativen rimliga svar för en student som inte kan området?"
-};
-function cardQuestions(v){ return askQuestions(v).filter(q=>!ASK_SUMMARY.includes(q.key)); }
+/* ---------- Mönster i frågorna ----------
+   Det som gäller flera frågor på samma sätt står EN gång överst, med antal, möjliga orsaker och en knapp som visar
+   frågorna: mycket lätta frågor och sällan valda alternativ. Sammanfattningen räknas på de frågor som visas, så
+   den följer filtret och gäller urvalet på en urvalssida. */
 function patternSummary(view){
   const live=(view||[]).filter(v=>!isExcluded(v.seq)), N=live.length, rows=[];
   if(!N) return rows;
   const ids=a=>a.map(v=>String(v.seq));
   const withStat=live.filter(v=>v.n>=MIN_N);
-  // antal av frågorna i ett mönster där formkontrollen ger en trolig förklaring (den står på de frågornas kort)
-  const sub=(a,k)=>{ const n=a.filter(v=>Object.keys(formFor(v,[{key:k}])).length).length;
+  const l2=(v,psy)=>(v.advice||advice(v)).l2.find(x=>x.psy===psy);
+  // antal av frågorna i ett mönster där formkontrollen ger en möjlig förklaring (den står på de frågornas kort)
+  const sub=(a,psy)=>{ const n=a.filter(v=>{ const x=l2(v,psy); return x && x.form && x.form.length; }).length;
     return {explained:n, sub: n ? `I ${n} av dem finns något i frågans form som kan förklara det. Det står på de frågornas kort.` : ""}; };
   const easy=withStat.filter(v=>v.pcorr>=state.th.easy);
   if(easy.length) rows.push(Object.assign({key:"latt", seqs:ids(easy),
-    head:`${easy.length} av ${N} MCQ-frågor klarades av minst ${thFmt("easy")} %.`, ask:SUM_TEXT.latt}, sub(easy,"latt")));
-  const dead=withStat.filter(v=>{ const a=v.advice||advice(v); return a.l1.concat(a.l2).some(x=>x.psy==="distractor-eff"); });
+    head:`${easy.length} av ${N} MCQ-frågor klarades av minst ${thFmt("easy")} %.`, more:PSY.easy}, sub(easy,"easy")));
+  const dead=withStat.filter(v=>l2(v,"distractor-eff"));
   if(dead.length) rows.push(Object.assign({key:"distraktor", seqs:ids(dead),
-    head:`I ${dead.length} av ${N} MCQ-frågor valdes minst ett alternativ av färre än 5 %.`, ask:SUM_TEXT.distraktor}, sub(dead,"distraktor")));
+    head:`I ${dead.length} av ${N} MCQ-frågor valdes minst ett alternativ av färre än 5 %.`, more:PSY["distractor-eff"]}, sub(dead,"distractor-eff")));
   return rows;
 }
 function renderPatterns(){
   const el=$("#patterns"); if(!el) return;
-  const rows=activePatternRows();
+  if(!renderPatterns.wired){ renderPatterns.wired=true;
+    document.addEventListener("click", e=>{ const pb=e.target && e.target.closest && e.target.closest(".patbtn"); if(pb) togglePattern(pb.dataset.key); }); }
+  const rows=(state.mode==="simple" || isPre()) ? [] : activePatternRows();
   if(state.patternKey && !rows.some(r=>r.key===state.patternKey)){ state.patternKey=null; state.patternSeqs=null; }
   if(!rows.length){ el.innerHTML=""; return; }
   const one=r=>`<div class="patrow${r.key===state.patternKey?" on":""}"><div class="patmain"><div class="pathead">${esc(r.head)}</div>`
-    + (r.ask?`<div class="patask">${esc(r.ask)}</div>`:"")
+    + (r.more?`<div class="patask">${esc(r.more)}</div>`:"")
     + (r.sub?`<div class="patsub">${esc(r.sub)}</div>`:"")
     + `</div><button type="button" class="btn-ghost patbtn" data-key="${esc(r.key)}">${r.key===state.patternKey?"Visa alla":"Visa frågorna"}</button></div>`;
   el.innerHTML = `<div class="patbox"><div class="pattitle">Mönster i de här frågorna</div>`
-    + `<div class="patnote">Sådant som gäller flera frågor står här en gång. Korten nedan har en ruta bara när något gäller just den frågan.</div>`
+    + `<div class="patnote">Sådant som gäller flera frågor står här en gång, med möjliga orsaker.</div>`
     + rows.map(one).join("") + `</div>`;
 }
 function togglePattern(k){
@@ -2360,7 +2234,7 @@ function render(){
   if(mismatch || qaFails){ qa.className="bad";
     let msg="OBS: ";
     if(jsonOnly.length){
-      msg += `${jsonOnly.length} flervalsfråga(or) kunde inte läsas ur PDF:en, så deras kort saknas (nr ${jsonOnly.join(", ")}). Kontrollera PDF-formateringen för dessa – andel rätt och r_pb finns ändå i översiktstabellen och i Excel. `;
+      msg += `${jsonOnly.length} flervalsfråga(or) kunde inte läsas ur PDF:en, så deras kort saknas (nr ${jsonOnly.join(", ")}). Kontrollera PDF-formateringen för dessa – andel rätt och diskriminering finns ändå i översiktstabellen och i Excel. `;
     }
     if(gapN) msg+=`${gapN} fråga(or) har alternativ med specialtecken (t.ex. Na⁺, H₂CO₃) vars text saknas i Inspera-exporten – deras svarsfördelning kan inte visas. `;
     if(otherFails) msg+=`${otherFails} fråga(or) hade svar som inte säkert kunde matchas mot ett PDF-alternativ (markerade). `;
@@ -2464,7 +2338,7 @@ function filterText(forTema){
   const parts=[], s=$("#search");
   if(s && s.value && s.value.trim()) parts.push(`sök "${s.value.trim()}"`);
   Object.keys(state.activeTags||{}).forEach(c=>parts.push(`${c}: ${[...state.activeTags[c]].join(", ")}`));
-  FACETS.forEach(g=>{ const sel=(state.facets||{})[g.key]; if(sel && sel.size) parts.push(`${g.label}: ${[...sel].map(v=>(forTema && g.key==="titta" && v==="fraga") ? "Fråga på kortet" : facetLabel(g.key,v)).join(", ")}`); });
+  FACETS.forEach(g=>{ const sel=(state.facets||{})[g.key]; if(sel && sel.size) parts.push(`${g.label}: ${[...sel].map(v=>facetLabel(g.key,v)).join(", ")}`); });
   return parts.join(" · ");
 }
 /* Fristående sida utan skript: tabellen att skriva ut, spara som PDF eller skicka vidare. Bara sammanräknade tal. */
@@ -2492,7 +2366,7 @@ function overviewHtml(payload, rows, filt, credit){
    @media print{body{margin:12mm} tr{page-break-inside:avoid}}
   </style></head><body><h1>Översiktstabell</h1><p class="sub">${esc(sub)}</p>${filt?`<p class="sub">Filtrerat på ${esc(filt)}</p>`:""}
    <table class="totaltable"><thead><tr><th class="num">#</th><th>Fråga</th><th>Typ</th><th class="num">Max</th><th>Svårighet</th><th>Diskriminering (mot hela tentans poäng)</th></tr></thead><tbody>${body}</tbody></table>
-   <p class="foot">MCQ visar punkt-biseriell korrelation (r<sub>pb</sub>), essä- och flersvarsfrågor korrigerad item–total-korrelation. Tabellen innehåller bara sammanräknade resultat, aldrig enskilda studenters svar.</p>
+   <p class="foot">MCQ visar punkt-biseriell korrelation (r), essä- och flersvarsfrågor korrigerad item–total-korrelation. Tabellen innehåller bara sammanräknade resultat, aldrig enskilda studenters svar.</p>
    ${credit?`<p class="foot">${credit}</p>`:""}</body></html>`;
 }
 /* Exporten Översiktstabell: alla frågor, eller de som syns när ett filter är valt. Fungerar i appen och i temarapporten. */
@@ -2520,7 +2394,7 @@ const FACETS = [
 ];
 function isTemaPage(){ return typeof EMBED!=="undefined" && !!EMBED && EMBED.kind==="tema"; }
 function facetLabel(key, val){
-  if(key==="titta" && val==="fraga") return isTemaPage() ? "Fråga på kortet" : "Att se över";
+  if(key==="titta" && val==="fraga") return "Med observation";
   const g=FACETS.find(x=>x.key===key), v=g && g.values.find(x=>x[0]===val);
   return v ? v[1] : val;
 }
@@ -2550,9 +2424,9 @@ function mkFacets(o){
            disk: discBucket(o.info, o.r), titta };
 }
 function facetsOfMcq(v){
-  const tema=isTemaPage(), ex=isExcluded(v.seq);
+  const ex=isExcluded(v.seq);
   return mkFacets({typ:"single", pct:v.pcorr, info:rpbInfo(v), r:v.rpb, excluded:ex,
-    fraga: !ex && (tema ? cardQuestions(v).length>0 : !!((v.advice||advice(v)).l1.length)),
+    fraga: !ex && (a=>a.l1.length+a.l2.length>0)(v.advice||advice(v)),
     forebild: !ex && isForebild(v)});
 }
 function facetsOfScored(e){
@@ -2680,7 +2554,7 @@ function pageItems(opts){
   return m.concat(s).sort(cmp);
 }
 function drawCards(){
-  if(state.mode==="ask") renderPatterns();   // räknas om före korten: kan nollställa ett mönsterfilter som inte längre finns
+  renderPatterns();   // räknas om före korten: kan nollställa ett mönsterfilter som inte längre finns
   const items=pageItems();
   const all=state.vm.view.length + (state.scored||[]).length;
   const activeSummary=Object.keys(state.activeTags).map(col=>`${col}: ${[...state.activeTags[col]].join(", ")}`).join(" · ");
@@ -2780,66 +2654,51 @@ function card(v){
     }
     const barColor = r.isCorrect ? "var(--correct-bar)" : distColor(r.pct, r.isTrap);
     const barW = Math.max(r.pct, 1.5);
-    const pbStr = (r.pbis!==null && r.cnt>=10) ? `r_pb ${(r.pbis>=0?"+":"")}${r.pbis.toFixed(2)}` : "";
-    const titleAttr = pbStr ? ` title="Diskriminering för detta alternativ: ${pbStr}. ${r.isCorrect?"":(r.pbis>v.sig?"Positiv = starka studenter valde det (oönskat för en distraktor).":"Negativ/låg = svaga studenter valde det (önskat för en distraktor).")}"` : "";
-    const discMark = (!simple && r.outDisc) ? `<span class="discmark" title="Starka studenter valde denna distraktor (r_pb ${(r.pbis>=0?"+":"")}${r.pbis.toFixed(2)})${askMode?"":" – dubbelkolla facit"}.">${askMode?"":"⚠ "}starka valde denna</span>` : "";
+    // Riktningen för ett alternativ skrivs i ord; siffran står i verktygstipset.
+    const meas = r.pbis!==null && r.pbis!==undefined && r.cnt>=10;
+    const dirTxt = !meas || r.isCorrect ? "" : r.pbis>v.sig ? "Valdes oftare av studenter med högre totalpoäng. "
+                 : r.pbis< -v.sig ? "Valdes oftare av studenter med lägre totalpoäng. " : "";
+    const titleAttr = meas ? ` title="${dirTxt}r för alternativet ${rFmt(r.pbis)}"` : "";
+    const discMark = (!simple && r.outDisc) ? `<span class="discmark">valdes oftare av studenter med högre totalpoäng</span>` : "";
     return `<div class="opt ${r.cat}${r.outDisc?' outdisc':''}"${titleAttr}>
-      <div class="pct">${r.pct.toFixed(1)+" %"}</div>
+      <div class="pct">${dk(r.pct,1)+" %"}</div>
       <div class="body"><div class="txt">${esc(r.o)}${discMark}</div>
         <div class="barwrap"><div class="bar" style="width:${barW}%;background:${barColor}"></div></div>
       </div></div>`;
   }).join("")
-    + (v.blank ? `<div class="opt blank"><div class="pct">${(v.n?v.blank/v.n*100:0).toFixed(1)+" %"}</div><div class="body"><div class="txt"><em>Inget svar</em> (${v.blank} ${v.blank===1?"student":"studenter"})</div></div></div>` : "");
+    + (v.blank ? `<div class="opt blank"><div class="pct">${dk(v.n?v.blank/v.n*100:0,1)+" %"}</div><div class="body"><div class="txt"><em>Inget svar</em> (${v.blank} ${v.blank===1?"student":"studenter"})</div></div></div>` : "");
   const tags=v.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("");
   let badge = levelBadgeFor(v.n, v.pcorr);
   const flag=v.unmatched>0;
   const ri = askMode ? Object.assign(neutralInfo(rpbInfo(v), v.rpb), {badge: rpbInfo(v).state==="miskey" ? "" : rpbInfo(v).badge}) : rpbInfo(v);
   badge += ri.badge;
   if(simple) badge="";
-  const rpbHtml = `<div class="rpb ${ri.cls}" title="${esc(ri.tip)}">${ri.value.replace('r_pb','r<sub>pb</sub>')}${(!simple && ri.label)?` · ${esc(ri.label)}`:""}</div>`;
+  const rpbHtml = `<div class="rpb ${ri.cls}" title="${esc(ri.tip)}">${esc(ri.value)}${(!simple && ri.label)?` · ${esc(ri.label)}${ri.note?` (${esc(ri.note)})`:""}`:""}</div>`;
   const adv = v.advice || advice(v);
-  const renderAdv = (a, edu) => `<div class="adv ${a.cls}">
-      <div class="advhead"><span class="advdot"></span>${esc(a.action)}</div>
-      ${edu?`<div class="advwhy">${esc(a.why)}</div>
-      ${PSY[a.psy]?`<details class="advpsy"><summary>Mer om psykometriken</summary><div>${esc(PSY[a.psy])}</div></details>`:""}
-      ${a.tw?`<details class="advtw"><summary>${esc(a.tw.title)}</summary><div>
-        <div class="twlead">${esc(a.tw.lead)}</div>
-        ${a.tw.found&&a.tw.found.length
-          ? `<div class="twfound"><b>Det här kunde vi mäta i frågan:</b><ul>${a.tw.found.map(p=>`<li>${esc(p)}</li>`).join("")}</ul></div>`
-          : `<div class="twfound twnone">Inga mätbara formledtrådar hittades – bedöm punkterna nedan själv.</div>`}
-        <div class="twintro">${esc(TW.intro)}</div>
-        <ul>${a.tw.points.map(p=>`<li>${esc(p)}</li>`).join("")}</ul>
-      </div></details>`:""}`:""}
+  // Ett kort överallt (Kajsa 21 nov 2026): samma observationer hos examinatorn och i temarapporten. Skillnaden är
+  // uppmaningarna, som temarapporten visar som en fråga till den som skrev uppgiften eller som en ren observation.
+  const more = a => PSY[a.psy] ? (k=>`<details class="askmore" data-k="${esc(k)}"${(state.open && state.open.has(k))?" open":""}><summary>Mer om måttet</summary><div class="askpsy">${esc(PSY[a.psy])}</div></details>`)(`psy:${v.seq}:${a.psy}`) : "";
+  const item = (head, body, a) => `<div class="adv ${a.cls}">
+      <div class="advhead"><span class="advdot"></span>${esc(head)}</div>
+      ${body?`<div class="advwhy">${esc(body)}</div>`:""}${(a.form||[]).map(f=>renderForm(f,"askform")).join("")}${more(a)}
     </div>`;
-  const noteTxt = (askMode && adv.note) ? adv.note.replace(" – bedöm utifrån fördelningen ovan och frågans innehåll.", ".") : adv.note;
-  const noteHtml = noteTxt ? `<div class="advnote">${esc(noteTxt)}</div>` : "";
-  const bucket = (title, items) => items.length
-    ? `<div class="advbucket">${title}</div>${items.map(a=>renderAdv(a,true)).join("")}` : "";
+  const askHead = a => a.ask==="forsvar" ? ASK_TEXT.forsvar.replace("«X»", (s=>`«${s.length>54 ? s.slice(0,52)+"…" : s}»`)(String(v.opts[a.optIdx]))) : ASK_TEXT[a.ask];
+  const bucket = (title, html) => html ? `<div class="advbucket">${title}</div>${html}` : "";
+  const noteHtml = adv.note ? `<div class="advnote">${esc(adv.note)}</div>` : "";
+  const obsHtml = adv.l2.map(a=>item(a.action, a.why, a)).join("");
   let advHtml="";
   if(simple){
-    advHtml = "";   // Bara mätvärden: inga råd eller tolkningar
+    advHtml = "";   // Bara mätvärden: inga observationer eller uppmaningar
   } else if(isPre()){
-    // Före betygssättning: bara det som ska ses över nu, med förklaringen. Råden till nästa gång hör till hela rapporten.
-    advHtml = adv.l1.length ? `<div class="advbox">${noteHtml}${bucket("Att se över", adv.l1)}</div>` : noteHtml;
-  } else if(state.mode==="edu"){
-    const body = bucket("Att se över", adv.l1) + bucket("Till nästa gång", adv.l2);
-    advHtml = (body || noteHtml) ? `<div class="advbox">${noteHtml}${body}</div>` : "";   // kort utan råd har ingen ruta
-  }
-  if(askMode){
-    const allQ=askQuestions(v), qs=allQ.filter(q=>!ASK_SUMMARY.includes(q.key)), forms=formFor(v, allQ);
-    // Mönster som sammanfattas överst (mycket lätt, alternativ som nästan ingen valde) får en rad på kortet
-    // bara när frågans form ger en trolig förklaring.
-    const expl=[]; const seenLead=new Set();
-    for(const q of allQ){ if(!ASK_SUMMARY.includes(q.key) || !(forms[q.key]||[]).length) continue;
-      const lead=SUM_LEAD[q.key]; expl.push((seenLead.has(lead)?"":`<div class="askq">${esc(lead)}</div>`) + forms[q.key].map(f=>renderForm(f,"askform")).join("")); seenLead.add(lead); }
-    advHtml = (qs.length || expl.length || adv.note) ? `<div class="askbox">${noteHtml}`
-      + (qs.length ? `<div class="askhead">Att fråga sig</div>`
-        + qs.map(q=>{ const fs=forms[q.key]||[];
-            return `<div class="askq">${esc(q.text)}${(q.fact && !fs.length)?`<div class="askfact">${esc(q.fact)}</div>`:""}`
-              + fs.map(f=>renderForm(f,"askform")).join("")
-              + (PSY[q.psy] ? (k=>`<details class="askmore" data-k="${esc(k)}"${(state.open && state.open.has(k))?" open":""}><summary>Mer om måttet</summary><div class="askpsy">${esc(PSY[q.psy])}</div></details>`)(`psy:${v.seq}:${q.key}`) : "") + `</div>`; }).join("") : "")
-      + (expl.length ? `<div class="askhead${qs.length?" askhead2":""}">Möjlig förklaring i frågans form</div>` + expl.join("") : "")
-      + `</div>` : "";
+    // Före betygssättning: bara uppmaningarna. Observationerna hör till steg 3.
+    const l1=adv.l1.map(a=>item(a.action, a.why, a)).join("");
+    advHtml = l1 ? `<div class="advbox">${noteHtml}${bucket("Att se över", l1)}</div>` : noteHtml;
+  } else {
+    const body = askMode
+      ? bucket("Att fråga sig", adv.l1.filter(a=>a.ask).map(a=>item(askHead(a), a.obs, a)).join(""))
+        + bucket("Observationer", adv.l1.filter(a=>!a.ask).map(a=>item(a.temaHead||a.action, a.obs, a)).join("") + obsHtml)
+      : bucket("Att se över", adv.l1.map(a=>item(a.action, a.why, a)).join("")) + bucket("Observationer", obsHtml);
+    advHtml = (body || noteHtml) ? `<div class="advbox">${noteHtml}${body}</div>` : "";   // kort utan observation har ingen ruta
     if(isForebild(v)) advHtml += `<div class="forebild">✓ Fungerar som förebild: skiljer väl mellan studenter med höga och låga totalpoäng, och utan fynd i formkontrollen.</div>`;
   }
   if(excluded) advHtml="";   // exkluderad fråga: ingen åtgärdsruta – beslutet är taget, talen visas som dokumentation
@@ -2847,7 +2706,7 @@ function card(v){
     <div class="top">
       <div class="code">${selBoxHtml(v.seq)}Fråga ${esc(String(v.seq))}${(v.title && v.title!==String(v.seq))?`<span class="qtitle">${esc(v.title)}</span>`:""}${v.pts?`<span class="pts">${esc(v.pts)}</span>`:""}${tags}</div>
       <div class="metrics">${badge}
-        <div class="pc">${v.pcorr.toFixed(1)} % rätt <small>(n=${v.n})</small></div>
+        <div class="pc">${dk(v.pcorr,1)} % rätt <small>(n=${v.n})</small></div>
         ${rpbHtml}
       </div>
     </div>
@@ -2869,11 +2728,11 @@ function card(v){
         if(noText.length){
           const tot=noText.reduce((s,o)=>s+o.cnt,0), corr=noText.find(o=>o.isCorrect);
           let s=`⚠ ${noText.length} alternativ saknar text i Inspera-exporten (specialtecken som Na⁺, H₂CO₃) och kan inte kopplas till en rad ovan. `
-              +`Tillsammans valda ${tot} (${v.n?(tot/v.n*100).toFixed(1):0} %).`;
-          if(corr) s+=` Rätt svar finns bland dessa och valdes av ${corr.cnt} (${v.n?(corr.cnt/v.n*100).toFixed(1):0} %).`;
+              +`Tillsammans valda ${tot} (${dk(v.n?tot/v.n*100:0,1)} %).`;
+          if(corr) s+=` Rätt svar finns bland dessa och valdes av ${corr.cnt} (${dk(v.n?corr.cnt/v.n*100:0,1)} %).`;
           blocks.push(s);
         }
-        blocks.push(`Andel rätt (${v.pcorr.toFixed(1)} %) och r_pb bygger på poäng och är opåverkade.`);
+        blocks.push(`Andel rätt (${dk(v.pcorr,1)} %) och diskriminering bygger på poäng och påverkas inte.`);
         return `<div class="qanote">${blocks.join(" ")}</div>`;
       }
       return v.unmatched>0
@@ -3080,7 +2939,6 @@ function xExportInit(){
     if(b.checked) state.sel.add(String(b.dataset.seq)); else state.sel.delete(String(b.dataset.seq));
     renderSelBar();
   });
-  document.addEventListener("click", e=>{ const pb=e.target && e.target.closest && e.target.closest(".patbtn"); if(pb) togglePattern(pb.dataset.key); });
   // Kommentarer: vem som helst med rapporten kan skriva, och texten följer med när sidan sparas eller skrivs ut.
   document.addEventListener("click", e=>{ const cm=e.target && e.target.closest && e.target.closest(".card-comment"); if(cm){ state.commentOpen=String(cm.dataset.qnum); drawCards(); } });
   document.addEventListener("input", e=>{ const ta=e.target && e.target.closest && e.target.closest(".card-cmt"); if(!ta) return;
@@ -3104,28 +2962,27 @@ function xExportInit(){
 function neutralInfo(info, r){
   const out=Object.assign({}, info);
   if(out.label==="dubbelkolla facit") out.label = (r!==null && r!==undefined && r<0) ? "negativ" : "låg";
-  out.tip = String(out.tip||"").split(/\s(?:Tyder på|Vanligt tecken|Granska|Bedöm)\b/)[0].trim();
   return out;
 }
 /* Etiketterna god, låg och ingen etikett följer den justerbara gränsen även för rader som räknades fram vid exporten. */
 function thInfo(info, r){
   if(r===null || r===undefined || !(info.label==="god" || info.label==="låg" || info.label==="")) return info;
   if(info.cls==="rpb-na") return info;
-  return Object.assign({}, info, discLabel(r));
+  const d=discLabel(r);
+  return Object.assign({}, info, (info.noGood && d.label==="god") ? {label:"", cls:"rpb-mid"} : d);   // essä och flersvar: aldrig "god"
 }
 const HELP_TEMA_HTML = `
 <details class="helpsec" open><summary>Så läser du rapporten</summary><div class="body">
 <p><b>Andel rätt.</b> Hur stor andel som svarade rätt. Lågt betyder svår fråga, högt betyder lätt.</p>
-<p><b>Diskriminering (r<sub>pb</sub>).</b> Sambandet mellan att ha rätt på frågan och att ha hög
-poäng på hela tentan, alltså hur väl frågan skiljer studenter med höga totalpoäng från studenter
-med låga. Positivt och högt betyder att frågan skiljer väl. Nära noll betyder att den inte skiljer.
-Negativt betyder att studenter med låga totalpoäng oftare svarade rätt. I rapporten kallas
-studenter med höga totalpoäng ibland kort för starka och studenter med låga för svaga. Håll
-muspekaren över värdet för en förklaring.</p>
-<p><b>Färgerna på alternativen.</b> En distraktor är ett felaktigt svarsalternativ. För varje
-alternativ visas andelen som valde det: rätt svar,
-distraktor som minst 5 % valde, distraktor som färre än 5 % valde, distraktor som ingen valde, och
-distraktor som fler valde än rätt svar.</p>
+<p><b>Diskriminering (r).</b> Sambandet mellan att ha rätt på frågan och att ha hög totalpoäng,
+alltså hur väl frågan skiljer studenter med höga totalpoäng från studenter med låga. Positivt och
+högt betyder att frågan skiljer väl. Nära noll betyder att den inte skiljer. På ett målrelaterat
+prov är det inget fel i sig, eftersom en fråga som nästan alla klarar inte kan skilja studenter åt
+men ändå kan pröva det den ska. Tydligt negativt betyder att studenter med låga totalpoäng oftare
+svarade rätt, och då ska facit och formulering kontrolleras. Håll muspekaren över värdet för en
+förklaring. Totalpoängen är poängen på hela tentan.</p>
+<p><b>Enstaka varningar.</b> Med många frågor uppstår enstaka varningar av slump. En varning är ett
+skäl att läsa frågan, inte ett bevis på att den är fel.</p>
 <p><b>Statistiken och kursplanen.</b> Statistiken visar hur frågorna fungerade i den här
 studentgruppen. Den säger inget om huruvida en fråga ligger på rätt nivå i förhållande till
 kursplanen.</p>
@@ -3133,7 +2990,7 @@ kursplanen.</p>
 <details class="helpsec"><summary>Filtrera</summary><div class="body">
 <p>Filterraden har en rad knappar per grupp: <b>tema</b>, <b>frågetyp</b>,
 <b>svårighet</b>, <b>diskriminering</b> och <b>att titta på</b>. Under att titta på väljer
-<b>Fråga på kortet</b> de frågor som har en ruta Att fråga sig, och där finns också förebilder och
+<b>Med observation</b> de frågor som har en ruta på kortet, och där finns också förebilder och
 exkluderade frågor. Flera val i samma grupp breddar
 urvalet, till exempel Lätt eller Svår. Val i olika grupper smalnar av det, till exempel ett tema
 och Svår. Siffran på en knapp säger hur många frågor ett klick ger, med de andra valen som de är.</p>
@@ -3148,12 +3005,13 @@ med antal. <b>Visa frågorna</b> visar just de frågorna, och <b>Visa alla</b> g
 <p>Sammanfattningen räknas på de frågor som visas. Filtrerar du på ett tema gäller den temat, och
 på en urvalssida gäller den urvalet.</p>
 </div></details>
-<details class="helpsec"><summary>Att fråga sig</summary><div class="body">
-<p>När något gäller just en viss fråga står en eller två frågor på kortet: om facit stämmer, om
-en distraktor går att försvara, om det var tydligt vad som efterfrågades, eller om svaren visar
-en missuppfattning. De är frågor till den som skrev uppgiften, inte bedömningar. Kort utan
-sådana mönster har ingen ruta.</p>
-<p>Under <b>Mer om måttet</b> på kortet står vad måttet bakom frågan betyder.</p>
+<details class="helpsec"><summary>Observationer på korten</summary><div class="body">
+<p>En distraktor är ett felaktigt svarsalternativ. När svaren på en fråga följer ett mönster står
+en observation på kortet: en distraktor som fler valde än rätt svar, alternativ som nästan ingen valde, eller hur felen fördelar sig när få svarade
+rätt. Under <b>Mer om måttet</b> står möjliga orsaker. Statistiken kan inte avgöra vilken som
+gäller. Kort utan sådana mönster har ingen ruta.</p>
+<p>När statistiken talar för att facit kan vara fel står en fråga under <b>Att fråga sig</b>: om
+facit stämmer, eller om en distraktor går att försvara som rätt.</p>
 </div></details>
 <details class="helpsec"><summary>Kommentarer och utskrift</summary><div class="body">
 <p>Med <b>Lägg till kommentar</b> skriver du en fråga eller synpunkt på ett kort. Det står inte vem
@@ -3163,22 +3021,20 @@ valda frågor och när du skriver ut.</p>
 utfällningar som är öppna. Välj Spara som PDF i utskriftsrutan för att få en fil.</p>
 </div></details>
 <details class="helpsec"><summary>Formkontrollen och förebilderna</summary><div class="body">
-<p>När en fråga har en svaghet i statistiken prövas den mot den mekaniska kontrollen ur
-<b>MCQ-lathunden</b>, som ser på frågans form: längd, ordval, ledtrådar, negationer och
-samlingsalternativ. Ett fynd visas bara när det är en trolig förklaring till svagheten, till
-exempel att rätt svar är mycket längre än distraktorerna i en fråga som nästan alla klarade.
-Under "Ur MCQ-lathunden" står lathundens råd inför nästa gång och källan. Frågor utan svaghet
-i statistiken prövas inte, med ett undantag: tänkbara förebilder.</p>
-<p><b>Förebilder</b> är frågor som var medelsvåra (50–85 % rätt), skilde tydligt mellan
-studenter med höga och låga totalpoäng och inte gav några fynd i formkontrollen.</p>
+<p>När en fråga var mycket lätt eller har ett alternativ som nästan ingen valde prövas den mot den
+mekaniska kontrollen ur <b>MCQ-lathunden</b>, som ser på frågans form: längd, ordval, ledtrådar,
+negationer och samlingsalternativ. Ett fynd visas bara när det kan förklara mönstret, till exempel
+att rätt svar är mycket längre än distraktorerna i en fråga som nästan alla klarade. Under
+"Ur MCQ-lathunden" står lathundens text och källan.</p>
+<p><b>Förebilder</b> är frågor som skilde väl mellan studenter med höga och låga totalpoäng, inte
+har någon observation på kortet och inte gav några fynd i formkontrollen.</p>
 </div></details>
 <details class="helpsec"><summary>Frågetyperna</summary><div class="body">
 <p>Alla frågor står på samma sida, i tentans ordning. Välj frågetyp i filtret.</p>
 <p><b>MCQ</b> – ett kort per flervalsfråga, med svarsfördelning och diskriminering mot hela tentans poäng.</p>
 <p><b>Essä</b> – ett kort per essäfråga: medelpoäng av max, hur väl poängen på frågan följer
-studentens poäng på resten av tentan (r), och hur många som fick varje poäng. När poängen inte följer resten av tentan står en fråga om bedömningsmallen på kortet.</p>
-<p><b>Flersvar</b> – samma slags kort för frågor med flera rätta svar. När poängen inte följer resten
-av tentan står en fråga om facit och poängregeln på kortet.</p>
+studentens poäng på resten av tentan (r), och hur många som fick varje poäng. Vid tydligt negativ diskriminering står en observation på kortet, med möjliga orsaker i bedömningsmallen och rättningen.</p>
+<p><b>Flersvar</b> – samma slags kort för frågor med flera rätta svar.</p>
 <p><b>Översiktstabell</b> sparar en tabell med en rad per fråga, att skriva ut eller skicka vidare.
 Med ett filter valt kommer bara de frågor som syns med.</p>
 </div></details>
@@ -3281,24 +3137,29 @@ function saveSubset(){
   downloadText(`temarapport_urval_${stamp()}.html`, buildTemaReport(subsetEmbed(temaSource(), state.sel, state.th)), "text/html;charset=utf-8");
 }
 /* ---------- Essä- och flersvarskorten ---------- */
+/* Essä- och flersvarsfrågor har en enda uppmaning, vid tydligt negativ diskriminering (Kajsa 22 nov 2026). */
 const SCORE_TEXT = {
-  mall: "Poängen på frågan följer inte resten av tentan. Bedömer mallen det ni avsåg att pröva?",
-  facit: "Poängen på frågan följer inte resten av tentan. Stämmer facit och poängregeln?",
-  elatt: "Är det väntat för de här målen, eller skiljer bedömningsmallen för lite mellan svaren?"
+  mall:  {action:"Kontrollera bedömningsmallen och rättningen", temaHead:"Tydligt negativ diskriminering", psy:"mall",
+          obs:"Studenter med hög totalpoäng fick lägre poäng på frågan än övriga.",
+          todo:"Kontrollera bedömningsmallen och rättningen före betygssättningen."},
+  facit: {action:"Kontrollera facit och poängregeln", temaHead:"Tydligt negativ diskriminering", psy:"poangregel",
+          obs:"Studenter med hög totalpoäng fick lägre poäng på frågan än övriga.",
+          todo:"Kontrollera facit och poängregeln före betygssättningen."}
 };
 function scoreQuestions(e){
   // Samma regel som etiketten "negativ" (polyInfo), räknad ur kortets poängfördelning.
   if(e.excluded || !(e.n>=MIN_N) || e.r===null || e.r===undefined) return [];
   const top=(e.dist||[]).reduce((m,d)=>Math.max(m,d.count),0);
   if(e.n-top<10 || !(e.r < -2/Math.sqrt(e.n))) return [];
-  return e.typ==="multi" ? [{key:"facit", text:SCORE_TEXT.facit}] : [{key:"mall", text:SCORE_TEXT.mall}];
+  const key=e.typ==="multi" ? "facit" : "mall", t=SCORE_TEXT[key];
+  return [Object.assign({key, text:t.obs+" "+t.todo}, t)];
 }
 function scorePatterns(list){
   const live=(list||[]).filter(e=>!e.excluded && (e.typ||"text")==="text"), N=live.length;
   if(!N) return [];
   const easy=live.filter(e=>e.n>=MIN_N && e.pct>=state.th.easy);
   return easy.length ? [{key:"elatt", seqs:easy.map(e=>String(e.seq)),
-    head:`${easy.length} av ${N} essäfrågor hade ett medel på minst ${thFmt("easy")} % av maxpoängen.`, ask:SCORE_TEXT.elatt, sub:""}] : [];
+    head:`${easy.length} av ${N} essäfrågor hade ett medel på minst ${thFmt("easy")} % av maxpoängen.`, more:PSY.eeasy, sub:""}] : [];
 }
 function scoredVisible(opts){
   opts=opts||{};
@@ -3316,21 +3177,24 @@ function scoreCard(e){
   const sel = selBoxHtml(e.seq);
   const nm=(e.title && e.title!==String(e.num)) ? `<span class="qtitle">${esc(e.title)}</span>` : "";
   const tags=(e.tagVals||[]).filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join("");
-  const badge = e.excluded ? "" : levelBadgeFor(e.n, e.pct);
   const maxCount=e.dist.reduce((m,d)=>Math.max(m,d.count),0)||1;
   const bars=e.dist.map(d=>{ const w=Math.max(d.count/maxCount*100,2), pc=e.n?d.count/e.n*100:0;
     return `<div class="ftrow"><div class="ftpts">${fmt(d.pts)} p</div><div class="ftbarwrap"><div class="ftbar" style="width:${w}%"></div></div><div class="ftcnt">${d.count} <small>(${pc.toFixed(0)} %)</small></div></div>`; }).join("");
-  const qs=scoreQuestions(e);
-  const ask = (qs.length && !simple) ? `<div class="askbox"><div class="askhead">Att fråga sig</div>${qs.map(q=>`<div class="askq">${esc(q.text)}</div>`).join("")}</div>` : "";
+  const qs=scoreQuestions(e), tema=isTemaPage();
+  const ask = (qs.length && !simple) ? `<div class="advbox"><div class="advbucket">${tema?"Observationer":"Att se över"}</div>${qs.map(q=>`<div class="adv adv-red">
+      <div class="advhead"><span class="advdot"></span>${esc(tema?q.temaHead:q.action)}</div>
+      <div class="advwhy">${esc(tema?q.obs:q.text)}</div>
+      ${(k=>`<details class="askmore" data-k="${esc(k)}"${(state.open && state.open.has(k))?" open":""}><summary>Mer om måttet</summary><div class="askpsy">${esc(PSY[q.psy])}</div></details>`)(`psy:${e.seq}:${q.key}`)}
+    </div>`).join("")}</div>` : "";
   const ex = e.excluded ? exclParts(seq, e.reason||"", isApp) : null;
   const excl = ex ? `<div class="exclbanner">${ex.head}${ex.ctrl}${ex.note}</div>` : "";
   const exclCtrl = (isApp && !e.excluded && !simple) ? `<div class="exclctrl"><button type="button" class="card-exclude" data-qnum="${seq}">Exkludera frågan</button></div>` : "";
   return `<div class="q ftcard${e.excluded?" excluded":""}" id="card-${seq}">
     <div class="top">
       <div class="code">${sel}Fråga ${esc(String(e.num))}${nm}<span class="pts">${fmt(e.max)} p</span><span class="fttag">${e.typ==="multi"?"Flersvar":"Essä"}</span>${tags}</div>
-      <div class="metrics">${badge}
+      <div class="metrics">
         <div class="pc">medel ${fmt(e.mean)} av ${fmt(e.max)} <small>(${e.pct.toFixed(0)} %, n=${e.n})</small></div>
-        <div class="rpb ${info.cls}" title="${esc(info.tip||"")}">${esc(info.value)}${info.label?` · ${esc(info.label)}`:""}</div>
+        <div class="rpb ${info.cls}" title="${esc(info.tip||"")}">${esc(info.value)}${info.label?` · ${esc(info.label)}${info.note?` (${esc(info.note)})`:""}`:""}</div>
       </div>
     </div>
     ${excl}
@@ -3350,21 +3214,20 @@ function activePatternRows(){
 function temaFns(){
   return [esc,norm,key,codeSortKey,cmpArr,rpbSortVal,distColor,critLabel,isPre,commentHtml,modeHint,
              isTemaPage,facetLabel,facetTitle,discBucket,mkFacets,facetsOfMcq,facetsOfScored,facetPass,anyFacet,toggleFacet,toggleTag,filterBase,filterGroups,tagPass,filtersActive,updateClearBtn,applyFilters,clearFilters,rpbInfo,isExcluded,exclReason,
-             cueWords,cueHas,cueScan,advice,askQuestions,unmapReason,cardIsApp,exclParts,selBoxHtml,levelBadge,levelBadgeFor,discLabel,card,
+             formPick,advice,dk,rFmt,unmapReason,cardIsApp,exclParts,selBoxHtml,levelBadge,levelBadgeFor,discLabel,card,
              currentView,pageItems,drawCards,buildTagbar,
              setThreshold,thresholdsCustom,resetThresholds,thFmt,thresholdsText,settingsHtml,renderThCustom,wireSettings,thInfo,neutralInfo,
              temaFns,temaConsts,buildTemaReport,downloadText,stamp,
-             cardQuestions,patternSummary,renderPatterns,togglePattern,
+             patternSummary,renderPatterns,togglePattern,
              scoreQuestions,scorePatterns,scoredVisible,scoreCard,activePatternRows,filterText,overviewHtml,exportOverview,
-             lathundKontrollInit,splitStem,formFindings,formFor,renderForm,isForebild,
+             lathundKontrollInit,splitStem,formFindings,renderForm,isForebild,
              subsetEmbed,selVisible,renderSelBar,selRedraw,selAllVisible,selClear,saveSubset,
              fileLineText,temaSource,xExportRender,xExportPrint,openHelp,closeHelp,wireHelp,xExportInit];
 }
 function temaConsts(){
   return `const MIN_N=${MIN_N};const R_LOW=${R_LOW};const TH_DEFAULT=${JSON.stringify(TH_DEFAULT)};const TH_RANGE=${JSON.stringify(TH_RANGE)};const TH_LABEL=${JSON.stringify(TH_LABEL)};const PSY=${JSON.stringify(PSY)};`
-    + `const TW=${JSON.stringify(TW)};const CUE_ABS=${JSON.stringify(CUE_ABS)};const CUE_HEDGE=${JSON.stringify(CUE_HEDGE)};`
     + `const FORM_META=${JSON.stringify(FORM_META)};const FORM_REGLER=${JSON.stringify(FORM_REGLER)};const FORM_CUE=${JSON.stringify(FORM_CUE)};const FORM_EXPLAINS=${JSON.stringify(FORM_EXPLAINS)};`
-    + `const FACETS=${JSON.stringify(FACETS)};const SCORE_TEXT=${JSON.stringify(SCORE_TEXT)};const EXCL_REASONS=${JSON.stringify(EXCL_REASONS)};const INSPERA_REASON=${JSON.stringify(INSPERA_REASON)};const LOCAL_EXCL_NOTE=${JSON.stringify(LOCAL_EXCL_NOTE)};const ASK_SUMMARY=${JSON.stringify(ASK_SUMMARY)};const SUM_TEXT=${JSON.stringify(SUM_TEXT)};const SUM_LEAD=${JSON.stringify(SUM_LEAD)};const ASK_ORDER=${JSON.stringify(ASK_ORDER)};const ASK_TEXT=${JSON.stringify(ASK_TEXT)};const ASK_PSY=${JSON.stringify(ASK_PSY)};`
+    + `const FACETS=${JSON.stringify(FACETS)};const SCORE_TEXT=${JSON.stringify(SCORE_TEXT)};const EXCL_REASONS=${JSON.stringify(EXCL_REASONS)};const INSPERA_REASON=${JSON.stringify(INSPERA_REASON)};const LOCAL_EXCL_NOTE=${JSON.stringify(LOCAL_EXCL_NOTE)};const ASK_TEXT=${JSON.stringify(ASK_TEXT)};`
     + `const HELP_HTML=${JSON.stringify(HELP_TEMA_HTML)};const HELP_TEMA_HTML=HELP_HTML;`;
 }
 /* Bygger hela den fristående temarapporten som en HTML-sträng. Använder bara embed, funktionslistan
@@ -3426,8 +3289,8 @@ function buildTemaReport(EMBED){
             <option value="doc">Tentans ordning</option>
             <option value="pc-asc">Andel rätt – lägst först</option>
             <option value="pc-desc">Andel rätt – högst först</option>
-            <option value="trap-desc">Starkaste distraktor först</option>
-            <option value="rpb-asc">Diskriminering (r_pb) – lägst först</option>
+            <option value="trap-desc">Mest valda distraktor först</option>
+            <option value="rpb-asc">Diskriminering (r), lägst först</option>
             <option value="code">Frågans namn</option>
             <option value="tag">Tema, sedan frågans namn</option>
           </select>
@@ -3438,9 +3301,9 @@ function buildTemaReport(EMBED){
       <div id="count"></div>
       <div class="legend">
         <span class="sw"><i style="background:var(--correct-bar)"></i>Rätt svar</span>
-        <span class="sw"><i style="background:var(--eff)"></i>Distraktor – effektiv (≥ 5 %)</span>
-        <span class="sw"><i style="background:var(--ineff)"></i>Distraktor – mindre effektiv (&lt; 5 %)</span>
-        <span class="sw"><i style="background:var(--ineff0)"></i>Distraktor – ineffektiv (0 %, ingen valde)</span>
+        <span class="sw"><i style="background:var(--eff)"></i>Distraktor ≥ 5 %</span>
+        <span class="sw"><i style="background:var(--ineff)"></i>Distraktor &lt; 5 %</span>
+        <span class="sw"><i style="background:var(--ineff0)"></i>Distraktor 0 %</span>
         <span class="sw"><i style="background:var(--trap)"></i>Vanligare än rätt svar</span>
       </div>
       <div id="cards"></div>

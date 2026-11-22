@@ -6,6 +6,31 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.28.0
+Andra etappen efter genomgången: ett kort överallt, och essäfrågornas återkoppling (Kajsas beslut 21 och 22 nov 2026).
+- **Uppmaningar finns bara där ett beslut ska fattas före betygssättning:** "Dubbelkolla facit" och "Se över
+  frågan". "Se över frågan" har en lydelse för låg r och en för ej mätbar r. "Talar starkt för" sägs bara när
+  frågan både ligger nära gissningsnivå och har tydligt negativ r.
+- **Allt annat är observationer**, med möjliga orsaker under "Mer om måttet": Vanligt felsvar (förut "Ta upp i
+  undervisningen"), Sällan valda alternativ (förut "Förbättra svarsalternativen"), Mycket lätt fråga och Få
+  svarade rätt (förut "Se över svårighetsgraden"). Rubriken "Till nästa gång" är borta.
+- **Samma kort hos examinatorn och i temarapporten.** Temarapporten visar samma observationer, och ställer
+  frågorna "Stämmer facit?" och "Går «X» att försvara?" i stället för uppmaningen. De fem övriga frågorna under
+  "Att fråga sig" är borta. Läget heter "Med observationer" och filtervalet "Med observation" på båda ställena.
+  Mönsterraderna överst finns nu också i steg 3, och förebilder märks ut även där.
+- **MCQ-lathunden är enda källan för formfynd.** Verktygets egen ledtrådssökning och checklistan "Kan det vara
+  testwiseness?" är borttagna.
+- **Ett alternativs riktning står i ord**, aldrig som tecken: "valdes oftare av studenter med högre/lägre
+  totalpoäng". Siffran står i verktygstipset. Orden starka och svaga studenter används inte längre.
+- **Ej mätbar diskriminering säger skälet på kortet**, till exempel "ej mätbar (bara 3 svarade fel)". "Tak ≈",
+  "(för lätt)" och "(för svår)" är borta ur tipsen.
+- **Essäkort:** inga brickor Lätt/Svår, aldrig etiketten "god", och en enda uppmaning (vid tydligt negativ r):
+  "Kontrollera bedömningsmallen och rättningen före betygssättningen." Raden om lätta essäfrågor har möjliga
+  orsaker i stället för en fråga.
+- **Text:** decimalkomma och "r" i stället för "r_pb" på korten. Färgförklaringen säger "Distraktor ≥ 5 %",
+  "Distraktor < 5 %", "Distraktor 0 %". Hjälpen har förbehållet om målrelaterat prov och meningen om att
+  enstaka varningar väntas av slump; stycket om distraktorfärger är struket.
+
 ## 3.27.0
 Första etappen efter genomgången 21 nov 2026: räknereglerna. Texterna på korten följer i nästa etapp.
 - **En gräns för litet underlag.** Under 30 svar visas bara mätvärden, utan etiketter, observationer
