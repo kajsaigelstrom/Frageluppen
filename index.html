@@ -699,7 +699,7 @@ function discLabel(r){
 }
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum. */
-const VERSION = "3.32.2";
+const VERSION = "3.32.3";
 const UPDATED = "2026-11-22";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
@@ -1716,7 +1716,8 @@ const ASK_TEXT = {
 /* Lathundens formfynd som kan förklara ett mönster (key = nyckel i FORM_EXPLAINS). Högst två. */
 function formPick(v, key){
   const ok=(typeof FORM_EXPLAINS!=="undefined" && FORM_EXPLAINS[key]) || [];
-  return formFindings(v).filter(f=>ok.includes(f.regel)).slice(0,2);
+  const seen=new Set();                                      // en regel visas en gång, också när den slår på flera alternativ
+  return formFindings(v).filter(f=>ok.includes(f.regel) && !seen.has(f.regel) && seen.add(f.regel)).slice(0,2);
 }
 /* Kortets uppmaningar (l1) och observationer (l2).
    l1 finns bara där ett beslut ska fattas före betygssättning: "Dubbelkolla facit" och "Se över frågan". Varje post
@@ -2133,12 +2134,14 @@ lathundKontrollInit();
    bästa-svar-markören, som är en trolig förklaring just när en distraktor går att försvara. */
 const FORM_CUE = ["langst","kortast","eko","inledning","tvadelad","absolut"];
 const FORM_EXPLAINS = {
-  latt: FORM_CUE, ledtrad: FORM_CUE,
+  // Påståendeformen prövar ofta ange-nivå och kan därför förklara en mycket lätt fråga, men inte ett facitproblem.
+  // "Stammen bär inte frågan" (pekar) visas aldrig som förklaring: den hör hemma när frågan skrivs. Den hindrar
+  // ändå förebild i tysthet, som alla fynd utöver tips (Kajsa 22 nov 2026).
+  latt: FORM_CUE.concat(["pastaende"]),
   distraktor: ["absolut","samling"],
-  tydlig: ["pastaende","negstam","pekar","samling","dubblett"],
-  facit: ["dubblett","pastaende","negstam"],
-  forsvar: ["markor","pastaende","samling","dubblett"],
-  undervisning: ["negstam"]
+  tydlig: ["negstam","samling","dubblett"],
+  facit: ["dubblett","negstam"],
+  forsvar: ["markor","samling","dubblett"]
 };
 /* Frågetexten ur PDF:en är ett stycke; lathundens kontroll vill ha vinjett och stam var för sig.
    Sista meningen räknas som stam. Blir delningen fel tystnar några regler, de ger inte falska fynd. */

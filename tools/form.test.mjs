@@ -162,3 +162,34 @@ test("ett alternativ som nästan ingen valde får en förklaring bara när forme
   assert.ok(html.includes("askform") && html.includes("Sällan valda alternativ") && html.includes("«Alltid sömnapné» valdes av 1 % av studenterna."));
   assert.equal(ev("typeof ASK_NEEDS_FORM"), "undefined");
 });
+
+// ---- vilka formfynd som förklarar vad (Kajsa 22 nov 2026) ----
+test("stammen som inte bär frågan visas aldrig som förklaring, men hindrar förebild i tysthet", () => {
+  const { ev, evj } = fresh();
+  assert.ok(!evj("Object.values(FORM_EXPLAINS).flat()").includes("pekar"));
+  const STEM = "En 45-årig kvinna söker för trötthet. Vilken av följande är den mest sannolika orsaken?";
+  const good = `mk({n:90, counts:[65,9,8,8], rpb:0.35, stem:${JSON.stringify(STEM)}})`;
+  assert.ok(evj(`rules(${good})`).includes("pekar"), JSON.stringify(evj(`rules(${good})`)));
+  assert.equal(ev(`isForebild(${good})`), false);
+  assert.ok(!ev(`card(${good})`).includes("Stammen bär inte frågan"));
+  const hard = `mk({rpb:0.05, counts:[28,25,24,23], stem:${JSON.stringify(STEM)}})`;
+  assert.ok(!ev(`card(${hard})`).includes("Stammen bär inte frågan"));
+});
+test("påståendeformen kan förklara en mycket lätt fråga, men inte ett facitproblem", () => {
+  const { evj } = fresh();
+  const E = evj("FORM_EXPLAINS");
+  assert.ok(E.latt.includes("pastaende"));
+  for (const k of ["tydlig", "facit", "forsvar"]) assert.ok(!E[k].includes("pastaende"), k);
+  const STEM = "En 45-årig kvinna söker för trötthet. Vilket påstående stämmer?";
+  const easy = `mk({n:80, counts:[76,2,1,1], rpb:0.05, stem:${JSON.stringify(STEM)}})`;
+  assert.ok(evj(`rules(${easy})`).includes("pastaende"), JSON.stringify(evj(`rules(${easy})`)));
+  assert.deepEqual(evj(`advice(${easy}).l2.map(x => [x.psy, x.form.map(f => f.regel)])`), [["easy", ["pastaende"]]]);
+  const neg = `mk({rpb:-0.4, counts:[50,20,15,15], stem:${JSON.stringify(STEM)}})`;
+  assert.deepEqual(evj(`advice(${neg}).l1.map(x => x.form.map(f => f.regel))`), [[]]);
+});
+test("samma formregel visas en gång per observation, också när den slår på flera alternativ", () => {
+  const { evj } = fresh();
+  const v = `mk({n:80, counts:[76,2,1,1], rpb:0.05, opts:["Järnbrist","Alltid hypotyreos","Aldrig depression","Endast sömnapné"]})`;
+  const forms = evj(`advice(${v}).l2.flatMap(x => x.form.map(f => x.psy + ":" + f.regel))`);
+  assert.equal(new Set(forms).size, forms.length, JSON.stringify(forms));
+});

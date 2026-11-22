@@ -6,6 +6,14 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.32.3
+Vilka formfynd ur MCQ-lathunden som visas som möjlig förklaring (Kajsas beslut 22 nov 2026).
+- **"Stammen bär inte frågan" visas inte längre på något kort.** Regeln hör hemma när frågan skrivs. Den
+  hindrar fortfarande att en fråga blir förebild.
+- **Påståendeformen visas som möjlig förklaring till en mycket lätt fråga**, eftersom den ofta prövar
+  ange-nivå. Den visas inte längre under "Se över frågan" eller "Dubbelkolla facit".
+- En formregel visas en gång per observation, också när den slår på flera alternativ.
+
 ## 3.32.2
 - **Översiktstabellen gav essäfrågor etiketten "god"**, fast korten inte gör det. Tabellen tappade uppgiften
   om att etiketten inte gäller essä- och flersvarsfrågor. Nu säger tabellen och kortet samma sak, och
