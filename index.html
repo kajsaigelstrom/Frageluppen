@@ -528,7 +528,7 @@ function wireSettings(withPass, onChange){
 /* Steg 2, före betygssättning: bara det som statistiken pekar ut, eller alla flervalsfrågor (Kajsa 21 nov 2026). */
 function isPre(){ return typeof EMBED==="undefined" && activeView().id==="pre-mcq"; }
 function modeHint(m){
-  const pre=" Diskrimineringen räknas mot poängen på flervalsdelen, eftersom essäfrågorna inte är rättade än.";
+  const pre=" Diskrimineringen räknas mot poängen på flervalsdelen, eftersom essäfrågorna inte är rättade än. Statistiken är preliminär och kan ändras när allt är rättat.";
   return m==="ask" ? "Hur varje fråga fungerade. Där svaren följer ett mönster står en observation på kortet, med möjliga orsaker."
     : m==="action" ? "Frågor som statistiken pekar ut: tecken på fel i facit, eller mycket svåra frågor som inte skiljer mellan studenter." + pre
     : m==="simple" ? "Bara korten med mätvärden. Observationer och uppmaningar är dolda. Diskrimineringen räknas mot poängen på hela tentan."
@@ -699,7 +699,7 @@ function discLabel(r){
 }
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum. */
-const VERSION = "3.32.3";
+const VERSION = "3.32.4";
 const UPDATED = "2026-11-22";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
@@ -742,7 +742,8 @@ Temarapporten visar alfa för de tre delarna överst.</p>
 från det verktyget räknar fram står en varning överst i steg 3, med antalet studenter det gäller.</p>
 <p><b>2 Hitta problemfrågor</b> – flervalsfrågor som kan behöva rättas i facit
 eller exkluderas, med diskriminering mot flervalsdelens poäng. Går att göra innan essäfrågorna
-är rättade. Vyn öppnar på frågorna <b>att se över</b>, alltså dem som statistiken pekar ut.
+är rättade. Statistiken är preliminär och kan ändras när allt är rättat. En fråga kan pekas ut här
+men inte i steg 3, eller tvärtom, eftersom diskrimineringen då räknas mot hela tentan. Vyn öppnar på frågorna <b>att se över</b>, alltså dem som statistiken pekar ut.
 <b>Alla flervalsfrågor</b> ger överblick över svårighet och diskriminering, och sökrutan hittar
 vilken fråga som helst. Observationerna om hur svaren fördelar sig står inte här utan i steg 3.
 En fråga exkluderas med knappen på kortet, och allt räknas då om. Exkluderingen gäller bara
@@ -857,7 +858,7 @@ function exportProblems(){
     + `<style>${css}</style></head><body><div class="wrap">`
     + `<h1>Problemfrågor före betygssättning</h1><p style="color:var(--muted);font-size:13px;margin:2px 0 10px">${esc(sub)}</p>`
     + `<p style="font-size:13.5px;max-width:80ch;margin:0 0 14px">Underlag för beslut om facit och exkludering. Här står de flervalsfrågor som statistiken pekar ut, `
-    + `exkluderade frågor och frågor med kommentar. Diskrimineringen är räknad mot poängen på flervalsdelen, eftersom essäfrågorna inte är rättade än. `
+    + `exkluderade frågor och frågor med kommentar. Diskrimineringen är räknad mot poängen på flervalsdelen, eftersom essäfrågorna inte är rättade än. Statistiken är preliminär och kan ändras när allt är rättat. `
     + `Sidan innehåller bara sammanräknade resultat, aldrig enskilda studenters svar.</p>`
     + (cards || `<div class="panel">Statistiken pekar inte ut någon fråga, och ingen fråga är exkluderad eller kommenterad.</div>`)
     + `</div></body></html>`;
@@ -1713,11 +1714,12 @@ const ASK_TEXT = {
   facit: "Stämmer facit? Kan frågan läsas på ett sätt som gör ett annat svar rätt?",
   forsvar: "Går alternativet «X» att försvara som rätt eller delvis rätt?"
 };
-/* Lathundens formfynd som kan förklara ett mönster (key = nyckel i FORM_EXPLAINS). Högst två. */
+/* Lathundens formfynd som kan förklara ett mönster (key = nyckel i FORM_EXPLAINS). Alla som passar visas, utan övre
+   gräns: ett fynd som finns men göms är svårare att försvara än ett längre kort (Kajsa 22 nov 2026). */
 function formPick(v, key){
   const ok=(typeof FORM_EXPLAINS!=="undefined" && FORM_EXPLAINS[key]) || [];
   const seen=new Set();                                      // en regel visas en gång, också när den slår på flera alternativ
-  return formFindings(v).filter(f=>ok.includes(f.regel) && !seen.has(f.regel) && seen.add(f.regel)).slice(0,2);
+  return formFindings(v).filter(f=>ok.includes(f.regel) && !seen.has(f.regel) && seen.add(f.regel));
 }
 /* Kortets uppmaningar (l1) och observationer (l2).
    l1 finns bara där ett beslut ska fattas före betygssättning: "Dubbelkolla facit" och "Se över frågan". Varje post

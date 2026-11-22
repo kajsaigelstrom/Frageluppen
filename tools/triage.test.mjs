@@ -86,3 +86,16 @@ test("examinatorns PDF finns inte längre: återkopplingen går till temagrupper
   assert.equal(ev("typeof exportPdf"), "undefined");
   assert.ok(!/PDF/.test(el("#modehint").textContent));
 });
+
+test("steg 2 säger att statistiken är preliminär och kan ändras när allt är rättat", () => {
+  const a = loadApp(); a.ev("setPrep(false); loadSynthetic(); setStep('triage');");
+  const RE = /Statistiken är preliminär och kan ändras när allt är rättat\./;
+  assert.match(a.el("#modehint").textContent, RE);
+  a.ev("state.mode = 'edu'; $('#modehint').textContent = modeHint(state.mode);");
+  assert.match(a.el("#modehint").textContent, RE);                    // också under Alla flervalsfrågor
+  a.ev("exportProblems()");
+  assert.match(a.downloads[a.downloads.length - 1].parts.join(""), RE);
+  assert.match(a.ev("HELP_HTML"), RE);
+  a.ev("setStep('report')");
+  assert.ok(!/preliminär/.test(a.el("#modehint").textContent));        // inte i steg 3
+});

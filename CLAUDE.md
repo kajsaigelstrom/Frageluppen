@@ -96,6 +96,8 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
 - **Ett kort överallt.** Examinatorn och temarapporten har samma kort och samma observationer.
   Temarapporten visar aldrig uppmaningar: den ställer frågorna i `ASK_TEXT` ("Stämmer facit?",
   "Går «X» att försvara?") eller visar bara observationsdelen (`obs` utan `todo`).
+- **Steg 2 är preliminärt.** Där räknas r mot flervalsdelen, så en fråga kan pekas ut i steg 2 men
+  inte i steg 3, eller tvärtom. Vyn, exporten Problemfrågor och hjälpen säger det.
 - **En gräns för litet underlag**, `MIN_N` = 30: under den visas bara mätvärden. Undantaget är
   "ingen svarade rätt", som ger "Dubbelkolla facit" oavsett antal.
 - **Diskrimineringen heter "god" från `state.th.goodDisc` (0,30) och "låg" under `R_LOW` (0,10)**,
@@ -114,7 +116,9 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
   `LATHUND-KONTROLL` och `LATHUND-REGLER` i `index.html` skrivs av
   `node tools/sync-lathund.mjs <lathundens mapp>` och ändras aldrig för hand. Med `LATHUND_DIR`
   satt jämför testerna mot lathunden. Ett fynd visas bara där det kan förklara ett mönster
-  (`FORM_EXPLAINS`, `formPick`), högst två per observation. Bygg ingen egen ledtrådssökning.
+  (`FORM_EXPLAINS`, `formPick`), och då visas alla som passar, en gång per regel. Påståendeformen
+  förklarar bara en mycket lätt fråga. "Stammen bär inte frågan" visas aldrig men hindrar förebild.
+  Bygg ingen egen ledtrådssökning.
 - **Det som gäller flera frågor står en gång överst** ("Mönster i de här frågorna",
   `patternSummary`, `scorePatterns`), i steg 3 och i temarapporten.
 - **Statistiken säger inget om en frågas nivå mot kursplanen.** Verktyget bedömer aldrig

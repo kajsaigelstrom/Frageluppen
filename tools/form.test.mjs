@@ -94,14 +94,17 @@ test("ett fynd visas bara under en fråga det kan förklara", () => {
   assert.deepEqual(shown.map(a => a.psy), ["hard"]);
   assert.ok(shown[0].form.some(f => f.regel === "negstam"));
 });
-test("högst två formfynd per observation", () => {
+test("alla formfynd som passar mönstret visas, utan övre gräns", () => {
   const { evj } = fresh();
   const many = `mk({n:80, counts:[76,2,1,1], rpb:0.05, stem:"En patient har hjärtsvikt. Vilken behandling är bäst?",
     opts:["Både behandling av hjärtsvikt och samtidigt alltid noggrann uppföljning av patienten; dessutom kontroll","Aldrig a","Endast b","Inga c"]})`;
   assert.ok(evj(`rules(${many})`).length > 3);
   const a = evj(`advice(${many})`);
   assert.ok(a.l1.concat(a.l2).some(x => x.form.length > 0));
-  assert.ok(a.l1.concat(a.l2).every(x => (x.form || []).length <= 2));
+  // inget fynd som passar en mycket lätt fråga göms undan (Kajsa 22 nov 2026)
+  const fits = evj(`rules(${many})`).filter(r => evj("FORM_EXPLAINS.latt").includes(r));
+  assert.ok(fits.length > 2, JSON.stringify(fits));
+  assert.deepEqual(a.l2.find(x => x.psy === "easy").form.map(f => f.regel), [...new Set(fits)]);
 });
 test("förebild: skiljer väl, inget på kortet och utan fynd i formkontrollen; svårigheten är inget krav", () => {
   const { ev } = fresh();

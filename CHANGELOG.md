@@ -6,6 +6,12 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.32.4
+- **Alla formfynd som passar mönstret visas** (Kajsas beslut 22 nov 2026). Gränsen på två per observation är
+  borta: den klippte bort fynd som fanns, och valde de två som stod först i lathundens ordning.
+- **Steg 2 säger att statistiken är preliminär** och kan ändras när allt är rättat: i vyn, i exporten
+  Problemfrågor och i hjälpen. En fråga kan pekas ut i steg 2 men inte i steg 3, eller tvärtom.
+
 ## 3.32.3
 Vilka formfynd ur MCQ-lathunden som visas som möjlig förklaring (Kajsas beslut 22 nov 2026).
 - **"Stammen bär inte frågan" visas inte längre på något kort.** Regeln hör hemma när frågan skrivs. Den
