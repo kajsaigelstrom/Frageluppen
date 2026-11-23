@@ -1,6 +1,7 @@
-// Ladok-listan över registrerade studenter (Kajsa 23 nov 2026): uppdelningen i studenter registrerade på kursen
-// innevarande termin och övriga finns inte i Inspera. Den kommer ur en lista från Ladok där kolumnen AidCode är
-// Insperas kandidatnummer. Bara den kolumnen läses, och i datafilen står bara ja eller nej per student.
+// Listan över registrerade studenter (Kajsa 23 nov 2026): uppdelningen i studenter registrerade på kursen
+// innevarande termin och övriga finns inte i Inspera. Den kommer ur en fil med en kolumn, ett id per student
+// (tentans anonymkod = Insperas kandidatnummer). En lista direkt ur Ladok går också: då läses bara kolumnen AidCode.
+// I datafilen står bara ja eller nej per student.
 import test from "node:test"; import assert from "node:assert/strict";
 import { loadApp } from "./harness.mjs";
 import { setupDirty } from "./fixtures.mjs";
@@ -26,9 +27,29 @@ test("listan läses med citattecken, semikolon i namn och BOM, och bara koderna 
   assert.equal(r.rows, 5); assert.equal(r.empty, 1);
   assert.ok(!/1999|Efternamn/.test(JSON.stringify(r)));
 });
-test("en fil utan kolumnen AidCode ger ett begripligt fel", () => {
+test("en fil med flera kolumner och ingen id-kolumn ger ett begripligt fel", () => {
   const a = loadApp();
-  assert.throws(() => a.ev('parseRegList("\\"Personal identity number\\";\\"Name\\";\\"Grade\\"\\n\\"1\\";\\"A\\";\\"G\\"", "fel.csv")'), /ingen kolumn som heter AidCode/);
+  for (const sep of [";", ",", "\t"]) {
+    a.set("BAD", ["Personnummer", "Namn", "Betyg"].join(sep) + "\n" + ["19990101-1234", "A", "G"].join(sep));
+    assert.throws(() => a.ev('parseRegList(BAD, "fel.csv")'), /en kolumn med ett id per student/);
+  }
+  assert.throws(() => a.ev('parseRegList("", "tom.csv")'), /en kolumn med ett id per student/);
+});
+test("en fil med en enda kolumn läses som id, med eller utan rubrik", () => {
+  const a = loadApp();
+  assert.deepEqual(a.evj('parseRegList("1583\\n1038\\r\\n 1577 \\n\\n1038\\n", "l.csv").codes'), ["1583", "1038", "1577"]);
+  assert.deepEqual(a.evj('parseRegList("Anonymkoder VT26\\n1583\\n1038", "l.csv").codes'), ["1583", "1038"]);       // rubrik utan siffror hoppas över
+  assert.deepEqual(a.evj('parseRegList("ID\\n1583\\n1038", "l.csv").codes'), ["1583", "1038"]);
+  assert.deepEqual(a.evj('parseRegList("\\"A-17\\"\\n\\"B-18\\"", "l.csv").codes'), ["A-17", "B-18"]);                   // id behöver inte vara tal
+});
+test("Excel-rader tolkas på samma sätt: en kolumn, eller en kolumn med känd rubrik", () => {
+  const a = loadApp();
+  assert.deepEqual(a.evj('regCodesFromRows([["Student-ID"],["1583"],[1038],[""],["1577"]]).codes'), ["1583", "1038", "1577"]);
+  assert.deepEqual(a.evj('regCodesFromRows([[null,"1583"],[null,"1038"]]).codes'), ["1583", "1038"]);                  // kolumn B
+  assert.deepEqual(a.evj('regCodesFromRows([["Namn","AidCode"],["A","1583"],["B","1038"]]).codes'), ["1583", "1038"]);
+  assert.equal(a.evj('regCodesFromRows([["A","1583"],["B","1038"]])'), null);                                         // två kolumner, ingen rubrik
+  a.set("XLSX", { read: () => ({ SheetNames: ["s"], Sheets: { s: {} } }), utils: { sheet_to_json: () => [["ID"], ["1583"], ["1038"]] } });
+  assert.deepEqual(a.evj('parseRegSheet(new ArrayBuffer(1), "l.xlsx").codes'), ["1583", "1038"]);
 });
 test("datafilen får bara ja eller nej per student: ingen kod, inget namn och inget personnummer", async () => {
   const { a, ids, chosen } = await withList(ids => ids.filter((_, i) => i % 3 === 0));
@@ -95,12 +116,10 @@ test("kvittot säger hur listan passade, och en lista utan träffar används int
   a.ev("globalThis.A1 = makeDirty(); globalThis.IDS = A1.ext_inspera_candidates.map(c => String(c.result.ext_inspera_candidateId));");
   const fit = a.evj("regFit([A1], [IDS[0], IDS[1], 'finns-inte'])");
   assert.deepEqual({ listed: fit.listed, hit: fit.hit, miss: fit.miss, reg: fit.reg, used: fit.used }, { listed: 3, hit: 2, miss: 1, reg: 2, used: true });
-  assert.match(a.ev("regNote(regFit([A1], [IDS[0], IDS[1], 'finns-inte']))"), /1 av Ladok-listans 3 koder finns inte bland tentans studenter/);
+  assert.match(a.ev("regNote(regFit([A1], [IDS[0], IDS[1], 'finns-inte']))"), /1 av listans 3 id finns inte bland tentans studenter/);
   assert.equal(a.ev("regNote(regFit([A1], IDS))"), "");
-  // Koder som saknas bland studenterna följer med som antal, så att steg 3 och Excel kan varna.
-  a.ev("globalThis.PM = buildPackage({jsonObjs:[A1], pdfMcqs:null, tagRows:null, regCodes:[IDS[0], 'finns-inte']})");
-  assert.deepEqual(a.evj("PM.regList"), { listed: 2, miss: 1 });
-  assert.ok(!/finns-inte/.test(a.ev("JSON.stringify(PM)")));
+  assert.ok(!/warn|⚠/.test(a.ev("regNote(regFit([A1], [IDS[0], IDS[1], 'finns-inte']))")));     // ett antal, ingen varning
+  assert.ok(!/finns-inte|regList/.test(a.ev("JSON.stringify(buildPackage({jsonObjs:[A1], pdfMcqs:null, tagRows:null, regCodes:[IDS[0], 'finns-inte']}))")));
   assert.match(a.ev("regNote(regFit([A1], ['x', 'y']))"), /listan används inte/);
   assert.ok(!/fl_registered/.test(a.ev("JSON.stringify(buildPackage({jsonObjs:[A1], pdfMcqs:null, tagRows:null, regCodes:['x','y']}))")));
   assert.equal(a.evj("prepReceipt({jsonObjs:[A1], pdfMcqs:null, tagRows:null, regCodes:[IDS[0]]})").reg.reg, 1);

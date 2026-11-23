@@ -6,6 +6,13 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.35.0
+- **Listan över registrerade studenter är en fil med en kolumn**: ett id per student, i Excel eller CSV. Id:t är
+  tentans anonymkod (AidCode), samma id som står på studenten i Inspera. En fil med flera kolumner går också om
+  id-kolumnen heter ID eller AidCode. Texterna säger "listan över registrerade studenter" i stället för Ladok-listan.
+- Den som väljer filen ansvarar för att den har rätt id. Id i listan som inte finns bland tentans studenter
+  redovisas som ett antal i kvittot, utan varning. Varningen i bokslutsrutan och i Excel-filen är borta.
+
 ## 3.34.0
 - **Uppdelning i studenter registrerade innevarande termin och övriga.** Steg 1 har en fjärde, valfri filruta för
   en lista från Ladok (CSV) med kolumnen AidCode, som är samma nummer som Insperas kandidatnummer. Bara den

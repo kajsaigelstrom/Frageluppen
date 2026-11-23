@@ -60,7 +60,6 @@
   #bokslut{margin:10px 0;padding:12px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px}
   #bokslut label{margin-right:14px} #bokslut textarea{display:block;width:100%;box-sizing:border-box;margin:8px 0;font:inherit;padding:8px;border:1px solid var(--line);border-radius:6px}
   #bokslut .hint{color:var(--muted);font-size:13px}
-  #bokslut .warn{color:#8a3b12;margin:6px 0}
   .gctl{font-size:13px;color:var(--muted);white-space:nowrap}
   .gctl input{width:3.2em;font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);text-align:right}
   #g-pts{color:var(--ink)}
@@ -401,9 +400,9 @@
         <div class="got" id="got-tags"></div>
       </div>
       <div class="drop" id="d-reg">
-        <label>Registrerade studenter från Ladok (CSV) – valfri</label>
-        <div class="hint">Ger uppdelningen i studenter registrerade på kursen innevarande termin och övriga, i tentamensstatistiken och i texten till kursbokslutet. Exportera listan med tentans resultat ur Ladok när tentan är rättad, med alla rader och kolumnen <b>AidCode</b>. Flera filer går bra. Bara kolumnen AidCode läses. Namn och personnummer läses inte, och i datafilen står bara om studenten finns i listan eller inte.</div>
-        <input type="file" id="reg" accept=".csv,text/csv" multiple>
+        <label>Registrerade studenter (Excel eller CSV) – valfri</label>
+        <div class="hint">Ger uppdelningen i studenter registrerade på kursen innevarande termin och övriga, i tentamensstatistiken och i texten till kursbokslutet. Filen ska ha <b>en kolumn med ett id per student</b>, för de studenter som var registrerade på kursen innevarande termin. Id:t är det som står på studenten i Inspera för just den här tentan (anonymkoden, AidCode). Det är nytt för varje tentatillfälle. De studenter vars id finns i filen räknas som registrerade, alla andra som övriga. I datafilen står bara om studenten finns i listan eller inte.</div>
+        <input type="file" id="reg" accept=".xlsx,.xls,.csv,.txt,text/csv" multiple>
         <div class="got" id="got-reg"></div>
       </div>
     </div>
@@ -448,7 +447,7 @@
         <button class="expbtn" id="exp-temapdf" title="Samma rapport som PDF: öppnas i ett eget fönster och går till utskrift, där du väljer Spara som PDF. Följer filtret.">Temarapport (PDF)</button>
         <button class="expbtn" id="exp-overview" title="Tabell med en rad per fråga, alla frågetyper, alla frågetyper. Öppnas för utskrift, där du väljer Spara som PDF. Följer filtret.">Översiktstabell (PDF)</button>
         <button class="expbtn" id="exp-xlsx" title="Excel med samma flikar som den mall som tidigare fylldes i för hand: sammanfattning, resultat per student och uppgift, och resultat per tema. En rad per student, med löpnummer.">Tentamensstatistik (Excel)</button>
-        <button class="expbtn" id="exp-bokslut" title="Text till kursbokslutet: hur många som skrev, hur många av dem som var registrerade på kursen innevarande termin och andelen godkända i varje grupp. Kräver Ladok-listan i steg 1.">Kursbokslutstext</button>
+        <button class="expbtn" id="exp-bokslut" title="Text till kursbokslutet: hur många som skrev, hur många av dem som var registrerade på kursen innevarande termin och andelen godkända i varje grupp. Kräver listan över registrerade studenter i steg 1.">Kursbokslutstext</button>
         <button class="expbtn" id="exp-charts" title="Poängfördelningen och slutpoäng per student och studieort, med G-gränsen utritad. Öppnas för utskrift, där du väljer Spara som PDF.">Diagram (PDF)</button>
       </div>
     </div>
@@ -711,7 +710,7 @@ function discLabel(r){
 }
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum. */
-const VERSION = "3.34.0";
+const VERSION = "3.35.0";
 const UPDATED = "2026-11-23";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
@@ -788,11 +787,12 @@ sec("Steg 1: Förbered filer", `
 <p>Släpp resultatfilerna från Inspera, tentans PDF och taggfilen om den finns. Utan tentans PDF saknas
 frågetexterna, och utan taggfil saknas filtret på tema. Har du fått en sparad datafil väljer du den
 i rutan under filrutorna.</p>
-<p><b>Listan från Ladok</b> är valfri. Den ger uppdelningen i studenter registrerade på kursen
-innevarande termin och övriga, i Tentamensstatistiken och i Kursbokslutstexten. Exportera listan med
-tentans resultat som CSV när tentan är rättad, med alla rader och kolumnen AidCode. Ladok visar varje
-students senaste resultat, så en lista som tas ut efter omtentan passar inte den ordinarie tentan.
-Kvittot säger hur många av listans koder som finns bland tentans studenter.</p>
+<p><b>Listan över registrerade studenter</b> är valfri. Den ger uppdelningen i studenter registrerade på
+kursen innevarande termin och övriga, i Tentamensstatistiken och i Kursbokslutstexten. Filen är en
+Excel- eller CSV-fil med en kolumn: ett id per student som var registrerad på kursen innevarande termin.
+Id:t är det som står på studenten i Inspera för just den här tentan (anonymkoden, AidCode), och det är
+nytt för varje tentatillfälle. De studenter vars id finns i filen räknas som registrerade, alla andra
+som övriga. Kvittot säger hur många av tentans studenter som finns i listan.</p>
 <p><b>Kvittot</b> under knapparna säger vad som lästes in: tentans namn, antal studenter, om
 essäfrågorna är rättade och hur många frågor taggfilen matchade. Passar PDF:en inte resultaten står
 en varning där. Inga resultat visas i steg 1.</p>
@@ -856,7 +856,7 @@ frågor. Följer filtret, så en rapport per tema skapas genom att filtrera på 
 Sammanfattning har också Cronbachs alfa för hela tentan, flervalsdelen och essädelen, mätfelet i
 poäng och antalet studenter inom ett mätfel från G-gränsen.</li>
 <li><b>Kursbokslutstext</b>: en färdig text om hur många som skrev, hur många av dem som var registrerade på
-kursen innevarande termin och andelen godkända i varje grupp. Kräver Ladok-listan i steg 1. Samma uppdelning
+kursen innevarande termin och andelen godkända i varje grupp. Kräver listan över registrerade studenter i steg 1. Samma uppdelning
 står då i Tentamensstatistiken.</li>
 <li><b>Diagram (PDF)</b>: poängfördelningen och slutpoäng per student och studieort, med G-gränsen utritad.</li>
 </ul>`),
@@ -883,9 +883,8 @@ aldrig till temagrupperna.</p>
 <p><b>Temarapporten, Problemfrågor och Översiktstabellen</b> innehåller bara sammanräknade resultat,
 aldrig enskilda studenters svar. De innehåller frågetexterna och rätt svar.</p>
 <p><b>Tentamensstatistiken</b> har en rad per student, med löpnummer.</p>
-<p><b>Ladok-listan</b> över registrerade studenter innehåller namn och personnummer. Verktyget läser bara
-kolumnen AidCode ur den. I datafilen står bara om en student finns i listan eller inte, och i exporterna
-bara antal per grupp.</p>`)
+<p><b>Listan över registrerade studenter</b> används bara för att avgöra vilka studenter som finns i den.
+I datafilen står bara om en student finns i listan eller inte, och i exporterna bara antal per grupp.</p>`)
 ].join("\n");
 
 /* Hjälpen öppnar på avsnittet för det steg man står i (data-step på avsnittet). */
@@ -1310,7 +1309,7 @@ function minimizeInspera(obj, offset, regSet){
     const res = { ext_inspera_candidateId: String((offset||0)+i+1) };
     // Insperas slutbetyg och totalpoäng följer med (Kajsa 21 nov 2026), så att uträkningen här kan kontrolleras mot dem.
     for(const k of ["ext_inspera_finalGrade","ext_inspera_totalScore"]) if(r[k]!==undefined && r[k]!==null) res[k]=r[k];
-    // Finns studenten i Ladok-listan över registrerade? Bara ja eller nej följer med, aldrig koden (Kajsa 23 nov 2026).
+    // Finns studenten i listan över registrerade? Bara ja eller nej följer med, aldrig koden (Kajsa 23 nov 2026).
     if(regSet) res.fl_registered = regSet.has(regKey(r.ext_inspera_candidateId));
     if(qs) res.ext_inspera_questions = qs.map(q=>{
       const o={};
@@ -1328,11 +1327,13 @@ function minimizeInspera(obj, offset, regSet){
   return out;
 }
 
-/* ---------- Ladok-listan över registrerade studenter ----------
+/* ---------- Listan över registrerade studenter ----------
    Uppdelningen i studenter registrerade på kursen innevarande termin och övriga finns inte i Inspera. Den kommer ur
-   en lista från Ladok (CSV) där kolumnen AidCode är samma nummer som Insperas kandidatnummer. BARA den kolumnen
-   läses: namn och personnummer lagras aldrig, och i datafilen står bara ja eller nej per student (fl_registered).
-   Kopplingen måste göras i steg 1, eftersom kandidatnumren sedan ersätts av löpnummer. */
+   en fil med EN kolumn: ett id per registrerad student (Kajsa 23 nov 2026). Id:t är tentans anonymkod (AidCode i
+   Ladok), som är samma nummer som Insperas kandidatnummer och är nytt för varje tentatillfälle. I datafilen står
+   bara ja eller nej per student (fl_registered). Kopplingen måste göras i steg 1, eftersom kandidatnumren sedan
+   ersätts av löpnummer. En fil med flera kolumner går också, om id-kolumnen har en rubrik som känns igen (till
+   exempel en lista direkt ur Ladok med kolumnen AidCode); då läses bara den kolumnen. */
 function regKey(x){ return String(x===null||x===undefined ? "" : x).trim(); }
 function csvRows(text, sep){
   const rows=[]; let row=[], cell="", q=false; const t=String(text||"").replace(/^\uFEFF/,"");
@@ -1345,17 +1346,40 @@ function csvRows(text, sep){
   if(cell!=="" || row.length){ row.push(cell); rows.push(row); }
   return rows.filter(r=>r.some(x=>String(x).trim()!==""));
 }
-/* Ger listans koder och antal rader. Kastar ett begripligt fel när kolumnen saknas. */
-function parseRegList(text, name){
-  const isCol=x=>/^(aid\s*code|aid|anonymkod|anonymitetskod)$/i.test(String(x).trim());
-  for(const sep of [";", ",", "\t"]){
-    const rows=csvRows(text, sep); if(!rows.length) continue;
-    const ci=rows[0].findIndex(isCol); if(ci<0) continue;
-    const codes=[]; let empty=0;
-    for(const r of rows.slice(1)){ const k=regKey(r[ci]); if(k) codes.push(k); else empty++; }
-    return {codes:[...new Set(codes)], rows:rows.length-1, empty};
+/* Rader (ur Excel eller CSV) → listans id. En kolumn med känd rubrik går före; annars måste filen ha en enda kolumn.
+   En rubrik överst i en ensam kolumn (utan siffror, eller med mellanslag) hoppas över. null när raderna inte går att tolka. */
+const REG_COL = /^(aid\s*code|aid|anonymkod|anonymitetskod|id|student-?\s*id|kandidat-?\s*id|kandidatnummer|kod)$/i;
+function regCodesFromRows(rows){
+  rows=(rows||[]).map(r=>(r||[]).map(x=>regKey(x))).filter(r=>r.some(Boolean)); if(!rows.length) return null;
+  let ci=rows[0].findIndex(x=>REG_COL.test(x)), body=rows.slice(1);
+  if(ci<0){
+    const cols=new Set(); for(const r of rows) r.forEach((x,i)=>{ if(x) cols.add(i); });
+    if(cols.size!==1) return null;
+    ci=[...cols][0]; body = (/\d/.test(rows[0][ci]) && !/\s/.test(rows[0][ci])) ? rows : rows.slice(1);   // ett id har siffror och inga mellanslag
   }
-  throw new Error(`Filen "${name||"okänd"}" har ingen kolumn som heter AidCode. Exportera listan med tentans resultat ur Ladok, med anonymkoderna.`);
+  const codes=[]; let empty=0;
+  for(const r of body){ const k=r[ci]||""; if(k) codes.push(k); else empty++; }
+  return {codes:[...new Set(codes)], rows:body.length, empty};
+}
+function regFormatError(name){
+  return new Error(`Filen "${name||"okänd"}" går inte att läsa som en lista över studenter. Den ska ha en kolumn med ett id per student. Har den flera kolumner ska id-kolumnen heta ID eller AidCode.`);
+}
+/* CSV eller text. Skiljetecknet prövas, så att en fil med flera kolumner inte läses som en enda. */
+function parseRegList(text, name){
+  for(const sep of [";", ",", "\t"]){
+    const rows=csvRows(text, sep);
+    if(rows.length && rows[0].some(x=>REG_COL.test(regKey(x)))){ const r=regCodesFromRows(rows); if(r) return r; }
+  }
+  const one=csvRows(text, ";");
+  const r = one.some(row=>row.some(x=>/[;,\t]/.test(x))) ? null : regCodesFromRows(one);
+  if(!r || !r.codes.length) throw regFormatError(name);
+  return r;
+}
+/* Excel: första bladet, samma tolkning. */
+function parseRegSheet(buf, name){
+  const r=regCodesFromRows(readTagRows(buf));
+  if(!r || !r.codes.length) throw regFormatError(name);
+  return r;
 }
 /* Hur listan passar tentan: antal koder i listan, hur många av dem som finns bland tentans studenter, och hur många
    studenter som alltså räknas som registrerade. Utan en enda träff används listan inte. */
@@ -1399,7 +1423,6 @@ function buildPackage({jsonObjs, pdfMcqs, tagRows, regCodes}){
     created:new Date().toISOString().slice(0,10),
     examName: commonTitle(titles),
     orter: ortNames(jsonObjs.map(o=>o && o.ext_inspera_assessmentRunTitle)),   // en per resultatfil, i samma ordning som data
-    regList: regSet ? {listed:fit.listed, miss:fit.miss} : null,                // Ladok-listan: bara antal koder och hur många som inte fanns
     examWarning: examMismatch(pdfName, titles) || null,
     data: (()=>{ let off=0;                                   // löpnumren löper över alla filer (en fil per ort)
       return jsonObjs.map(o=>{ const m=minimizeInspera(o, off, regSet); off+=m.ext_inspera_candidates.length; return m; }); })(),
@@ -1583,7 +1606,7 @@ function parseJSON(jsonObjs){
   const zeroWeight=[], partialZero=[];
   for(const qn of order){ const w=agg[qn].w0||0; if(!w) continue;
     if(w===cands.length) zeroWeight.push(String(qn)); else partialZero.push({num:String(qn), n:w}); }
-  // Registrerad på kursen innevarande termin (ur Ladok-listan i steg 1): true/false per student, eller null utan lista.
+  // Registrerad på kursen innevarande termin (ur listan i steg 1): true/false per student, eller null utan lista.
   const hasReg = cands.some(c=>typeof c.fl_registered==="boolean");
   const reg = hasReg ? cands.map(c=>c.fl_registered===true) : null;
   const J={candCount:cands.length, agg, mcqSeqs, qMeta, qTitle:titleOf, cohortScores, ungradedPts, fullyGraded, maxTotal, mcqSlot:mcqSlotByCand, candMeta, zeroWeight, partialZero, candFile, reg,
@@ -3058,7 +3081,7 @@ function statsData(){
   return {exam:state.examName||"", max:+max.toFixed(2), gThr, passPct:state.th.pass, questions, students, themes, excluded, rel:reliability(), reg:regSplit(students),
           orter:[...new Set(students.map(x=>x.ort).filter(Boolean))]};
 }
-/* Uppdelningen i registrerade innevarande termin och övriga: antal och antal godkända per grupp. null utan Ladok-lista.
+/* Uppdelningen i registrerade innevarande termin och övriga: antal och antal godkända per grupp. null utan lista.
    Bara summor, aldrig vilka studenter. */
 function regSplit(students){
   if(!students.length || students[0].reg===null || students[0].reg===undefined) return null;
@@ -3115,8 +3138,7 @@ function renderBokslut(d){
     + `<label><input type="radio" name="bokslut-kind" value="omtenta"${kind==="omtenta"?" checked":""}> Omtentamen</label>`
     + `<textarea id="bokslut-text" rows="4" readonly>${esc(bokslutText(d, kind))}</textarea>`
     + `<button class="expbtn" id="bokslut-copy" type="button">Kopiera texten</button> `
-    + (state.regList && state.regList.miss ? `<div class="warn">⚠ ${esc(regMissText(state.regList))}</div>` : "")
-    + `<span class="hint">Räknat med G-gränsen ${esc(thFmt("pass"))} % (${d.gThr} p) och utan exkluderade frågor. Registrerade är de studenter som finns i Ladok-listan från steg 1.</span>`;
+    + `<span class="hint">Räknat med G-gränsen ${esc(thFmt("pass"))} % (${d.gThr} p) och utan exkluderade frågor. Registrerade är de studenter som finns i listan från steg 1.</span>`;
   if(typeof el.querySelectorAll==="function") el.querySelectorAll('input[name="bokslut-kind"]').forEach(r=>r.addEventListener("change", ()=>{ state.bokslutKind=r.value; renderBokslut(); }));
   const cp=el.querySelector && el.querySelector("#bokslut-copy");
   if(cp) cp.addEventListener("click", ()=>{ const ta=el.querySelector("#bokslut-text"); if(!ta) return;
@@ -3160,11 +3182,10 @@ function statsSheets(d){
     ["Antal G", {v:nG, f:`COUNTIF(${bet},"G")`}, {v:pc(nG,n)||0, f:"ROUND(B9/B7*100,2)"}, "% av tentanderna"],["Antal U", {v:n-nG, f:`COUNTIF(${bet},"U")`}, {v:pc(n-nG,n)||0, f:"ROUND(B10/B7*100,2)"}, "% av tentanderna"],
     ...(insp ? [["Antal G enligt Inspera", d.students.filter(x=>x.inspGrade && x.inspGrade.toUpperCase()!=="U").length, "", "Slutbetyget som står i Inspera, för jämförelse."],
                  ["Antal U enligt Inspera", d.students.filter(x=>x.inspGrade && x.inspGrade.toUpperCase()==="U").length]] : []),
-    ...(d.reg ? [["Registrerade innevarande termin: antal G och U", d.reg.reg.g, d.reg.reg.n-d.reg.reg.g, pc(d.reg.reg.g,d.reg.reg.n), "Antal G, antal U och andel G i procent. Ur Ladok-listan i steg 1. Räknat med G-gränsen vid exporten. Följer inte med om gränsen ändras här i Excel."
-                    + (state.regList && state.regList.miss ? " OBS: "+regMissText(state.regList) : "")],
-                  ["Registrerade tidigare terminer: antal G och U", d.reg.oth.g, d.reg.oth.n-d.reg.oth.g, pc(d.reg.oth.g,d.reg.oth.n), "Studenter som inte finns i Ladok-listan."]]
-               : [["Registrerade innevarande termin: antal G och U", "", "Fylls i för hand, eller välj Ladok-listan i steg 1."],
-                  ["Registrerade tidigare terminer: antal G och U", "", "Fylls i för hand, eller välj Ladok-listan i steg 1."]]),[""]];
+    ...(d.reg ? [["Registrerade innevarande termin: antal G och U", d.reg.reg.g, d.reg.reg.n-d.reg.reg.g, pc(d.reg.reg.g,d.reg.reg.n), "Antal G, antal U och andel G i procent. Ur listan över registrerade studenter i steg 1. Räknat med G-gränsen vid exporten. Följer inte med om gränsen ändras här i Excel."],
+                  ["Registrerade tidigare terminer: antal G och U", d.reg.oth.g, d.reg.oth.n-d.reg.oth.g, pc(d.reg.oth.g,d.reg.oth.n), "Studenter som inte finns i listan."]]
+               : [["Registrerade innevarande termin: antal G och U", "", "Fylls i för hand, eller välj listan över registrerade studenter i steg 1."],
+                  ["Registrerade tidigare terminer: antal G och U", "", "Fylls i för hand, eller välj listan över registrerade studenter i steg 1."]]),[""]];
   if(d.rel){ const r3=x=>(x===null||x===undefined) ? "" : +(+x).toFixed(3);
     sum.push(["Reliabilitet","Cronbachs alfa","Medeldiskriminering (r)","Antal frågor"]);
     d.rel.parts.forEach((p,i)=>sum.push([p.label, r3(p.alpha), r3(p.meanR), p.k, ...(i===2 ? [REL_CAVEAT] : [])]));
@@ -3676,7 +3697,6 @@ async function tryRun(){
     (state.json.zeroWeight||[]).forEach(n=>{ if(!state.excluded.has(n)) state.excluded.set(n, INSPERA_REASON); });
     renderWeightNote();
     { const pk=objs.find(isPackage);
-      state.regList = (pk && isPlainObj(pk.regList)) ? {listed:+pk.regList.listed||0, miss:+pk.regList.miss||0} : null;
       state.orter = pk ? (Array.isArray(pk.orter) ? pk.orter : []) : ortNames(objs.map(o=>o && o.ext_inspera_assessmentRunTitle));
       state.examName = (pk && pk.examName) || commonTitle(objs.map(o=>o && o.ext_inspera_assessmentRunTitle)) || ""; }
     state.synthMcqs = null;   // JSON-lägets kortunderlag byggs om från nya datan vid behov
@@ -3721,10 +3741,12 @@ async function prepInputs(){
   const pdfMcqs = (state.prepPdf!==undefined) ? state.prepPdf : ((state.pdfMcqs && !state.pdfFromPackage) ? state.pdfMcqs : null);
   const tf = state.prepTags || state.tagsFile;
   const tagRows = (tf && typeof tf.arrayBuffer==="function") ? readTagRows(await tf.arrayBuffer()) : null;
-  // Ladok-listan: bara koderna läses ut. Ett fel i en fil (ingen kolumn AidCode) stoppar inte resten; det visas vid rutan.
+  // Listan över registrerade: bara id:na läses ut. Ett fel i en fil stoppar inte resten; det visas vid rutan.
   let regCodes=null; state.regError=null;
   for(const f of (state.prepReg || state.regFiles || [])){ if(typeof f.text!=="function") continue;
-    try{ regCodes=(regCodes||[]).concat(parseRegList(await f.text(), f.name).codes); }catch(e){ state.regError=e.message; } }
+    try{ const xl=/\.xlsx?$/i.test(f.name||"") && typeof f.arrayBuffer==="function";
+         regCodes=(regCodes||[]).concat((xl ? parseRegSheet(await f.arrayBuffer(), f.name) : parseRegList(await f.text(), f.name)).codes); }
+    catch(e){ state.regError = /lista över studenter/.test(e.message) ? e.message : `Filen "${f.name||"okänd"}" gick inte att läsa.`; } }
   return {jsonObjs, pdfMcqs, tagRows, regCodes};
 }
 /* Det kvittot behöver veta om den kombinerade datafilen innan analysen visas: frågetyper, om allt är rättat och hur
@@ -3773,18 +3795,15 @@ function examFacts(J, T){
 function receiptFacts(f){
   return (f.counts.text ? `<br>${f.fullyGraded ? "Essäfrågorna är rättade." : "Essäfrågorna är inte rättade än."}` : "")
        + (f.tagHit!==null ? `<br>${f.tagHit<f.total ? '<span class="warn">' : "<span>"}Taggfilen matchade ${f.tagHit} av ${f.total} frågor.</span>` : "")
-       + (f.regN!==null && f.regN!==undefined ? `<br>Ladok-listan är med: ${f.regN} av ${f.candCount} studenter finns i listan och räknas som registrerade på kursen.` : "");
+       + (f.regN!==null && f.regN!==undefined ? `<br>Listan över registrerade är med: ${f.regN} av ${f.candCount} studenter finns i listan och räknas som registrerade på kursen.` : "");
 }
-/* Kvittots rad om hur Ladok-listan passade tentan. Koder som inte finns bland studenterna kan höra till ett annat
-   tentatillfälle (Ladok visar varje students senaste resultat), och då räknas de studenterna som övriga. */
+/* Kvittots rad om hur listan passade tentan. Den som väljer filen ansvarar för att den har rätt id (Kajsa 23 nov
+   2026): listan ÄR gruppen registrerade. Id som inte finns bland tentans studenter redovisas som ett antal, utan
+   varning. Bara när inget id alls finns bland studenterna används listan inte, och då sägs det. */
 function regNote(r){
   if(!r) return "";
-  if(!r.used) return `<br><span class="warn">⚠ Ingen av Ladok-listans ${r.listed} koder finns bland tentans studenter, så listan används inte. Kontrollera att listan gäller den här tentan.</span>`;
-  if(!r.miss) return "";
-  return `<br><span class="warn">⚠ ${regMissText(r)}</span>`;
-}
-function regMissText(r){
-  return `${r.miss} av Ladok-listans ${r.listed} koder finns inte bland tentans studenter. Ladok visar varje students senaste resultat, så koderna kan gälla ett senare tentatillfälle. Skrev de studenterna också den här tentan räknas de här som övriga, och antalet registrerade blir för lågt.`;
+  if(!r.used) return `<br><span class="warn">⚠ Inget av listans ${r.listed} id finns bland tentans studenter, så listan används inte. Kontrollera att listan har id:n för just den här tentan.</span>`;
+  return r.miss ? `<br>${r.miss} av listans ${r.listed} id finns inte bland tentans studenter.` : "";
 }
 async function refreshPrep(){
   const box=$("#prep-receipt"), b=$("#prep-save"); if(!state.prep || !box || !b) return;
@@ -3803,7 +3822,7 @@ async function refreshPrep(){
     { const gj=$("#got-json"); if(gj) gj.textContent = `✓ ${k.nFiles} ${k.nFiles===1?"fil":"filer"} — ${k.candCount} studenter${k.orter.length?` (${k.orter.join(", ")})`:""}`;
       const gp=$("#got-pdf"); if(gp && f.pdf) gp.textContent = `✓ ${pdfCountText(f.pdf).replace(" lästa ur PDF:en","")}${k.essays?`, ${k.essays} essäfrågor`:""} lästa`;
       const gt=$("#got-tags"); if(gt && k.hasTags) gt.textContent = `✓ ger filter på ${k.tagCols.join(", ") || "taggarna"}`;
-      const gr=$("#got-reg"); if(gr) gr.textContent = state.regError ? `✗ ${state.regError}` : k.reg ? `✓ ${k.reg.listed} koder lästa` : ""; }
+      const gr=$("#got-reg"); if(gr) gr.textContent = state.regError ? `✗ ${state.regError}` : k.reg ? `✓ ${k.reg.listed} id lästa` : ""; }
     box.innerHTML = `<b>${esc(k.examName||"Tenta utan namn")}</b><br>`
       + `${k.candCount} studenter · `
       + (f.pdf ? pdfCountText(f.pdf) : "ingen PDF") + " · "
