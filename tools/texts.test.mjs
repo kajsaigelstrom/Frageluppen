@@ -71,7 +71,25 @@ test("temarapportens hjälp talar till mottagaren", () => {
   assert.match(h, /På ett målrelaterat\s+prov är det inget fel i sig/);
   assert.match(h, /frågetexterna och rätt svar/);
   assert.match(h, /poängfördelning/);
-  assert.match(h, /Med observation/);
+  assert.match(h, /med observation/i);
+});
+test("hjälpen har ett ämne per avsnitt, i en fast ordning, och inga rester från äldre versioner", () => {
+  const a = loadApp();
+  const heads = h => [...h.matchAll(/<summary>([^<]+)<\/summary>/g)].map(m => m[1]);
+  assert.deepEqual(heads(a.ev("HELP_HTML")), ["De tre stegen", "Steg 1: Förbered filer", "Steg 2: Hitta problemfrågor", "Steg 3: Skapa rapporter",
+    "Måtten på korten", "Uppmaningar och observationer", "Frågetyperna", "Formkontrollen och förebilderna", "Filtrera och sortera",
+    "Exporterna", "Kommentarer och exkluderingar", "Inställningar", "Vad filerna innehåller"]);
+  assert.deepEqual(heads(a.ev("HELP_TEMA_HTML")), ["Det här är temarapporten", "Måtten på korten", "Observationer på korten", "Frågetyperna",
+    "Formkontrollen och förebilderna", "Det som står överst", "Filtrera och sortera", "Kommentera, spara och skriva ut", "Inställningar"]);
+  for (const h of [a.ev("HELP_HTML"), a.ev("HELP_TEMA_HTML")]) {
+    assert.ok(!/Godkäntstatistik visas inte|hela rapporten|Gå vidare till steg 2|får en kommentar|får en fråga\b|Råden till nästa gång/.test(h));
+    assert.equal(new Set(heads(h)).size, heads(h).length);              // ingen rubrik två gånger
+  }
+  // det gemensamma står en gång i källan och är ordagrant lika i de två hjälptexterna
+  const part = (h, t) => h.slice(h.indexOf(`<summary>${t}</summary>`)).split("</details>")[0];
+  for (const t of ["Frågetyperna", "Formkontrollen och förebilderna"]) assert.equal(part(a.ev("HELP_HTML"), t), part(a.ev("HELP_TEMA_HTML"), t), t);
+  // mottagaren av temarapporten får inget om uppmaningar, steg eller datafilen
+  assert.ok(!/Dubbelkolla facit|Se över frågan|datafil|steg [123]/i.test(a.ev("HELP_TEMA_HTML")));
 });
 test("temarapporten räknar studenter, inte kandidater", () => {
   const { html } = tema();

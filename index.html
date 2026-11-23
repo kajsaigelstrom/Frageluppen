@@ -88,6 +88,7 @@
   .helpsec .body{font-size:13.5px;color:var(--ink);line-height:1.65;padding:10px 2px 14px}
   .helpsec .body p{margin:0 0 9px}
   .helpsec .body b{color:var(--ink)}
+  .helpsec .body ul{margin:0 0 9px;padding-left:20px} .helpsec .body li{margin:3px 0}
 
   .panel{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin:22px 0}
   .drops{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
@@ -699,116 +700,170 @@ function discLabel(r){
 }
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum. */
-const VERSION = "3.32.4";
-const UPDATED = "2026-11-22";
+const VERSION = "3.32.5";
+const UPDATED = "2026-11-23";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
    modal (rena <details>-sektioner, ingen extern kod). Tolkningsdelen först eftersom den är
    mest relevant för temaansvariga som öppnar den delade rapporten. */
-const HELP_HTML = `
-<details class="helpsec" open><summary>Så läser du resultaten</summary><div class="body">
-<p><b>Andel rätt (svårighetsgrad).</b> Hur stor andel som svarade rätt. Lågt = svår fråga,
-högt = lätt. Nästan alla rätt säger lite om hur frågan skiljer studenter åt; nästan ingen
-rätt kan tyda på fel i facit eller missvisande formulering.</p>
+/* Hjälpens delar. Det som är gemensamt för verktyget och temarapporten står en gång (helpMatt, HELP_TYPER, HELP_FORM),
+   så att de två hjälptexterna inte glider isär. Varje avsnitt har ett ämne. data-step säger vilket avsnitt hjälpen
+   öppnar på i vilket steg (openHelp). */
+const sec = (title, body, step) => `<details class="helpsec"${step?` data-step="${step}"`:""}><summary>${title}</summary><div class="body">${body}</div></details>`;
+function helpMatt(tema){
+  return sec("Måtten på korten", `
+<p><b>Andel rätt.</b> Hur stor andel som svarade rätt. Lågt betyder svår fråga, högt betyder lätt. För
+essäfrågor står medelpoängen av maxpoängen i stället.</p>
 <p><b>Diskriminering (r).</b> Sambandet mellan att ha rätt på frågan och att ha hög totalpoäng,
 alltså hur väl frågan skiljer studenter med höga totalpoäng från studenter med låga. Positivt och
 högt betyder att frågan skiljer väl. Nära noll betyder att den inte skiljer. På ett målrelaterat
 prov är det inget fel i sig, eftersom en fråga som nästan alla klarar inte kan skilja studenter åt
 men ändå kan pröva det den ska. Tydligt negativt betyder att studenter med låga totalpoäng oftare
-svarade rätt, och då ska facit och formulering kontrolleras. Håll muspekaren över värdet för en
-förklaring. Före betygssättningen räknas totalpoängen på
-flervalsdelen, i steg 3 på hela tentan.</p>
+svarade rätt, och då ska facit och formulering kontrolleras. ${tema
+  ? "Totalpoängen är poängen på hela tentan."
+  : "I steg 2 är totalpoängen poängen på flervalsdelen, i steg 3 poängen på hela tentan."}</p>
+<p><b>Etiketten vid r.</b> God, låg eller ingen etikett alls för värden däremellan. När för få
+studenter svarade rätt eller fel går sambandet inte att mäta, och då står skälet på kortet. Under
+30 svar visas bara mätvärdena. Håll muspekaren över värdet för en förklaring.</p>
+<p><b>Svarsalternativen.</b> En distraktor är ett felaktigt svarsalternativ. Stapeln visar hur stor
+andel som valde varje alternativ, och färgförklaringen står ovanför korten. Håll muspekaren över ett
+alternativ för att se om det valdes oftare av studenter med högre eller lägre totalpoäng.</p>
 <p><b>Enstaka varningar.</b> Med många frågor uppstår enstaka varningar av slump. En varning är ett
-skäl att läsa frågan, inte ett bevis på att den är fel.</p>
-<p><b>Övrig</b> är automaträttade frågor som varken är flervals- eller flersvarsfrågor, till exempel
-markera i en bild, välja i löptext eller para ihop. De har samma slags kort som essäfrågorna, utan
-frågetext, och räknas i hela tentan men inte i essädelen.</p>
-<p><b>Essä- och flersvarsfrågor.</b> Korten visar medelpoäng av max, hur många som fick varje
-poäng, och hur väl poängen på frågan följer studentens poäng på resten av tentan (r). De finns
-bara i steg 3, eftersom de kräver färdig rättning.</p>
-</div></details>
-<details class="helpsec" data-step="triage report"><summary>Steg 2 och 3</summary><div class="body">
-<p>När filerna är inlästa byter du mellan stegen i raden överst. Raden högst upp på sidan visar
-vilken tenta som är inläst, och om datafilen är sparad.</p>
-<p><b>Lägena.</b> I steg 2 väljer du mellan frågorna <b>att se över</b> och <b>alla flervalsfrågor</b>.
-I steg 3 väljer du mellan <b>Med observationer</b> och <b>Bara mätvärden</b>, som döljer
-observationer och uppmaningar.</p>
-<p><b>G-gräns.</b> Fältet i steg 3 är gränsen för godkänt i procent av maxpoängen. Den styr betygen i
+skäl att läsa frågan, inte ett bevis på att den är fel.</p>`);
+}
+const HELP_TYPER = sec("Frågetyperna", `
+<p>Alla frågor står på samma sida, i tentans ordning. Frågetyp väljs i filtret.</p>
+<ul>
+<li><b>MCQ</b>: flervalsfrågor med ett rätt svar. Kortet visar svarsfördelningen.</li>
+<li><b>Essä</b>: manuellt rättade frågor. Kortet visar medelpoäng av max och hur många som fick varje poäng.</li>
+<li><b>Flersvar</b>: frågor med flera rätta svar. Samma slags kort som essä.</li>
+<li><b>Övrig</b>: automaträttade frågor av andra slag, till exempel markera i en bild, välja i löptext
+eller para ihop. Samma slags kort som essä, utan frågetext.</li>
+</ul>
+<p>Essä- och flersvarsfrågor och övriga frågor får aldrig etiketten god och ingen märkning Lätt eller
+Svår. Gränserna för dem kommer från flervalsfrågor och passar inte frågor med flera poängsteg.</p>`);
+const HELP_FORM = sec("Formkontrollen och förebilderna", `
+<p>En flervalsfråga som var mycket lätt, har ett alternativ som nästan ingen valde, eller där
+statistiken talar för att frågan eller facit behöver ses över, prövas mot den mekaniska kontrollen ur
+<b>MCQ-lathunden</b>. Kontrollen ser på
+frågans form: längd, ordval, ledtrådar, negationer och samlingsalternativ. Ett fynd visas bara när
+det kan förklara mönstret i svaren, till exempel att rätt svar är mycket längre än distraktorerna i
+en fråga som nästan alla klarade. Under "Ur MCQ-lathunden" står lathundens text och källan.</p>
+<p><b>Förebilder</b> är flervalsfrågor som skilde väl mellan studenter med höga och låga totalpoäng,
+inte har någon ruta på kortet och inte gav några fynd i formkontrollen.</p>`);
+const helpFilter = tema => sec("Filtrera och sortera", `
+<p>Filterraden har en rad knappar per grupp: <b>tema</b>${tema?"":" (ur taggfilen, om den lades med i steg 1)"},
+<b>frågetyp</b>, <b>svårighet</b>, <b>diskriminering</b> och <b>att titta på</b>. Under att titta på
+finns frågor med observation, förebilder och exkluderade frågor.</p>
+<p>Flera val i samma grupp breddar urvalet, till exempel Lätt eller Svår. Val i olika grupper smalnar
+av det, till exempel ett tema och Svår. Siffran på en knapp säger hur många frågor ett klick ger, med
+de andra valen som de är. Valen står under knapparna och tas bort ett i taget med ✕, eller alla med
+<b>Rensa filter</b>.</p>
+<p>Sökrutan söker i frågetext och svarsalternativ, och <b>Sortera</b> ändrar ordningen på korten.</p>`);
+const HELP_HTML = [
+sec("De tre stegen", `
+<p>Verktyget används i tre steg, som väljs i raden överst.</p>
+<ul>
+<li><b>1 Förbered filer.</b> Insperas filer kombineras till en datafil.</li>
+<li><b>2 Hitta problemfrågor.</b> Flervalsfrågor som kan behöva rättas i facit eller exkluderas, före betygssättningen.</li>
+<li><b>3 Skapa rapporter.</b> Alla frågor efter rättningen, och exporterna.</li>
+</ul>
+<p>Steg 2 och 3 tänds när filerna är inlästa. Filerna följer med när du byter steg. Raden högst upp
+visar vilken tenta som är inläst och om datafilen är sparad.</p>
+<p>Vem som gör vilket steg bestämmer ni själva. I Linköping gör kurssamordnaren steg 1, eftersom
+det är hen som hämtar filerna ur Inspera, och examinatorn steg 2 och 3.</p>`),
+sec("Steg 1: Förbered filer", `
+<p>Släpp resultatfilerna från Inspera, tentans PDF och taggfilen om den finns. Utan tentans PDF saknas
+frågetexterna, och utan taggfil saknas filtret på tema. Har du fått en sparad datafil väljer du den
+i rutan under filrutorna.</p>
+<p><b>Kvittot</b> under knapparna säger vad som lästes in: tentans namn, antal studenter, om
+essäfrågorna är rättade och hur många frågor taggfilen matchade. Passar PDF:en inte resultaten står
+en varning där. Inga resultat visas i steg 1.</p>
+<p><b>Spara kombinerad datafil</b> om någon annan ska göra steg 2 och 3. Annars går du direkt till
+steg 2 eller 3.</p>
+<p>Gör steg 1 två gånger per tenta: direkt efter tentan, för att hitta problemfrågor före
+betygssättningen, och en gång till när allt är rättat, då med nya filer från Inspera.</p>`, "prep"),
+sec("Steg 2: Hitta problemfrågor", `
+<p>Här står de flervalsfrågor som statistiken pekar ut före betygssättningen. Det går att göra innan
+essäfrågorna är rättade, och diskrimineringen räknas därför mot poängen på flervalsdelen.</p>
+<p>Statistiken är preliminär och kan ändras när allt är rättat. En fråga kan pekas ut här men inte i
+steg 3, eller tvärtom.</p>
+<p><b>Lägena.</b> <b>Att se över</b> visar de frågor som har en uppmaning. <b>Alla flervalsfrågor</b>
+ger överblick över svårighet och diskriminering. Observationerna om hur svaren fördelar sig står
+inte här utan i steg 3.</p>
+<p><b>Problemfrågor (PDF)</b> öppnar en sida till betygskollegiet för utskrift: frågorna att se över,
+exkluderade frågor och dina kommentarer.</p>`, "triage"),
+sec("Steg 3: Skapa rapporter", `
+<p>Alla frågor efter rättningen på en sida, med diskriminering mot hela tentans poäng. Steget kräver
+färdig rättning.</p>
+<p><b>Lägena.</b> <b>Med observationer</b> och <b>Bara mätvärden</b>, som döljer observationer och
+uppmaningar.</p>
+<p><b>Mönster i de här frågorna.</b> Överst står det som gäller flera frågor på samma sätt, till
+exempel hur många som var mycket lätta, med möjliga orsaker. <b>Visa frågorna</b> visar just de
+frågorna.</p>
+<p><b>G-gräns.</b> Gränsen för godkänt i procent av maxpoängen. Den styr betygen i
 Tentamensstatistiken och linjen i Diagram. Bredvid står från vilken poäng man är godkänd.</p>
-<p><b>Reliabilitet.</b> Tentamensstatistikens flik Sammanfattning har Cronbachs alfa för hela tentan,
-flervalsdelen och essädelen, mätfelet i poäng och antalet studenter inom ett mätfel från G-gränsen.
-Temarapporten visar alfa för de tre delarna överst.</p>
 <p><b>Kontrollen mot Inspera.</b> Datafilen bär med sig Insperas totalpoäng och betyg. Skiljer de sig
-från det verktyget räknar fram står en varning överst i steg 3, med antalet studenter det gäller.</p>
-<p><b>2 Hitta problemfrågor</b> – flervalsfrågor som kan behöva rättas i facit
-eller exkluderas, med diskriminering mot flervalsdelens poäng. Går att göra innan essäfrågorna
-är rättade. Statistiken är preliminär och kan ändras när allt är rättat. En fråga kan pekas ut här
-men inte i steg 3, eller tvärtom, eftersom diskrimineringen då räknas mot hela tentan. Vyn öppnar på frågorna <b>att se över</b>, alltså dem som statistiken pekar ut.
-<b>Alla flervalsfrågor</b> ger överblick över svårighet och diskriminering, och sökrutan hittar
-vilken fråga som helst. Observationerna om hur svaren fördelar sig står inte här utan i steg 3.
-En fråga exkluderas med knappen på kortet, och allt räknas då om. Exkluderingen gäller bara
-i verktyget tills frågan också är viktad till 0 % i Inspera. Då följer den med i filen efter
-rättningen, och verktyget räknar frågan som exkluderad utan att du behöver göra något.</p>
-<p><b>3 Skapa rapporter</b> – alla frågor efter rättningen på en sida: flervalsfrågor (MCQ),
-essäfrågor och flersvarsfrågor, med diskriminering mot hela tentans poäng. Frågetyp väljs i
-filtret. Essä- och flersvarsfrågor exkluderas med knappen på sitt kort, precis som
-flervalsfrågorna. Härifrån skapas <b>Temarapporten</b> till temagrupperna, <b>Översiktstabellen</b>
-(en rad per fråga, att skriva ut eller skicka vidare) och <b>Tentamensstatistiken</b>: en Excel-fil
-med samma flikar som den mall som tidigare fylldes i för hand, och <b>Diagram</b> med poängfördelningen. Kräver färdig rättning.</p>
-<p><b>Temarapporten följer filtret.</b> Med ett filter valt, till exempel ett tema, innehåller
-rapporten bara de frågor som syns, och den säger vilket filter det var. Så skapas en rapport per tema.
-<b>Temarapport (interaktiv)</b> sparar den interaktiva sidan som en fil. Exporterna som heter
-<b>(PDF)</b> öppnas för utskrift, där du väljer Spara som PDF. Med ett filter valt står antalet
-frågor på knappen.</p>
+från det verktyget räknar fram står en varning överst, med antalet studenter det gäller.</p>`, "report"),
+helpMatt(false),
+sec("Uppmaningar och observationer", `
+<p><b>Uppmaningar</b> finns bara där ett beslut ska fattas före betygssättningen. De står under
+<b>Att se över</b> på kortet.</p>
+<ul>
+<li><b>Dubbelkolla facit</b>: ingen svarade rätt, studenter med hög totalpoäng svarade oftare fel, eller
+en distraktor valdes oftare av studenter med högre totalpoäng.</li>
+<li><b>Se över frågan</b>: andelen rätt ligger nära gissningsnivå, och frågan skiljer inte mellan studenter.</li>
+<li>För essäfrågor finns en enda uppmaning, vid tydligt negativ diskriminering: kontrollera
+bedömningsmallen och rättningen.</li>
+</ul>
+<p><b>Observationer</b> beskriver ett mönster i svaren utan att säga vad som ska göras: ett felsvar
+som fler valde än rätt svar, alternativ som nästan ingen valde, en mycket lätt fråga där formen kan
+peka ut svaret, eller hur felen fördelar sig när få svarade rätt. Under <b>Mer om måttet</b> står
+möjliga orsaker. Statistiken kan inte avgöra vilken som gäller.</p>
+<p>Kort utan sådana mönster har ingen ruta. Verktyget föreslår aldrig själv att en fråga ska
+exkluderas på en bestämd gräns. Det ger underlaget, och beslutet är ditt.</p>`),
+HELP_TYPER,
+HELP_FORM,
+helpFilter(false),
+sec("Exporterna", `
+<p>Exporterna som heter <b>(PDF)</b> öppnas för utskrift, där du väljer Spara som PDF. Med ett filter
+valt står antalet frågor på de knappar som följer filtret.</p>
+<ul>
+<li><b>Problemfrågor (PDF)</b>, steg 2: sidan till betygskollegiet.</li>
+<li><b>Temarapport (interaktiv)</b>: en fil till temagrupperna, med samma kort och observationer som i
+steg 3 men utan uppmaningar. Mottagaren kan filtrera, kommentera och spara en egen sida med valda
+frågor. Följer filtret, så en rapport per tema skapas genom att filtrera på temat först.</li>
+<li><b>Temarapport (PDF)</b>: samma rapport för utskrift. Följer filtret.</li>
+<li><b>Översiktstabell (PDF)</b>: en rad per fråga. Följer filtret.</li>
+<li><b>Tentamensstatistik (Excel)</b>: samma flikar som den mall som tidigare fylldes i för hand. Fliken
+Sammanfattning har också Cronbachs alfa för hela tentan, flervalsdelen och essädelen, mätfelet i
+poäng och antalet studenter inom ett mätfel från G-gränsen.</li>
+<li><b>Diagram (PDF)</b>: poängfördelningen och slutpoäng per student och studieort, med G-gränsen utritad.</li>
+</ul>`),
+sec("Kommentarer och exkluderingar", `
 <p><b>Kommentarer.</b> Med <b>Lägg till kommentar</b> på ett kort skriver du en fråga eller synpunkt
 till kollegorna. Den följer med i Problemfrågor och i Temarapporten, där mottagaren kan lägga till
-egna. Det står inte vem som skrev. Kommentarerna finns bara så länge sidan är öppen, så skapa
-exporten innan du stänger. Verktyget frågar innan kommentarer och exkluderingar försvinner.</p>
-<p><b>Problemfrågor</b> finns före betygssättning och är en sida till betygskollegiet: frågorna att se
-över, exkluderade frågor och dina kommentarer.</p>
-<p>Godkäntstatistik visas inte i vyerna.</p>
-</div></details>
-<details class="helpsec"><summary>Filtrera</summary><div class="body">
-<p>Filterraden har en rad knappar per grupp: <b>tema</b> (ur taggfilen, om den lades
-med i steg 1), <b>frågetyp</b>, <b>svårighet</b>, <b>diskriminering</b> och <b>att titta på</b> (frågor med
-observation, förebilder och exkluderade frågor). Flera val i samma grupp breddar
-urvalet, till exempel Lätt eller Svår. Val i olika grupper smalnar av det, till exempel ett tema
-och Svår. Siffran på en knapp säger hur många frågor ett klick ger, med de andra valen som de är.</p>
-<p>Valen står under knapparna och tas bort ett i taget med ✕, eller alla med <b>Rensa filter</b>.
-Gränserna för Lätt, Svår och God diskriminering är de under
-Inställningar.</p>
-</div></details>
-<details class="helpsec"><summary>Temarapporten</summary><div class="body">
-<p>Temarapporten innehåller alla frågor på en sida, flervalsfrågor, essäfrågor och flersvarsfrågor,
-med samma observationer som i steg 3 men utan uppmaningar. Överst står det som gäller flera frågor på samma sätt, och korten har en
-ruta bara när svaren på just den frågan följer ett mönster. Mottagaren kan bocka för frågor och spara en egen
-sida med bara dem, att ge vidare till den som skrev frågorna. Rapporten innehåller bara
-sammanräknade resultat, aldrig enskilda studenters svar. Den innehåller också frågetexterna och rätt svar.</p>
-<p>Temarapporten är det som går till temagrupperna. Datafilen skickas aldrig
-vidare.</p>
-</div></details>
-<details class="helpsec"><summary>Inställningar</summary><div class="body">
+egna. Det står inte vem som skrev.</p>
+<p><b>Exkludera en fråga</b> med knappen på kortet. Allt räknas då om utan frågan. Exkluderingen
+gäller bara i verktyget tills frågan också är viktad till 0 % i Inspera. Då följer den med i filen
+efter rättningen, och verktyget räknar frågan som exkluderad utan att du behöver göra något.</p>
+<p>Kommentarer och egna exkluderingar finns bara så länge sidan är öppen, så skapa exporten innan du
+stänger. Verktyget frågar innan de försvinner.</p>`),
+sec("Inställningar", `
 <p>Under <b>Inställningar</b> högst upp kan gränserna för märkningarna Lätt och Svår och för god
-diskriminering ändras. De ändrar bara märkningar och vilka kort som får en kommentar, aldrig
+diskriminering ändras. De ändrar bara märkningar, förebilder och filtrets grupper, aldrig
 mätvärdena. Avviker en gräns från standard står det överst på sidan, och temarapporten bär med
-sig dina gränser.</p>
-</div></details>
-<details class="helpsec" data-step="prep"><summary>De tre stegen</summary><div class="body">
-<p>Verktyget används i tre steg, som väljs i raden överst. Sidan öppnar på steg 1.</p>
-<p><b>1 Förbered filer.</b> Släpp resultatfilerna från Inspera, tentans PDF och taggfilen om den
-finns. De kombineras till <b>en datafil</b>, som inte är analyserad än. Spara den, eller gå direkt till steg 2 eller 3. Det görs två gånger per tenta: direkt efter tentan, och en
-gång till när allt är rättat, då med nya filer från Inspera. Studenternas skrivna svar, rättarnamn,
-tider, extratid och alla id tas bort, och kandidatnumren ersätts av löpnummer. Insperas slutbetyg
-och totalpoäng följer med, så att rättningen kan kontrolleras i steg 3. Inga resultat visas i
-steg 1. Utan tentans PDF saknas frågetexterna, och utan taggfil filtret på tema.</p>
-<p><b>2 Hitta problemfrågor</b> och <b>3 Skapa rapporter</b> tänds när filerna är inlästa. Den som
-har fått en sparad datafil väljer den i steg 1, under filrutorna. Filerna följer med när du byter
-steg, och raden högst upp säger om datafilen är sparad.</p>
-<p>Vem som gör vilket steg bestämmer ni själva. I Linköping gör kurssamordnaren steg 1, eftersom
-det är hen som hämtar filerna ur Inspera, och examinatorn steg 2 och 3.</p>
-<p>Datafilen är minimerad, inte anonym: varje rad är en students poängmönster. Behandla den som
-tentamaterial och skicka den inte vidare.</p>
-</div></details>`;
+sig dina gränser.</p>`),
+sec("Vad filerna innehåller", `
+<p>Allt körs i din webbläsare. Inga data laddas upp.</p>
+<p><b>Datafilen</b> är minimerad, inte anonym. Studenternas skrivna svar, rättarnamn, tider, extratid
+och alla id tas bort, och kandidatnumren ersätts av löpnummer. Men varje rad är en students
+poängmönster, och filen innehåller tentans frågor. Behandla den som tentamaterial och skicka den
+aldrig till temagrupperna.</p>
+<p><b>Temarapporten, Problemfrågor och Översiktstabellen</b> innehåller bara sammanräknade resultat,
+aldrig enskilda studenters svar. De innehåller frågetexterna och rätt svar.</p>
+<p><b>Tentamensstatistiken</b> har en rad per student, med löpnummer.</p>`)
+].join("\n");
 
 /* Hjälpen öppnar på avsnittet för det steg man står i (data-step på avsnittet). */
 function openHelp(){
@@ -818,6 +873,7 @@ function openHelp(){
   const secs = m.querySelectorAll ? [...m.querySelectorAll("details.helpsec")] : [];
   const hit = step ? secs.find(d=>String(d.getAttribute("data-step")||"").split(" ").includes(step)) : null;
   if(hit){ secs.forEach(d=>{ d.open = d===hit; }); if(hit.scrollIntoView) hit.scrollIntoView(); }
+  else if(secs.length && !secs.some(d=>d.open)) secs[0].open=true;        // utan steg (temarapporten): första avsnittet
 }
 function closeHelp(){ const m=document.getElementById("helpModal"); if(m) m.classList.add("hidden"); }
 function wireHelp(){
@@ -3097,101 +3153,59 @@ function thInfo(info, r){
   const d=discLabel(r);
   return Object.assign({}, info, (info.noGood && d.label==="god") ? {label:"", cls:"rpb-mid"} : d);   // essä och flersvar: aldrig "god"
 }
-const HELP_TEMA_HTML = `
-<details class="helpsec" open><summary>Så läser du rapporten</summary><div class="body">
-<p><b>Andel rätt.</b> Hur stor andel som svarade rätt. Lågt betyder svår fråga, högt betyder lätt.</p>
-<p><b>Diskriminering (r).</b> Sambandet mellan att ha rätt på frågan och att ha hög totalpoäng,
-alltså hur väl frågan skiljer studenter med höga totalpoäng från studenter med låga. Positivt och
-högt betyder att frågan skiljer väl. Nära noll betyder att den inte skiljer. På ett målrelaterat
-prov är det inget fel i sig, eftersom en fråga som nästan alla klarar inte kan skilja studenter åt
-men ändå kan pröva det den ska. Tydligt negativt betyder att studenter med låga totalpoäng oftare
-svarade rätt, och då ska facit och formulering kontrolleras. Håll muspekaren över värdet för en
-förklaring. Totalpoängen är poängen på hela tentan.</p>
-<p><b>Enstaka varningar.</b> Med många frågor uppstår enstaka varningar av slump. En varning är ett
-skäl att läsa frågan, inte ett bevis på att den är fel.</p>
+const HELP_TEMA_HTML = [
+sec("Det här är temarapporten", `
+<p>Rapporten visar hur tentans frågor fungerade, ett kort per fråga. Den är till för den som har
+skrivit eller ansvarar för frågorna.</p>
 <p><b>Statistiken och kursplanen.</b> Statistiken visar hur frågorna fungerade i den här
 studentgruppen. Den säger inget om huruvida en fråga ligger på rätt nivå i förhållande till
 kursplanen.</p>
-</div></details>
-<details class="helpsec"><summary>Filtrera</summary><div class="body">
-<p>Filterraden har en rad knappar per grupp: <b>tema</b>, <b>frågetyp</b>,
-<b>svårighet</b>, <b>diskriminering</b> och <b>att titta på</b>. Under att titta på väljer
-<b>Med observation</b> de frågor som har en ruta på kortet, och där finns också förebilder och
-exkluderade frågor. Flera val i samma grupp breddar
-urvalet, till exempel Lätt eller Svår. Val i olika grupper smalnar av det, till exempel ett tema
-och Svår. Siffran på en knapp säger hur många frågor ett klick ger, med de andra valen som de är.</p>
-<p>Valen står under knapparna och tas bort ett i taget med ✕, eller alla med <b>Rensa filter</b>.
-Gränserna för Lätt, Svår och God diskriminering är de under
-Inställningar.</p>
-</div></details>
-<details class="helpsec"><summary>Tentans reliabilitet</summary><div class="body">
-<p>Överst står Cronbachs alfa för hela tentan, flervalsdelen och essädelen. Alfa stiger med antalet
-frågor, så delarna jämförs bättre med <b>medeldiskrimineringen</b> bredvid, som inte beror på
-antalet. Frågor i samma fall räknas som fristående, vilket kan ge ett något för högt värde för
-essädelen. På en sida med ett urval av frågor gäller värdena fortfarande hela tentan.</p>
-</div></details>
-<details class="helpsec"><summary>Mönster i frågorna</summary><div class="body">
-<p>Överst står det som gäller flera frågor på samma sätt: hur många som var mycket lätta och i hur
-många ett alternativ valdes av nästan ingen. Varje rad står en gång,
-med antal. <b>Visa frågorna</b> visar just de frågorna, och <b>Visa alla</b> går tillbaka.</p>
-<p>Sammanfattningen räknas på de frågor som visas. Filtrerar du på ett tema gäller den temat, och
-på en urvalssida gäller den urvalet.</p>
-</div></details>
-<details class="helpsec"><summary>Observationer på korten</summary><div class="body">
-<p>En distraktor är ett felaktigt svarsalternativ. När svaren på en fråga följer ett mönster står
-en observation på kortet: en distraktor som fler valde än rätt svar, alternativ som nästan ingen valde, eller hur felen fördelar sig när få svarade
-rätt. Under <b>Mer om måttet</b> står möjliga orsaker. Statistiken kan inte avgöra vilken som
-gäller. Kort utan sådana mönster har ingen ruta.</p>
+<p><b>Vad rapporten innehåller.</b> Bara sammanräknade resultat: antal svar per alternativ, antal
+svarande, andel rätt, diskriminering och, för essä- och flersvarsfrågor, medelpoäng och
+poängfördelning. Inga enskilda studenters svar finns i filen. Rapporten innehåller också
+frågetexterna och rätt svar.</p>
+<p>En fråga som har tagits bort ur poängsättningen står kvar, märkt <b>Exkluderad ur
+tentan</b>, så att den som skrev den kan se hur den fungerade.</p>`),
+helpMatt(true),
+sec("Observationer på korten", `
+<p>När svaren på en fråga följer ett mönster står en observation på kortet: en distraktor som fler
+valde än rätt svar, alternativ som nästan ingen valde, en mycket lätt fråga där formen kan peka ut
+svaret, eller hur felen fördelar sig när få svarade rätt. Under <b>Mer om måttet</b> står möjliga
+orsaker. Statistiken kan inte avgöra vilken som gäller. Kort utan sådana mönster har ingen ruta.</p>
 <p>När statistiken talar för att facit kan vara fel står en fråga under <b>Att fråga sig</b>: om
-facit stämmer, eller om en distraktor går att försvara som rätt.</p>
-</div></details>
-<details class="helpsec"><summary>Kommentarer och utskrift</summary><div class="body">
-<p>Med <b>Lägg till kommentar</b> skriver du en fråga eller synpunkt på ett kort. Det står inte vem
-som skrev, så skriv det själv om det behövs. Kommentaren följer med när du sparar en sida med
-valda frågor, när du väljer <b>Spara sidan med kommentarer</b> och när du skriver ut. Stänger du
-sidan utan att spara försvinner kommentarerna.</p>
+facit stämmer, eller om en distraktor går att försvara som rätt.</p>`),
+HELP_TYPER,
+HELP_FORM,
+sec("Det som står överst", `
+<p><b>Tentans reliabilitet.</b> Cronbachs alfa för hela tentan, flervalsdelen och essädelen. Alfa
+stiger med antalet frågor, så delarna jämförs bättre med <b>medeldiskrimineringen</b> bredvid, som
+inte beror på antalet. Frågor i samma fall räknas som fristående, vilket kan ge ett något för högt
+värde för essädelen. På en sida med ett urval av frågor gäller värdena fortfarande hela tentan.</p>
+<p><b>Mönster i de här frågorna.</b> Det som gäller flera frågor på samma sätt står en gång, med
+antal och möjliga orsaker: hur många som var mycket lätta och i hur många ett alternativ valdes av
+nästan ingen. <b>Visa frågorna</b> visar just de frågorna, och <b>Visa alla</b> går tillbaka.
+Sammanfattningen räknas på de frågor som visas. Filtrerar du på ett tema gäller den temat, och på
+en urvalssida gäller den urvalet.</p>`),
+helpFilter(true),
+sec("Kommentera, spara och skriva ut", `
+<p><b>Kommentarer.</b> Med <b>Lägg till kommentar</b> skriver du en fråga eller synpunkt på ett kort.
+Det står inte vem som skrev, så skriv det själv om det behövs. Stänger du sidan utan att spara
+försvinner kommentarerna.</p>
+<p><b>Spara sidan med kommentarer</b> sparar hela sidan som en ny fil, med det du har skrivit.</p>
+<p><b>En egen sida med valda frågor.</b> Bocka för frågor på korten. <b>Markera alla visade</b>
+väljer allt som visas just nu, så filtrera först på ett tema för att välja hela temat. <b>Spara
+sida med valda frågor</b> ger en ny fristående fil med bara de frågorna och kommentarerna, att ge
+vidare till den som skrev dem. Den sidan fungerar som den här och kan delas upp igen. En urvalssida
+visar inga siffror för hela tentan, till exempel maxpoäng.</p>
 <p><b>Skriv ut / PDF</b> skriver ut sidan som den visas: med filtret, kommentarerna och de
 utfällningar som är öppna. Välj Spara som PDF i utskriftsrutan för att få en fil.</p>
-</div></details>
-<details class="helpsec"><summary>Formkontrollen och förebilderna</summary><div class="body">
-<p>När en fråga var mycket lätt eller har ett alternativ som nästan ingen valde prövas den mot den
-mekaniska kontrollen ur <b>MCQ-lathunden</b>, som ser på frågans form: längd, ordval, ledtrådar,
-negationer och samlingsalternativ. Ett fynd visas bara när det kan förklara mönstret, till exempel
-att rätt svar är mycket längre än distraktorerna i en fråga som nästan alla klarade. Under
-"Ur MCQ-lathunden" står lathundens text och källan.</p>
-<p><b>Förebilder</b> är frågor som skilde väl mellan studenter med höga och låga totalpoäng, inte
-har någon observation på kortet och inte gav några fynd i formkontrollen.</p>
-</div></details>
-<details class="helpsec"><summary>Frågetyperna</summary><div class="body">
-<p>Alla frågor står på samma sida, i tentans ordning. Välj frågetyp i filtret.</p>
-<p><b>MCQ</b> – ett kort per flervalsfråga, med svarsfördelning och diskriminering mot hela tentans poäng.</p>
-<p><b>Essä</b> – ett kort per essäfråga: medelpoäng av max, hur väl poängen på frågan följer
-studentens poäng på resten av tentan (r), och hur många som fick varje poäng. Vid tydligt negativ diskriminering står en observation på kortet, med möjliga orsaker i bedömningsmallen och rättningen.</p>
-<p><b>Flersvar</b> – samma slags kort för frågor med flera rätta svar.</p>
-<p><b>Övrig</b> – automaträttade frågor av andra slag, till exempel markera i en bild, välja i löptext
-eller para ihop. Samma slags kort, utan frågetext.</p>
-<p><b>Översiktstabell</b> sparar en tabell med en rad per fråga, att skriva ut eller skicka vidare.
-Med ett filter valt kommer bara de frågor som syns med.</p>
-</div></details>
-<details class="helpsec"><summary>Välj ut frågor till en egen sida</summary><div class="body">
-<p>Bocka för frågor på korten. <b>Markera alla visade</b> väljer allt som
-visas just nu, så filtrera först på ett tema för att välja hela temat. <b>Spara sida med valda
-frågor</b> ger en ny fristående fil med bara de frågorna, som går att ge vidare till den som
-skrev dem. Den sidan fungerar som den här och kan delas upp igen.</p>
-<p>En urvalssida visar inga siffror för hela tentan, till exempel maxpoäng.</p>
-</div></details>
-<details class="helpsec"><summary>Inställningar</summary><div class="body">
+<p><b>Översiktstabell (PDF)</b> öppnar en tabell med en rad per fråga för utskrift. Med ett filter
+valt kommer bara de frågor som syns med.</p>`),
+sec("Inställningar", `
 <p>Under <b>Inställningar</b> kan gränserna för märkningarna Lätt och Svår och för god diskriminering
-ändras. Det ändrar bara märkningar och vilka kort som får en fråga. Mätvärdena ändras aldrig. När
-en gräns avviker från standard står det överst på sidan.</p>
-</div></details>
-<details class="helpsec"><summary>Vad rapporten innehåller</summary><div class="body">
-<p>Bara sammanräknade resultat: antal svar per alternativ, antal svarande, andel rätt,
-diskriminering och, för essä- och flersvarsfrågor, medelpoäng och poängfördelning. Inga enskilda
-studenters svar finns i filen. Rapporten innehåller också frågetexterna och rätt svar.</p>
-<p>En fråga som har tagits bort ur poängsättningen står kvar, märkt <b>Exkluderad ur
-tentan</b>, så att den som skrev den kan se hur den fungerade.</p>
-</div></details>`;
+ändras. Det ändrar bara märkningar, förebilder och filtrets grupper. Mätvärdena ändras aldrig. När
+en gräns avviker från standard står det överst på sidan.</p>`)
+].join("\n");
 
 function temaEmbed(){
   if(!state.json || !state.json.qMeta || !state.json.fullyGraded) return null;   // temarapporten kräver färdig rättning

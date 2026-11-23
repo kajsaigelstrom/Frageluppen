@@ -6,6 +6,14 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.32.5
+- **Hjälpen är omskriven med ett ämne per avsnitt** (Kajsa 23 nov 2026). Den hade vuxit fram i lager, så att
+  samma sak stod på flera ställen och gamla formuleringar låg kvar. Verktygets hjälp har nu ett avsnitt per steg,
+  sedan måtten, uppmaningar och observationer, frågetyperna, formkontrollen, filtret, exporterna, kommentarer
+  och exkluderingar, inställningar och vad filerna innehåller. Hjälpen öppnar på avsnittet för aktuellt steg.
+- Temarapportens hjälp har samma uppställning, utan det som bara gäller verktyget. Det som är gemensamt
+  (måtten, frågetyperna, formkontrollen, filtret) står en gång i källan, så att texterna inte glider isär.
+
 ## 3.32.4
 - **Alla formfynd som passar mönstret visas** (Kajsas beslut 22 nov 2026). Gränsen på två per observation är
   borta: den klippte bort fynd som fanns, och valde de två som stod först i lathundens ordning.

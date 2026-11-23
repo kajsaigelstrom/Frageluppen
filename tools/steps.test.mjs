@@ -301,8 +301,9 @@ test("temarapporten har alltid knappen Spara sidan med kommentarer, och hjälpen
   (page.el("#dlsave").listeners.click || []).forEach(f => f({}));
   assert.match(page.downloads[page.downloads.length - 1].parts.join(""), /Min kommentar/);
   const help = a.ev("HELP_HTML");
-  assert.match(help, /data-step="prep"><summary>De tre stegen/);
-  assert.match(help, /data-step="triage report"><summary>Steg 2 och 3/);
+  assert.match(help, /data-step="prep"><summary>Steg 1: Förbered filer/);
+  assert.match(help, /data-step="triage"><summary>Steg 2: Hitta problemfrågor/);
+  assert.match(help, /data-step="report"><summary>Steg 3: Skapa rapporter/);
   assert.match(help, /G-gräns\.[\s\S]*Kontrollen mot Inspera\./);
   assert.match(help, /Med observationer<\/b> och <b>Bara mätvärden/);
 });
