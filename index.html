@@ -697,7 +697,7 @@ function discLabel(r){
 }
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum. */
-const VERSION = "3.32.7";
+const VERSION = "3.32.8";
 const UPDATED = "2026-11-23";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
@@ -1926,7 +1926,7 @@ function advice(v){
 function lathundKontrollInit(){
 /* <LATHUND-KONTROLL> */
 /* MCQ-lathunden — den mekaniska kontrollen.
-   Rena textregler (längd, absoluta ord, ordeko, inledning, led, tvådelad form, negation)
+   Rena textregler (längd, absoluta ord, ordeko, inledning, led, tvådelad form)
    plus några formregler ur NBME. Körs i webbläsaren och i Node-testerna. Ser bara formen. */
 (function (root) {
   /* Snowball-stammaren för svenska (Porter, snowballstem.org): tar bort böjningsändelser så att
@@ -1966,9 +1966,9 @@ function lathundKontrollInit(){
     'behandling', 'behandlingen', 'diagnos', 'diagnosen', 'åtgärd', 'åtgärden', 'sannolika', 'sannolikaste', 'rimligaste',
     'patientens', 'dagarna', 'veckorna', 'tidigare', 'senaste', 'sedan', 'därefter', 'också', 'eftersom', 'medan', 'genom', 'enligt'].forEach(w => STOP.add(stam(w)));
   const ABS = ['alltid', 'aldrig', 'endast', 'uteslutande', 'samtliga', 'inga', 'enbart'];
-  const NEG_VINJ = /\b(inte|aldrig|ingen|inget|inga|utan|saknar|negativt?|förnekar|varken)\b/gi;
   const NEG_STAM = /\b(inte|ej|utom|förutom|aldrig|felaktig[t]?|minst (?:trolig|sannolik)[a-z]*|stämmer inte)\b/i;
-  const PASTAENDE = /\b(vilket av följande (?:påståenden? )?(?:stämmer|är (?:korrekt|sant|riktigt|falskt|fel))|vilket påstående|stämmer inte|är inte (?:korrekt|sant|riktigt))\b/i;
+  /* "Vad stämmer bäst …" och "Vilket alternativ stämmer …" tillagda 23 nov 2026 (samma form utan "av följande"). */
+  const PASTAENDE = /\b(vilket av följande (?:påståenden? )?(?:stämmer|är (?:korrekt|sant|riktigt|falskt|fel))|vilket påstående|vad (?:som )?stämmer(?: bäst| inte)?|vilket (?:alternativ|svar) stämmer(?: bäst| inte)?|stämmer inte|är inte (?:korrekt|sant|riktigt))\b/i;
   const PEKAR = /\b(vilket alternativ|vilket av följande|vilken av följande|vilket av nedanstående|vilket påstående)\b/i;
   const BASTA = /\b(bäst|bästa|mest|främst|främsta|troligast|troligaste|sannolikast|sannolikaste|huvudsaklig\w*|viktigast\w*|lämpligast\w*|första hand)\b/i;
   const LED = /\b(så att|vilket|som|eftersom|medan|därför|därmed|när|om|och)\b|[;,]/gi;
@@ -2029,9 +2029,8 @@ function lathundKontrollInit(){
     /* K6 tvådelad form */
     if (TVA.test(ratt) && !ds.some(d => TVA.test(d))) f('tvadelad', 'Bara rätt svar har "både", "samtidigt" eller semikolon.');
 
-    /* K7 negation i vinjetten */
-    const negs = vinjett.match(NEG_VINJ);
-    if (negs) f('negation', [...new Set(negs.map(w => w.toLowerCase()))].join(', ') + '.');
+    /* K7 negation i vinjetten togs bort 23 nov 2026: slog på 113 av 404 vinjettfrågor i tentaanalysen (d −0,13)
+       och kunde inte skilja en negation som bär svaret från en ovidkommande. */
 
     /* K8 stammen (NBME) */
     if (PASTAENDE.test(stam)) f('pastaende', '"' + stam.match(PASTAENDE)[0] + '".');
@@ -2058,14 +2057,22 @@ function lathundKontrollInit(){
     return F;
   }
 
-  const api = { kor, stam };
+  /* Delar fältet med distraktorer i alternativ. Finns en tom rad mellan dem är det den som skiljer,
+     och radbrytningar inne i ett alternativ läses som mellanslag. Annars gäller ett alternativ per rad. */
+  function delaAlternativ(t) {
+    const s = String(t || '').replace(/\r\n?/g, '\n').trim();
+    const block = /\n[ \t]*\n/.test(s) ? s.split(/\n(?:[ \t]*\n)+/) : s.split('\n');
+    return block.map(x => x.replace(/\s*\n\s*/g, ' ').trim()).filter(Boolean);
+  }
+
+  const api = { kor, stam, delaAlternativ };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.KONTROLL = api;
 })(typeof window !== 'undefined' ? window : this);
 /* </LATHUND-KONTROLL> */
 }
 /* <LATHUND-REGLER> */
-const FORM_META = {"version":"Betaversion 0.9","datum":"5 november 2026","licens":"CC BY 4.0","upphov":"© 2026 Kajsa Igelström"};
+const FORM_META = {"version":"Version 1.0","datum":"23 november 2026","licens":"CC BY 4.0","upphov":"© 2026 Kajsa Igelström"};
 const FORM_REGLER = {
  "langst": {
   "prio": "battre",
@@ -2117,8 +2124,8 @@ const FORM_REGLER = {
  },
  "inledning2": {
   "prio": "tips",
-  "rubrik": "Inledningarna är ojämna.",
-  "text": "Några alternativ börjar likadant och andra inte, så en grupp sticker ut. Ge alla samma satsbyggnad.",
+  "rubrik": "Alternativen börjar på olika sätt.",
+  "text": "Kontrollen har jämfört de två första orden i varje alternativ, och några börjar likadant medan andra inte gör det. Det är en ledtråd i två lägen. Det ena är när rätt svar har mest gemensamt med de övriga alternativen. Det andra är när två alternativ är varandras spegelbild, till exempel längre och kortare, så att studenten kan räkna med att ett av dem är rätt. Gäller inget av lägena kan alternativen stå som de är.",
   "varfor": "Ojämna alternativ ger ledtrådar åt båda hållen. Det längsta uppfattas som mest genomtänkt, det kortaste som ett fyllnadsalternativ.",
   "ref": "NBME, Item-Writing Guide, 6 uppl. (2024), \"Long or complex options\" s. 17 och \"Nonparallel options\" s. 19; Haladyna, Downing & Rodriguez (2002), riktlinje 24.",
   "belagg": ""
@@ -2126,7 +2133,7 @@ const FORM_REGLER = {
  "led": {
   "prio": "tips",
   "rubrik": "Rätt svar har fler eller färre led än distraktorerna.",
-  "text": "Räkna bindeord och skiljetecken. Ett alternativ med två led mer än de andra är det mest garderade, och det väljs oftare oavsett kunskap.",
+  "text": "Kontrollen har räknat kommatecken, semikolon och bindeord som \"och\", \"som\", \"vilket\" och \"eftersom\" i varje alternativ. Många led i rätt svar betyder ofta att det är mer preciserat eller garderat än distraktorerna, och ett sådant alternativ väljs oftare oavsett kunskap. Läs alternativen bredvid varandra. Säger rätt svar fler saker än distraktorerna kan du korta det eller bygga ut dem. Är det bara kommateringen som skiljer kan alternativen stå som de är.",
   "varfor": "Ojämna alternativ ger ledtrådar åt båda hållen. Det längsta uppfattas som mest genomtänkt, det kortaste som ett fyllnadsalternativ.",
   "ref": "NBME, Item-Writing Guide, 6 uppl. (2024), \"Long or complex options\" s. 17 och \"Nonparallel options\" s. 19; Haladyna, Downing & Rodriguez (2002), riktlinje 24.",
   "belagg": ""
@@ -2138,14 +2145,6 @@ const FORM_REGLER = {
   "varfor": "Konstruktörer skriver ofta rätt svar först och lägger till förbehåll, parenteser och undervisande tillägg för att det ska vara oantastligt. Studenter lär sig att det mest specifika eller mest garderade alternativet oftast är rätt, och kan använda det utan ämneskunskap.",
   "ref": "NBME, Item-Writing Guide, 6 uppl. (2024), \"Correct option stands out\" s. 23; Haladyna, Downing & Rodriguez (2002), riktlinjerna 24 och 28d.",
   "belagg": "Mer detalj i rätt svar var ett av de åtta fel som stod för 85 % av felen hos Tarrant & Ware (2008). Ledtrådar gör frågan lättare för den som är van vid tentor, inte för den som kan ämnet. Hos Tarrant & Ware (2008) skilde felbyggda frågor sämre mellan starka och svaga studenter, fler gränsfall klarade tentan tack vare dem, och färre av de starkaste nådde 80 %."
- },
- "negation": {
-  "prio": "tips",
-  "rubrik": "Vinjetten innehåller en negation.",
-  "text": "Kontrollera att den bär information som behövs för svaret och inte bara finns för att slå ut en distraktor. En negation studenten missar ger fel som inte har med kunskap att göra.",
-  "varfor": "",
-  "ref": "",
-  "belagg": ""
  },
  "pastaende": {
   "prio": "start",
