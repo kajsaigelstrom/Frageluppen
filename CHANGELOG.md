@@ -6,6 +6,13 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.35.1
+- Tentamensstatistikens rader om registrerade följer samordnarnas mall: antal tentander registrerade innevarande
+  termin och före, sedan antal G och U i varje grupp med andelen av gruppen. Utan lista står raderna tomma för
+  ifyllning för hand, och andelen räknas då i Excel.
+- Texten om reliabiliteten säger "Frågor i samma MEQ-fall", så att det är tydligt vilka fall som avses.
+- Exportknappen heter "Tentamensstatistik, samordnarnas mall (Excel)", så att det syns vilket format filen har.
+
 ## 3.35.0
 - **Listan över registrerade studenter är en fil med en kolumn**: ett id per student, i Excel eller CSV. Id:t är
   tentans anonymkod (AidCode), samma id som står på studenten i Inspera. En fil med flera kolumner går också om

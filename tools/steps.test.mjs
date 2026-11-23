@@ -260,7 +260,7 @@ test("Gå vidare ligger direkt intill Spara, inte utknuffad till höger", () => 
 // ---- exporterna (Kajsa 21 nov 2026): knapparna säger formatet, PDF går till utskrift, och antalet står vid filter ----
 test("exportknapparna säger formatet", () => {
   for (const [id, label] of [["exp-problems", "Problemfrågor (PDF)"], ["exp-html", "Temarapport (interaktiv)"], ["exp-temapdf", "Temarapport (PDF)"],
-                             ["exp-overview", "Översiktstabell (PDF)"], ["exp-xlsx", "Tentamensstatistik (Excel)"], ["exp-charts", "Diagram (PDF)"]])
+                             ["exp-overview", "Översiktstabell (PDF)"], ["exp-xlsx", "Tentamensstatistik, samordnarnas mall (Excel)"], ["exp-charts", "Diagram (PDF)"]])
     assert.ok(STATIC.includes(`id="${id}"`) && new RegExp(`id="${id}"[^>]*>${label.replace(/[()]/g, "\\$&")}<`).test(STATIC), label);
 });
 test("exporterna som heter PDF öppnas för utskrift, och sparas som fil bara när fönstret inte går att öppna", async () => {

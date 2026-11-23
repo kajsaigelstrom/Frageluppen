@@ -67,8 +67,14 @@ test("utan lista finns inget fält, och raderna i Tentamensstatistiken fylls i f
   await a.ev("loadDataFile(JSON.stringify(PK), 'd.json', {saved:true})"); a.ev("setStep('report')");
   assert.equal(a.ev("state.json.reg"), null);
   assert.equal(a.ev("statsData().reg"), null);
-  const row = a.evj("statsSheets(statsData())[0].aoa").find(r => /^Registrerade innevarande/.test(r[0]));
-  assert.match(row[2], /Fylls i för hand/);
+  const sum0 = a.evj("statsSheets(statsData())[0].aoa");
+  const row = sum0.find(r => r[0] === "Reg innevarande termin");
+  assert.equal(row[1], ""); assert.match(row[2], /Fylls i för hand/);
+  // Mallens rader finns även utan lista, tomma, och andelen räknas i Excel när antalen fylls i för hand.
+  assert.deepEqual(sum0.map(r => r[0]).filter(l => /Reg innevarande|före innevarande|äldre/.test(l)),
+    ["Reg innevarande termin", "före innevarande termin", "Antal G Reg innevarande termin", "Antal U Reg innevarande termin", "Antal G äldre", "Antal U äldre"]);
+  const gReg = sum0.find(r => r[0] === "Antal G Reg innevarande termin");
+  assert.equal(gReg[1], ""); assert.equal(gReg[2].v, ""); assert.match(gReg[2].f, /^IF\(OR\(B\d+="",B\d+="",B\d+=0\),"",ROUND\(B\d+\/B\d+\*100,2\)\)$/);
   assert.equal(a.ev("bokslutText(statsData(), 'ordinarie')"), "");
   assert.equal(a.el("#exp-bokslut").disabled, true);
 });
@@ -79,9 +85,17 @@ test("uppdelningen summerar till hela tentan, i statistiken och i Excel-raderna"
   assert.equal(s.reg.g + s.oth.g, d.students.filter(x => x.g).length);
   assert.equal(s.reg.n, d.students.filter(x => x.reg).length);
   const rows = a.evj("statsSheets(statsData())[0].aoa").map(r => r.map(c => (c && typeof c === "object") ? c.v : c));
-  const r1 = rows.find(r => /^Registrerade innevarande/.test(r[0])), r2 = rows.find(r => /^Registrerade tidigare/.test(r[0]));
-  assert.deepEqual(r1.slice(1, 3), [s.reg.g, s.reg.n - s.reg.g]);
-  assert.deepEqual(r2.slice(1, 3), [s.oth.g, s.oth.n - s.oth.g]);
+  // Samma rader som i samordnarnas mall: antal per grupp, sedan G och U per grupp med andelen av gruppen.
+  const v = l => rows.find(r => r[0] === l), pc = (x, y) => y ? +(x / y * 100).toFixed(2) : "";
+  assert.equal(v("Reg innevarande termin")[1], s.reg.n);
+  assert.equal(v("före innevarande termin")[1], s.oth.n);
+  assert.deepEqual(v("Antal G Reg innevarande termin").slice(1, 3), [s.reg.g, pc(s.reg.g, s.reg.n)]);
+  assert.deepEqual(v("Antal U Reg innevarande termin").slice(1, 3), [s.reg.n - s.reg.g, pc(s.reg.n - s.reg.g, s.reg.n)]);
+  assert.deepEqual(v("Antal G äldre").slice(1, 3), [s.oth.g, pc(s.oth.g, s.oth.n)]);
+  assert.deepEqual(v("Antal U äldre").slice(1, 3), [s.oth.n - s.oth.g, pc(s.oth.n - s.oth.g, s.oth.n)]);
+  // Andelens formel pekar på gruppens egna rader.
+  const raw = a.evj("statsSheets(statsData())[0].aoa"), at = l => raw.findIndex(r => r[0] === l) + 1;
+  assert.equal(raw[at("Antal U äldre") - 1][2].f, `IF(OR(B${at("Antal U äldre")}="",B${at("före innevarande termin")}="",B${at("före innevarande termin")}=0),"",ROUND(B${at("Antal U äldre")}/B${at("före innevarande termin")}*100,2))`);
   // Raden per student har ingen kolumn om registrering: uppgiften finns bara som summor.
   assert.ok(!a.evj("statsSheets(statsData())[1].aoa[0]").some(h => /regist/i.test(String(h))));
 });

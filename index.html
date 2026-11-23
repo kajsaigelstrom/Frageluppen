@@ -446,7 +446,7 @@
         <button class="expbtn" id="exp-html" title="Interaktiv rapport till temagrupperna, sparas som en fil: samma observationer som här men utan uppmaningar, bara sammanräknade resultat. Med ett filter valt innehåller den bara de frågor som syns.">Temarapport (interaktiv)</button>
         <button class="expbtn" id="exp-temapdf" title="Samma rapport som PDF: öppnas i ett eget fönster och går till utskrift, där du väljer Spara som PDF. Följer filtret.">Temarapport (PDF)</button>
         <button class="expbtn" id="exp-overview" title="Tabell med en rad per fråga, alla frågetyper, alla frågetyper. Öppnas för utskrift, där du väljer Spara som PDF. Följer filtret.">Översiktstabell (PDF)</button>
-        <button class="expbtn" id="exp-xlsx" title="Excel med samma flikar som den mall som tidigare fylldes i för hand: sammanfattning, resultat per student och uppgift, och resultat per tema. En rad per student, med löpnummer.">Tentamensstatistik (Excel)</button>
+        <button class="expbtn" id="exp-xlsx" title="Excel med samma flikar som den mall som tidigare fylldes i för hand: sammanfattning, resultat per student och uppgift, och resultat per tema. En rad per student, med löpnummer.">Tentamensstatistik, samordnarnas mall (Excel)</button>
         <button class="expbtn" id="exp-bokslut" title="Text till kursbokslutet: hur många som skrev, hur många av dem som var registrerade på kursen innevarande termin och andelen godkända i varje grupp. Kräver listan över registrerade studenter i steg 1.">Kursbokslutstext</button>
         <button class="expbtn" id="exp-charts" title="Poängfördelningen och slutpoäng per student och studieort, med G-gränsen utritad. Öppnas för utskrift, där du väljer Spara som PDF.">Diagram (PDF)</button>
       </div>
@@ -710,7 +710,7 @@ function discLabel(r){
 }
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum. */
-const VERSION = "3.35.0";
+const VERSION = "3.35.1";
 const UPDATED = "2026-11-23";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
@@ -852,7 +852,7 @@ steg 3 men utan uppmaningar. Mottagaren kan filtrera, kommentera och spara en eg
 frågor. Följer filtret, så en rapport per tema skapas genom att filtrera på temat först.</li>
 <li><b>Temarapport (PDF)</b>: samma rapport för utskrift. Följer filtret.</li>
 <li><b>Översiktstabell (PDF)</b>: en rad per fråga. Följer filtret.</li>
-<li><b>Tentamensstatistik (Excel)</b>: samma flikar som den mall som tidigare fylldes i för hand. Fliken
+<li><b>Tentamensstatistik, samordnarnas mall (Excel)</b>: samma flikar som den mall som tidigare fylldes i för hand. Fliken
 Sammanfattning har också Cronbachs alfa för hela tentan, flervalsdelen och essädelen, mätfelet i
 poäng och antalet studenter inom ett mätfel från G-gränsen.</li>
 <li><b>Kursbokslutstext</b>: en färdig text om hur många som skrev, hur många av dem som var registrerade på
@@ -3017,10 +3017,10 @@ function card(v){
 
 /* ---------- Reliabilitet ----------
    Cronbachs alfa på råpoängen, för hela tentan, flervalsdelen och essädelen (Kajsa 21 nov 2026). Exkluderade
-   frågor räknas inte. Frågor i samma fall räknas som fristående, vilket kan ge ett något för högt värde för
+   frågor räknas inte. Frågor i samma MEQ-fall räknas som fristående, vilket kan ge ett något för högt värde för
    essädelen. Bredvid alfa står medeldiskrimineringen (r mot hela tentan), som inte beror på antalet frågor.
    rows = en rad per student, cols = frågornas kolumner. null = går inte att räkna. */
-const REL_CAVEAT = "Frågor i samma fall räknas som fristående, vilket kan ge ett något för högt värde.";
+const REL_CAVEAT = "Frågor i samma MEQ-fall räknas som fristående, vilket kan ge ett något för högt värde.";
 function sampleVar(xs){
   const n=xs.length; if(n<2) return 0;
   const m=xs.reduce((a,b)=>a+b,0)/n; return xs.reduce((s,x)=>s+(x-m)*(x-m),0)/(n-1);
@@ -3182,10 +3182,19 @@ function statsSheets(d){
     ["Antal G", {v:nG, f:`COUNTIF(${bet},"G")`}, {v:pc(nG,n)||0, f:"ROUND(B9/B7*100,2)"}, "% av tentanderna"],["Antal U", {v:n-nG, f:`COUNTIF(${bet},"U")`}, {v:pc(n-nG,n)||0, f:"ROUND(B10/B7*100,2)"}, "% av tentanderna"],
     ...(insp ? [["Antal G enligt Inspera", d.students.filter(x=>x.inspGrade && x.inspGrade.toUpperCase()!=="U").length, "", "Slutbetyget som står i Inspera, för jämförelse."],
                  ["Antal U enligt Inspera", d.students.filter(x=>x.inspGrade && x.inspGrade.toUpperCase()==="U").length]] : []),
-    ...(d.reg ? [["Registrerade innevarande termin: antal G och U", d.reg.reg.g, d.reg.reg.n-d.reg.reg.g, pc(d.reg.reg.g,d.reg.reg.n), "Antal G, antal U och andel G i procent. Ur listan över registrerade studenter i steg 1. Räknat med G-gränsen vid exporten. Följer inte med om gränsen ändras här i Excel."],
-                  ["Registrerade tidigare terminer: antal G och U", d.reg.oth.g, d.reg.oth.n-d.reg.oth.g, pc(d.reg.oth.g,d.reg.oth.n), "Studenter som inte finns i listan."]]
-               : [["Registrerade innevarande termin: antal G och U", "", "Fylls i för hand, eller välj listan över registrerade studenter i steg 1."],
-                  ["Registrerade tidigare terminer: antal G och U", "", "Fylls i för hand, eller välj listan över registrerade studenter i steg 1."]]),[""]];
+    ];
+  // Uppdelningen i registrerade innevarande termin och äldre, med samma rader som i samordnarnas mall (Kajsa 23 nov
+  // 2026): antal tentander per grupp, sedan antal G och U per grupp med andelen av gruppen. Antalen räknas vid
+  // exporten ur listan i steg 1. Utan lista står cellerna tomma för ifyllning för hand, och andelen räknas då i Excel.
+  { const R=d.reg, r0=sum.length+1, hand="Fylls i för hand, eller välj listan över registrerade studenter i steg 1.";
+    const pcf=(row,nRow,v)=>({v:v, f:`IF(OR(B${row}="",B${nRow}="",B${nRow}=0),"",ROUND(B${row}/B${nRow}*100,2))`});
+    const val=(x)=>R ? x : "";
+    sum.push(["Reg innevarande termin", val(R&&R.reg.n), R ? "Antal tentander som finns i listan över registrerade studenter från steg 1. Räknat med G-gränsen vid exporten. Följer inte med om gränsen ändras här i Excel." : hand],
+             ["före innevarande termin", val(R&&R.oth.n), R ? "Antal tentander som inte finns i listan." : ""],
+             ["Antal G Reg innevarande termin", val(R&&R.reg.g), pcf(r0+2, r0, R ? pc(R.reg.g,R.reg.n) : ""), "% av gruppen"],
+             ["Antal U Reg innevarande termin", val(R&&R.reg.n-R.reg.g), pcf(r0+3, r0, R ? pc(R.reg.n-R.reg.g,R.reg.n) : ""), "% av gruppen"],
+             ["Antal G äldre", val(R&&R.oth.g), pcf(r0+4, r0+1, R ? pc(R.oth.g,R.oth.n) : ""), "% av gruppen"],
+             ["Antal U äldre", val(R&&R.oth.n-R.oth.g), pcf(r0+5, r0+1, R ? pc(R.oth.n-R.oth.g,R.oth.n) : ""), "% av gruppen"],[""]); }
   if(d.rel){ const r3=x=>(x===null||x===undefined) ? "" : +(+x).toFixed(3);
     sum.push(["Reliabilitet","Cronbachs alfa","Medeldiskriminering (r)","Antal frågor"]);
     d.rel.parts.forEach((p,i)=>sum.push([p.label, r3(p.alpha), r3(p.meanR), p.k, ...(i===2 ? [REL_CAVEAT] : [])]));
@@ -3369,7 +3378,7 @@ HELP_FORM,
 sec("Det som står överst", `
 <p><b>Tentans reliabilitet.</b> Cronbachs alfa för hela tentan, flervalsdelen och essädelen. Alfa
 stiger med antalet frågor, så delarna jämförs bättre med <b>medeldiskrimineringen</b> bredvid, som
-inte beror på antalet. Frågor i samma fall räknas som fristående, vilket kan ge ett något för högt
+inte beror på antalet. Frågor i samma MEQ-fall räknas som fristående, vilket kan ge ett något för högt
 värde för essädelen. På en sida med ett urval av frågor gäller värdena fortfarande hela tentan.</p>
 <p><b>Mönster i de här frågorna.</b> Det som gäller flera frågor på samma sätt står en gång, med
 antal och möjliga orsaker: hur många som var mycket lätta och i hur många ett alternativ valdes av

@@ -39,7 +39,7 @@ test("Tentamensstatistikens Sammanfattning har alfa per del, mätfel och antal n
   assert.deepEqual(rows[i], ["Reliabilitet", "Cronbachs alfa", "Medeldiskriminering (r)", "Antal frågor"]);
   assert.deepEqual(rows.slice(i + 1, i + 4).map(r => r[0]), ["Hela tentan", "Flervalsdelen", "Essädelen"]);
   assert.equal(typeof rows[i + 1][1], "number");
-  assert.equal(rows[i + 3][4], "Frågor i samma fall räknas som fristående, vilket kan ge ett något för högt värde.");
+  assert.equal(rows[i + 3][4], "Frågor i samma MEQ-fall räknas som fristående, vilket kan ge ett något för högt värde.");
   assert.equal(rows[i + 4][0], "Mätfel i poäng (hela tentan)");
   assert.equal(rows[i + 5][0], "Studenter inom ett mätfel från G-gränsen");
   // formlerna för G och U pekar fortfarande på rätt rader
@@ -53,7 +53,7 @@ test("temarapporten visar alfa för de tre delarna med brasklappen, men inte mä
   const h = page.el("#relbox").innerHTML;
   assert.match(h, /Hela tentan[\s\S]*Flervalsdelen[\s\S]*Essädelen/);
   assert.match(h, /0,\d\d/);                                           // decimalkomma
-  assert.match(h, /Frågor i samma fall räknas som fristående, vilket kan ge ett något för högt värde\./);
+  assert.match(h, /Frågor i samma MEQ-fall räknas som fristående, vilket kan ge ett något för högt värde\./);
   assert.ok(!/Mätfel|G-gräns/.test(h));
   assert.ok(!/gäller hela tentan/.test(h));
   const child = runHtml(page.ev("buildTemaReport(subsetEmbed(EMBED, [String(EMBED.views[0].view[0].seq)], state.th))"));
