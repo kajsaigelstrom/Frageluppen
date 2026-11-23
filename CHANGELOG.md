@@ -6,6 +6,18 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.32.6
+- **Formfynden har egna eftertolkande lydelser** (Kajsas beslut 23 nov 2026). Lathundens rubriker, råd och
+  motiveringar är skrivna för den som konstruerar en fråga. Efter rättningen sa de hur frågan skulle göras om,
+  förutsatte regler som kursen inte har beslutat, påstod något om målen och nämnde former som frågan inte hade.
+  Korten visar nu en iakttagelse om frågans form och hur den kan hänga ihop med mönstret i svaren, till exempel
+  "Frågan ber studenten välja det påstående som stämmer. Varje påstående bedöms då för sig, och frågan kan
+  pröva om studenten känner igen ett faktum." Utfällningen "Ur MCQ-lathunden" med råden är borta, och en
+  källrad står kvar.
+- Ett fynd pekar ut alternativet med dess text i stället för "distraktor 2", eftersom kortet sorterar
+  alternativen efter andel. Flera fynd av samma regel slås ihop till en rad.
+- Hjälpen nämner inte längre vem som gör vilket steg i Linköping.
+
 ## 3.32.5
 - **Hjälpen är omskriven med ett ämne per avsnitt** (Kajsa 23 nov 2026). Den hade vuxit fram i lager, så att
   samma sak stod på flera ställen och gamla formuleringar låg kvar. Verktygets hjälp har nu ett avsnitt per steg,

@@ -240,11 +240,8 @@
   .askform{margin-top:6px;padding:7px 10px;border-left:3px solid #c9b06a;background:#fff;font-size:13px;line-height:1.5}
   .formrub{font-weight:600}
   .formfynd{color:var(--muted)}
-  .formrad{margin-top:4px}
-  .formrad summary{cursor:pointer;font-size:12.5px;color:var(--accent);font-weight:600}
-  .formtext{margin-top:5px}
-  .formvarfor{margin-top:5px;color:var(--muted)}
-  .formref{margin-top:5px;font-size:11.5px;color:var(--muted)}
+  .formkan{margin-top:3px;color:var(--muted)}
+  .formsrc{margin-top:5px;font-size:11.5px;color:var(--muted)}
   .forebild{margin-top:12px;padding:8px 12px;border-left:3px solid var(--accent);background:var(--card);font-size:13.5px}
   .askpsy{font-size:12.5px;color:var(--muted);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line)}
   .thcustom{margin:10px 0 0;padding:8px 12px;border:1px solid #c9b06a;border-radius:8px;background:#faf6ea;font-size:13px}
@@ -700,7 +697,7 @@ function discLabel(r){
 }
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum. */
-const VERSION = "3.32.5";
+const VERSION = "3.32.6";
 const UPDATED = "2026-11-23";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
@@ -748,7 +745,9 @@ statistiken talar för att frågan eller facit behöver ses över, prövas mot d
 <b>MCQ-lathunden</b>. Kontrollen ser på
 frågans form: längd, ordval, ledtrådar, negationer och samlingsalternativ. Ett fynd visas bara när
 det kan förklara mönstret i svaren, till exempel att rätt svar är mycket längre än distraktorerna i
-en fråga som nästan alla klarade. Under "Ur MCQ-lathunden" står lathundens text och källan.</p>
+en fråga som nästan alla klarade. Fyndet beskriver frågans form och hur den kan hänga ihop med
+mönstret. Det säger inget om hur frågan förhåller sig till målen, och det är inget råd. Råd om hur
+flervalsfrågor skrivs står i MCQ-lathunden.</p>
 <p><b>Förebilder</b> är flervalsfrågor som skilde väl mellan studenter med höga och låga totalpoäng,
 inte har någon ruta på kortet och inte gav några fynd i formkontrollen.</p>`);
 const helpFilter = tema => sec("Filtrera och sortera", `
@@ -1769,12 +1768,41 @@ const ASK_TEXT = {
   facit: "Stämmer facit? Kan frågan läsas på ett sätt som gör ett annat svar rätt?",
   forsvar: "Går alternativet «X» att försvara som rätt eller delvis rätt?"
 };
-/* Lathundens formfynd som kan förklara ett mönster (key = nyckel i FORM_EXPLAINS). Alla som passar visas, utan övre
-   gräns: ett fynd som finns men göms är svårare att försvara än ett längre kort (Kajsa 22 nov 2026). */
+/* Eftertolkande lydelser för de formfynd som visas på korten (Kajsa 23 nov 2026). Lathundens egna rubriker, råd och
+   motiveringar är skrivna för den som konstruerar en fråga: de säger hur frågan ska göras om, förutsätter regler som
+   kursen inte har beslutat och påstår något om målen, som verktyget inte känner till. Efter rättningen visas därför
+   bara en iakttagelse om frågans form (rubrik) och hur den KAN hänga ihop med mönstret i svaren (kan). Aldrig råd,
+   aldrig något om målen, och bara det som faktiskt hittades. Lathundens synkade block (FORM_REGLER) rörs inte. */
+const FORM_EFTER = {
+  langst:    {rubrik:"Rätt svar är längst.", kan:"Det mest utförliga alternativet kan väljas även utan ämneskunskap."},
+  kortast:   {rubrik:"Rätt svar är markant kortast.", kan:"Ett alternativ som avviker tydligt i längd kan peka ut sig självt."},
+  eko:       {rubrik:"Ett ord i stammen återkommer bara i rätt svar.", kan:"Ordlikheten kan peka ut svaret."},
+  inledning: {rubrik:"Distraktorerna börjar likadant, rätt svar börjar annorlunda.", kan:"Rätt svar kan sticka ut på formen."},
+  tvadelad:  {rubrik:"Bara rätt svar har två led.", kan:"Det mest garderade alternativet kan väljas utan ämneskunskap."},
+  absolut:   {rubrik:"Alternativ har absoluta ord.", kan:"Sådana alternativ kan gå att stryka utan ämneskunskap."},
+  pastaende: {rubrik:"Frågan ber studenten välja det påstående som stämmer.", kan:"Varje påstående bedöms då för sig, och frågan kan pröva om studenten känner igen ett faktum."},
+  samling:   {rubrik:"Ett alternativ är en samling eller kombination av andra.", kan:"Det kan väljas eller strykas på logik, och det kan bli oklart vilket svar som är bäst."},
+  negstam:   {rubrik:"Frågan är negativt formulerad.", kan:"En del studenter kan ha missat negationen, och felen säger då inget om kunskap."},
+  dubblett:  {rubrik:"Två alternativ har samma text.", kan:"Svaren kan ha delats mellan dem av slump."},
+  markor:    {rubrik:"Stammen säger inte att det bästa svaret efterfrågas.", kan:"Om fler än ett alternativ är sant i någon mening kan studenter med goda kunskaper ha valt ett annat än facit."}
+};
+/* Formfynden som kan förklara ett mönster (key = nyckel i FORM_EXPLAINS). Alla som passar visas, utan övre gräns:
+   ett fynd som finns men göms är svårare att försvara än ett längre kort (Kajsa 22 nov 2026). */
 function formPick(v, key){
   const ok=(typeof FORM_EXPLAINS!=="undefined" && FORM_EXPLAINS[key]) || [];
-  const seen=new Set();                                      // en regel visas en gång, också när den slår på flera alternativ
-  return formFindings(v).filter(f=>ok.includes(f.regel) && !seen.has(f.regel) && seen.add(f.regel));
+  const ds=v.opts.filter((_,i)=>i!==v.correctIdx).map(String);
+  const cut=t=>t.length>54 ? t.slice(0,52)+"…" : t;
+  // Lathunden numrerar distraktorerna i PDF:ens ordning. Kortet sorterar dem efter andel, så fyndet pekar ut alternativet med dess text.
+  const named=t=>String(t||"").replace(/[Dd]istraktor (\d+)/g, (m,n)=> ds[n-1]!==undefined ? `«${cut(ds[n-1])}»` : m);
+  const out=new Map();                                        // en rad per regel, också när den slår på flera alternativ
+  for(const f of formFindings(v)){
+    if(!ok.includes(f.regel)) continue;
+    const e=(typeof FORM_EFTER!=="undefined" && FORM_EFTER[f.regel]) || {rubrik:f.rubrik||"", kan:""};
+    const fynd=named(f.fynd), had=out.get(f.regel);
+    if(had){ if(fynd && !had.fynd.includes(fynd)) had.fynd=(had.fynd+" "+fynd).trim(); }
+    else out.set(f.regel, {regel:f.regel, prio:f.prio, rubrik:e.rubrik, kan:e.kan, fynd});
+  }
+  return [...out.values()];
 }
 /* Kortets uppmaningar (l1) och observationer (l2).
    l1 finns bara där ett beslut ska fattas före betygssättning: "Dubbelkolla facit" och "Se över frågan". Varje post
@@ -2217,10 +2245,7 @@ function formFindings(v){
 }
 function renderForm(f, cls){
   return `<div class="${cls}"><span class="formrub">${esc(f.rubrik||"")}</span>${f.fynd?` <span class="formfynd">${esc(f.fynd)}</span>`:""}`
-    + ((f.text||f.varfor) ? `<details class="formrad"><summary>Ur MCQ-lathunden</summary>`
-      + (f.text?`<div class="formtext">${esc(f.text)}</div>`:"")
-      + (f.varfor?`<div class="formvarfor">${esc(f.varfor)}</div>`:"")
-      + (f.ref?`<div class="formref">${esc(f.ref)}</div>`:"") + `</details>` : "") + `</div>`;
+    + (f.kan?`<div class="formkan">${esc(f.kan)}</div>`:"") + `</div>`;
 }
 /* Förebild = diskrimineringen är mätbar, god (state.th.goodDisc) och över brusgränsen 2/√n, kortet har varken
    observation eller uppmaning, och formkontrollen har inga fynd utöver lathundens tips. Inget krav på andel rätt:
@@ -2816,7 +2841,7 @@ function card(v){
   const more = a => PSY[a.psy] ? (k=>`<details class="askmore" data-k="${esc(k)}"${(state.open && state.open.has(k))?" open":""}><summary>Mer om måttet</summary><div class="askpsy">${esc(PSY[a.psy])}</div></details>`)(`psy:${v.seq}:${a.psy}`) : "";
   const item = (head, body, a) => `<div class="adv ${a.cls}">
       <div class="advhead"><span class="advdot"></span>${esc(head)}</div>
-      ${body?`<div class="advwhy">${esc(body)}</div>`:""}${(a.form||[]).map(f=>renderForm(f,"askform")).join("")}${more(a)}
+      ${body?`<div class="advwhy">${esc(body)}</div>`:""}${(a.form||[]).map(f=>renderForm(f,"askform")).join("")}${(a.form||[]).length?`<div class="formsrc">Ur formkontrollen i MCQ-lathunden</div>`:""}${more(a)}
     </div>`;
   const askHead = a => a.ask==="forsvar" ? ASK_TEXT.forsvar.replace("«X»", (s=>`«${s.length>54 ? s.slice(0,52)+"…" : s}»`)(String(v.opts[a.optIdx]))) : ASK_TEXT[a.ask];
   const bucket = (title, html) => html ? `<div class="advbucket">${title}</div>${html}` : "";
@@ -3377,7 +3402,7 @@ function temaFns(){
 }
 function temaConsts(){
   return `const MIN_N=${MIN_N};const R_LOW=${R_LOW};const TH_DEFAULT=${JSON.stringify(TH_DEFAULT)};const TH_RANGE=${JSON.stringify(TH_RANGE)};const TH_LABEL=${JSON.stringify(TH_LABEL)};const PSY=${JSON.stringify(PSY)};`
-    + `const FORM_META=${JSON.stringify(FORM_META)};const FORM_REGLER=${JSON.stringify(FORM_REGLER)};const FORM_CUE=${JSON.stringify(FORM_CUE)};const FORM_EXPLAINS=${JSON.stringify(FORM_EXPLAINS)};`
+    + `const FORM_META=${JSON.stringify(FORM_META)};const FORM_REGLER=${JSON.stringify(FORM_REGLER)};const FORM_CUE=${JSON.stringify(FORM_CUE)};const FORM_EFTER=${JSON.stringify(FORM_EFTER)};const FORM_EXPLAINS=${JSON.stringify(FORM_EXPLAINS)};`
     + `const NO_STEM=${JSON.stringify(NO_STEM)};const REL_CAVEAT=${JSON.stringify(REL_CAVEAT)};const FACETS=${JSON.stringify(FACETS)};const SCORE_TEXT=${JSON.stringify(SCORE_TEXT)};const EXCL_REASONS=${JSON.stringify(EXCL_REASONS)};const INSPERA_REASON=${JSON.stringify(INSPERA_REASON)};const LOCAL_EXCL_NOTE=${JSON.stringify(LOCAL_EXCL_NOTE)};const ASK_TEXT=${JSON.stringify(ASK_TEXT)};`
     + `const HELP_HTML=${JSON.stringify(HELP_TEMA_HTML)};const HELP_TEMA_HTML=HELP_HTML;`;
 }

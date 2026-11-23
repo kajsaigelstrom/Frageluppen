@@ -47,7 +47,7 @@ test("formfyndet visas som möjlig förklaring under observationen på kortet", 
   const html = ev(`card(mk({rpb:0.05, counts:[28,25,24,23], stem:"Vilket av följande är inte ett symtom vid anemi?"}))`);
   assert.ok(html.includes("Nära gissningsnivå"));
   assert.ok(html.includes('class="askform"'));
-  assert.ok(html.split('class="askform"')[1].split("</details>")[0].includes("Ur MCQ-lathunden"));
+  assert.match(html, /class="askform"[\s\S]*Frågan är negativt formulerad\.[\s\S]*Ur formkontrollen i MCQ-lathunden/);
 });
 test("formkontrollen körs bara på frågor med en svaghet och på tänkbara förebilder", () => {
   const { ev } = fresh();
@@ -55,7 +55,7 @@ test("formkontrollen körs bara på frågor med en svaghet och på tänkbara fö
   // varken svag eller tänkbar förebild (skiljer för svagt): prövas inte
   const html = ev(`card(mk({n:100, counts:[70,10,10,10], rpb:0.15, opts:[${JSON.stringify(LONG)},"Hypotyreos","Depression","Sömnapné"]}))`);
   assert.equal(ev("CALLS"), 0);
-  assert.ok(!html.includes("Rätt svar sticker ut.") && !html.includes("askbox") && !html.includes("Ur MCQ-lathunden"));
+  assert.ok(!html.includes("Rätt svar är längst.") && !html.includes("askbox") && !html.includes("MCQ-lathunden"));
   ev(`card(mk({n:80, counts:[76,2,1,1], rpb:0.05, opts:[${JSON.stringify(LONG)},"Hypotyreos","Depression","Sömnapné"]}))`);
   const afterWeak = ev("CALLS"); assert.ok(afterWeak > 0);
   ev("card(mk({n:90, counts:[65,9,8,8], rpb:0.35}))");                     // tänkbar förebild: prövas
@@ -65,7 +65,7 @@ test("en mycket lätt fråga får formfyndet som möjlig förklaring på kortet"
   const { ev } = fresh();
   const html = ev(`card(mk({n:80, counts:[76,2,1,1], rpb:0.05, opts:[${JSON.stringify(LONG)},"Hypotyreos","Depression","Sömnapné"]}))`);
   assert.ok(html.includes("Mycket lätt fråga"));
-  assert.ok(html.includes("Rätt svar sticker ut."));
+  assert.ok(html.includes("Rätt svar är längst."));
   assert.match(html, /tecken, den längsta distraktorn/);
   assert.ok(!html.includes("Att fråga sig"));
   // utan formfynd: ingen ruta alls
@@ -113,7 +113,7 @@ test("förebild: skiljer väl, inget på kortet och utan fynd i formkontrollen; 
   const flawed = `mk({n:90, counts:[65,9,8,8], rpb:0.35, opts:[${JSON.stringify(LONG)},"Hypotyreos","Depression","Sömnapné"]})`;
   assert.equal(ev(`isForebild(${flawed})`), false);
   assert.ok(!ev(`card(${flawed})`).includes("förebild"));
-  assert.ok(!ev(`card(${flawed})`).includes("Rätt svar sticker ut."));          // fyndet visas inte: frågan har ingen svaghet att förklara
+  assert.ok(!ev(`card(${flawed})`).includes("Rätt svar är längst."));          // fyndet visas inte: frågan har ingen svaghet att förklara
   // fynd som bara är tips i lathunden hindrar inte (t.ex. parallella alternativ)
   assert.equal(ev(`isForebild(mk({n:90, counts:[65,9,8,8], rpb:0.35, stem:"Vilken dos är lämpligast?", opts:["1000 mg 2 gånger per dygn","1000 mg 3 gånger per dygn","1500 mg 3 gånger per dygn","1500 mg 2 gånger per dygn"]}))`), true);
   assert.equal(ev("isForebild(mk({n:90, counts:[81,3,3,3], rpb:0.35}))"), false);     // bara 9 fel: diskrimineringen är osäker
@@ -133,7 +133,7 @@ test("examinatorns kort har samma formfynd som temarapportens", () => {
   const { ev } = fresh();
   ev("state.mode = 'edu'; state.view = 'final'");
   const html = ev(`card(mk({n:80, counts:[76,2,1,1], rpb:0.05, opts:[${JSON.stringify(LONG)},"Hypotyreos","Depression","Sömnapné"]}))`);
-  assert.ok(html.includes("askform") && html.includes("Rätt svar sticker ut.") && !html.includes("formall") && !html.includes("förebild"));
+  assert.ok(html.includes("askform") && html.includes("Rätt svar är längst.") && !html.includes("formall") && !html.includes("förebild"));
 });
 test("den exporterade rapporten och en urvalssida har formkontrollen med sig", () => {
   const { ev } = fresh();
@@ -143,15 +143,16 @@ test("den exporterade rapporten och en urvalssida har formkontrollen med sig", (
   const page = runHtml(ev("buildTemaReport(E)"));
   assert.equal(page.ev("typeof KONTROLL.kor"), "function");
   assert.ok(page.el("#cards").innerHTML.includes("Mycket lätt fråga"));
-  assert.ok(page.el("#cards").innerHTML.includes("Rätt svar sticker ut."));
+  assert.ok(page.el("#cards").innerHTML.includes("Rätt svar är längst."));
+  assert.equal(page.ev("typeof FORM_EFTER"), "object");
   assert.ok(!page.el("#cards").innerHTML.includes("formall"));
   const child = runHtml(page.ev("buildTemaReport(subsetEmbed(EMBED, [String(EMBED.views[0].view[" + ev("iE") + "].seq)], state.th))"));
-  assert.ok(child.el("#cards").innerHTML.includes("Rätt svar sticker ut."));
+  assert.ok(child.el("#cards").innerHTML.includes("Rätt svar är längst."));
 });
-test("lathundens källa syns där råden visas", () => {
+test("källan står under formfynden, utan lathundens litteraturhänvisningar och råd", () => {
   const { ev } = fresh();
   const html = ev(`card(mk({n:80, counts:[76,2,1,1], rpb:0.05, opts:[${JSON.stringify(LONG)},"Hypotyreos","Depression","Sömnapné"]}))`);
-  assert.ok(html.includes("NBME"));
+  assert.ok(html.includes("Ur formkontrollen i MCQ-lathunden") && !html.includes("NBME"));
 });
 test("kontrollen i Frågeluppen är densamma som i MCQ-lathunden", { skip: !process.env.LATHUND_DIR && "sätt LATHUND_DIR till lathundens mapp för att jämföra" }, () => {
   const html = fs.readFileSync(INDEX, "utf8");
@@ -195,4 +196,41 @@ test("samma formregel visas en gång per observation, också när den slår på 
   const v = `mk({n:80, counts:[76,2,1,1], rpb:0.05, opts:["Järnbrist","Alltid hypotyreos","Aldrig depression","Endast sömnapné"]})`;
   const forms = evj(`advice(${v}).l2.flatMap(x => x.form.map(f => x.psy + ":" + f.regel))`);
   assert.equal(new Set(forms).size, forms.length, JSON.stringify(forms));
+});
+
+// ---- eftertolkande lydelser (Kajsa 23 nov 2026): iakttagelse och möjligt samband, aldrig råd ----
+test("varje formfynd som kan visas har en egen eftertolkande lydelse, utan råd och utan påståenden om målen", () => {
+  const { evj } = fresh();
+  const E = evj("FORM_EFTER"), shown = [...new Set(evj("Object.values(FORM_EXPLAINS).flat()"))];
+  assert.deepEqual(shown.filter(r => !E[r]), []);
+  for (const r of shown) {
+    const t = E[r].rubrik + " " + E[r].kan;
+    assert.ok(E[r].rubrik.length > 10 && E[r].kan.length > 20, r);
+    assert.ok(!/\b(målet|målen|mäter)\b/i.test(t), r + ": inget om målen");
+    assert.ok(!/^(Stryk|Byt|Flytta|Ge |Gör |Välj|Vänd|Ersätt|Skriv|Låt |Sätt )|\b(bör|ska|måste|borde)\b/m.test(t), r + ": inget råd");
+    assert.match(E[r].kan, /\bkan\b/, r + ": sambandet är en möjlighet, inte ett påstående");
+  }
+  assert.equal(E.pastaende.rubrik, "Frågan ber studenten välja det påstående som stämmer.");
+  assert.equal(E.pastaende.kan, "Varje påstående bedöms då för sig, och frågan kan pröva om studenten känner igen ett faktum.");
+});
+test("kortet visar iakttagelsen och sambandet, men aldrig lathundens råd, motivering eller rubrik", () => {
+  const { ev } = fresh();
+  const STEM = "En 45-årig kvinna söker för trötthet. Vilket påstående stämmer?";
+  const html = ev(`card(mk({n:80, counts:[76,2,1,1], rpb:0.05, stem:${JSON.stringify(STEM)}}))`);
+  assert.match(html, /Frågan ber studenten välja det påstående som stämmer\./);
+  assert.match(html, /känner igen ett faktum\./);
+  assert.match(html, /Ur formkontrollen i MCQ-lathunden/);
+  assert.ok(!/mäter något annat än målet|Välj det påstående som bär målet|stämmer inte|<details class="formrad"|NBME avråder/.test(html));
+  const long = ev(`card(mk({n:80, counts:[76,2,1,1], rpb:0.05, opts:[${JSON.stringify(LONG)},"Hypotyreos","Depression","Sömnapné"]}))`);
+  assert.match(long, /Rätt svar är längst\./);
+  assert.match(long, /tecken, den längsta distraktorn/);                  // det mekaniska fyndet står kvar
+  assert.ok(!/Flytta detaljen|gör distraktorerna lika utförliga/.test(long));
+});
+test("ett fynd pekar ut alternativet med dess text, inte med ett nummer", () => {
+  const { evj } = fresh();
+  const v = `mk({n:100, rpb:0.3, counts:[70,20,9,1], opts:["Järnbrist","Hypotyreos","Depression","Alltid sömnapné"]})`;
+  const f = evj(`advice(${v}).l2.find(x => x.psy === "distractor-eff").form`);
+  assert.equal(f.length, 1);
+  assert.equal(f[0].fynd, '"alltid" i «Alltid sömnapné».');
+  assert.equal(f[0].rubrik, "Alternativ har absoluta ord.");
 });

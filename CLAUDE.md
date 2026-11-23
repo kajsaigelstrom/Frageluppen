@@ -119,6 +119,12 @@ vad som återstår). Repot innehåller kod och historik — inte planering.
   (`FORM_EXPLAINS`, `formPick`), och då visas alla som passar, en gång per regel. Påståendeformen
   förklarar bara en mycket lätt fråga. "Stammen bär inte frågan" visas aldrig men hindrar förebild.
   Bygg ingen egen ledtrådssökning.
+- **Korten visar aldrig lathundens egna texter.** Lathundens rubriker, råd och motiveringar är skrivna
+  för den som konstruerar en fråga. Efter rättningen visas bara de eftertolkande lydelserna i
+  `FORM_EFTER`: en iakttagelse om formen och hur den KAN hänga ihop med mönstret. Aldrig råd, aldrig
+  något om målen (verktyget känner inte till dem), och bara det som faktiskt hittades (Kajsas beslut
+  23 nov 2026). Lydelserna är godkända av Kajsa. En ny regel i `FORM_EXPLAINS` kräver en rad i
+  `FORM_EFTER`, och ett test kontrollerar det.
 - **Det som gäller flera frågor står en gång överst** ("Mönster i de här frågorna",
   `patternSummary`, `scorePatterns`), i steg 3 och i temarapporten.
 - **Statistiken säger inget om en frågas nivå mot kursplanen.** Verktyget bedömer aldrig
