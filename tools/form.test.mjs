@@ -234,3 +234,10 @@ test("ett fynd pekar ut alternativet med dess text, inte med ett nummer", () => 
   assert.equal(f[0].fynd, '"alltid" i «Alltid sömnapné».');
   assert.equal(f[0].rubrik, "Alternativ har absoluta ord.");
 });
+test("ett fynd som bara är en citerad fras ur stammen skrivs ut som en mening", () => {
+  const { evj } = fresh();
+  const past = evj(`advice(mk({n:80, counts:[76,2,1,1], rpb:0.05, stem:"En 45-årig kvinna söker för trötthet. Vilket påstående stämmer?"})).l2[0].form`);
+  assert.equal(past.find(f => f.regel === "pastaende").fynd, "Stammen har formuleringen «Vilket påstående».");
+  const neg = evj(`advice(mk({rpb:0.05, counts:[28,25,24,23], stem:"Vilket av följande är inte ett symtom vid anemi?"})).l1[0].form`);
+  assert.match(neg.find(f => f.regel === "negstam").fynd, /^Stammen har formuleringen «[^»]+»\.$/);
+});

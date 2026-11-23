@@ -6,6 +6,10 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.32.7
+- Ett formfynd som bara var en citerad fras ur stammen skrivs nu ut som en mening: "Stammen har formuleringen
+  «Vilket påstående»."
+
 ## 3.32.6
 - **Formfynden har egna eftertolkande lydelser** (Kajsas beslut 23 nov 2026). Lathundens rubriker, råd och
   motiveringar är skrivna för den som konstruerar en fråga. Efter rättningen sa de hur frågan skulle göras om,

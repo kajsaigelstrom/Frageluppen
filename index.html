@@ -697,7 +697,7 @@ function discLabel(r){
 }
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum. */
-const VERSION = "3.32.6";
+const VERSION = "3.32.7";
 const UPDATED = "2026-11-23";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
@@ -1794,11 +1794,13 @@ function formPick(v, key){
   const cut=t=>t.length>54 ? t.slice(0,52)+"…" : t;
   // Lathunden numrerar distraktorerna i PDF:ens ordning. Kortet sorterar dem efter andel, så fyndet pekar ut alternativet med dess text.
   const named=t=>String(t||"").replace(/[Dd]istraktor (\d+)/g, (m,n)=> ds[n-1]!==undefined ? `«${cut(ds[n-1])}»` : m);
+  // Ett fynd som bara är en citerad fras ur stammen ("Vilket påstående".) skrivs ut som en mening.
+  const phrase=t=>{ const m=t.match(/^"([^"]+)"\.$/); return m ? `Stammen har formuleringen «${m[1]}».` : t; };
   const out=new Map();                                        // en rad per regel, också när den slår på flera alternativ
   for(const f of formFindings(v)){
     if(!ok.includes(f.regel)) continue;
     const e=(typeof FORM_EFTER!=="undefined" && FORM_EFTER[f.regel]) || {rubrik:f.rubrik||"", kan:""};
-    const fynd=named(f.fynd), had=out.get(f.regel);
+    const fynd=phrase(named(f.fynd)), had=out.get(f.regel);
     if(had){ if(fynd && !had.fynd.includes(fynd)) had.fynd=(had.fynd+" "+fynd).trim(); }
     else out.set(f.regel, {regel:f.regel, prio:f.prio, rubrik:e.rubrik, kan:e.kan, fynd});
   }
