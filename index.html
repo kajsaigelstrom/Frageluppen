@@ -57,6 +57,10 @@
   .viewhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:6px 0 4px}
   .viewhead #viewtabs{flex:1 1 auto}
   .viewhead .exports{display:flex;gap:6px;flex-wrap:wrap}
+  #bokslut{margin:10px 0;padding:12px 14px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px}
+  #bokslut label{margin-right:14px} #bokslut textarea{display:block;width:100%;box-sizing:border-box;margin:8px 0;font:inherit;padding:8px;border:1px solid var(--line);border-radius:6px}
+  #bokslut .hint{color:var(--muted);font-size:13px}
+  #bokslut .warn{color:#8a3b12;margin:6px 0}
   .gctl{font-size:13px;color:var(--muted);white-space:nowrap}
   .gctl input{width:3.2em;font:inherit;font-size:13px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);text-align:right}
   #g-pts{color:var(--ink)}
@@ -396,6 +400,12 @@
         <input type="file" id="tags" accept=".xlsx,.xls">
         <div class="got" id="got-tags"></div>
       </div>
+      <div class="drop" id="d-reg">
+        <label>Registrerade studenter från Ladok (CSV) – valfri</label>
+        <div class="hint">Ger uppdelningen i studenter registrerade på kursen innevarande termin och övriga, i tentamensstatistiken och i texten till kursbokslutet. Exportera listan med tentans resultat ur Ladok när tentan är rättad, med alla rader och kolumnen <b>AidCode</b>. Flera filer går bra. Bara kolumnen AidCode läses. Namn och personnummer läses inte, och i datafilen står bara om studenten finns i listan eller inte.</div>
+        <input type="file" id="reg" accept=".csv,text/csv" multiple>
+        <div class="got" id="got-reg"></div>
+      </div>
     </div>
     <div id="databox" class="drop databox hidden">
       <label>Kombinerad datafil</label>
@@ -438,9 +448,11 @@
         <button class="expbtn" id="exp-temapdf" title="Samma rapport som PDF: öppnas i ett eget fönster och går till utskrift, där du väljer Spara som PDF. Följer filtret.">Temarapport (PDF)</button>
         <button class="expbtn" id="exp-overview" title="Tabell med en rad per fråga, alla frågetyper, alla frågetyper. Öppnas för utskrift, där du väljer Spara som PDF. Följer filtret.">Översiktstabell (PDF)</button>
         <button class="expbtn" id="exp-xlsx" title="Excel med samma flikar som den mall som tidigare fylldes i för hand: sammanfattning, resultat per student och uppgift, och resultat per tema. En rad per student, med löpnummer.">Tentamensstatistik (Excel)</button>
+        <button class="expbtn" id="exp-bokslut" title="Text till kursbokslutet: hur många som skrev, hur många av dem som var registrerade på kursen innevarande termin och andelen godkända i varje grupp. Kräver Ladok-listan i steg 1.">Kursbokslutstext</button>
         <button class="expbtn" id="exp-charts" title="Poängfördelningen och slutpoäng per student och studieort, med G-gränsen utritad. Öppnas för utskrift, där du väljer Spara som PDF.">Diagram (PDF)</button>
       </div>
     </div>
+    <div id="bokslut" class="hidden"></div>
     <div class="modehint" id="modehint"></div>
     <div class="nnote" id="nnote"></div>
 
@@ -699,7 +711,7 @@ function discLabel(r){
 }
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum. */
-const VERSION = "3.33.0";
+const VERSION = "3.34.0";
 const UPDATED = "2026-11-23";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
@@ -776,6 +788,11 @@ sec("Steg 1: Förbered filer", `
 <p>Släpp resultatfilerna från Inspera, tentans PDF och taggfilen om den finns. Utan tentans PDF saknas
 frågetexterna, och utan taggfil saknas filtret på tema. Har du fått en sparad datafil väljer du den
 i rutan under filrutorna.</p>
+<p><b>Listan från Ladok</b> är valfri. Den ger uppdelningen i studenter registrerade på kursen
+innevarande termin och övriga, i Tentamensstatistiken och i Kursbokslutstexten. Exportera listan med
+tentans resultat som CSV när tentan är rättad, med alla rader och kolumnen AidCode. Ladok visar varje
+students senaste resultat, så en lista som tas ut efter omtentan passar inte den ordinarie tentan.
+Kvittot säger hur många av listans koder som finns bland tentans studenter.</p>
 <p><b>Kvittot</b> under knapparna säger vad som lästes in: tentans namn, antal studenter, om
 essäfrågorna är rättade och hur många frågor taggfilen matchade. Passar PDF:en inte resultaten står
 en varning där. Inga resultat visas i steg 1.</p>
@@ -838,6 +855,9 @@ frågor. Följer filtret, så en rapport per tema skapas genom att filtrera på 
 <li><b>Tentamensstatistik (Excel)</b>: samma flikar som den mall som tidigare fylldes i för hand. Fliken
 Sammanfattning har också Cronbachs alfa för hela tentan, flervalsdelen och essädelen, mätfelet i
 poäng och antalet studenter inom ett mätfel från G-gränsen.</li>
+<li><b>Kursbokslutstext</b>: en färdig text om hur många som skrev, hur många av dem som var registrerade på
+kursen innevarande termin och andelen godkända i varje grupp. Kräver Ladok-listan i steg 1. Samma uppdelning
+står då i Tentamensstatistiken.</li>
 <li><b>Diagram (PDF)</b>: poängfördelningen och slutpoäng per student och studieort, med G-gränsen utritad.</li>
 </ul>`),
 sec("Kommentarer och exkluderingar", `
@@ -862,7 +882,10 @@ poängmönster, och filen innehåller tentans frågor. Behandla den som tentamat
 aldrig till temagrupperna.</p>
 <p><b>Temarapporten, Problemfrågor och Översiktstabellen</b> innehåller bara sammanräknade resultat,
 aldrig enskilda studenters svar. De innehåller frågetexterna och rätt svar.</p>
-<p><b>Tentamensstatistiken</b> har en rad per student, med löpnummer.</p>`)
+<p><b>Tentamensstatistiken</b> har en rad per student, med löpnummer.</p>
+<p><b>Ladok-listan</b> över registrerade studenter innehåller namn och personnummer. Verktyget läser bara
+kolumnen AidCode ur den. I datafilen står bara om en student finns i listan eller inte, och i exporterna
+bara antal per grupp.</p>`)
 ].join("\n");
 
 /* Hjälpen öppnar på avsnittet för det steg man står i (data-step på avsnittet). */
@@ -1276,7 +1299,7 @@ function parseJsonFile(text, name){
   catch(_){ throw new Error(`Filen "${name||"okänd"}" går inte att läsa. Kontrollera att det är resultatfilen (JSON) från Inspera.`); }
 }
 function isPlainObj(o){ return !!o && typeof o==="object" && !Array.isArray(o); }
-function minimizeInspera(obj, offset){
+function minimizeInspera(obj, offset, regSet){
   const out={};
   if(obj.ext_inspera_assessmentRunTitle!==undefined) out.ext_inspera_assessmentRunTitle=obj.ext_inspera_assessmentRunTitle;
   if(obj.ext_inspera_maxTotalScore!==undefined) out.ext_inspera_maxTotalScore=obj.ext_inspera_maxTotalScore;
@@ -1287,6 +1310,8 @@ function minimizeInspera(obj, offset){
     const res = { ext_inspera_candidateId: String((offset||0)+i+1) };
     // Insperas slutbetyg och totalpoäng följer med (Kajsa 21 nov 2026), så att uträkningen här kan kontrolleras mot dem.
     for(const k of ["ext_inspera_finalGrade","ext_inspera_totalScore"]) if(r[k]!==undefined && r[k]!==null) res[k]=r[k];
+    // Finns studenten i Ladok-listan över registrerade? Bara ja eller nej följer med, aldrig koden (Kajsa 23 nov 2026).
+    if(regSet) res.fl_registered = regSet.has(regKey(r.ext_inspera_candidateId));
     if(qs) res.ext_inspera_questions = qs.map(q=>{
       const o={};
       for(const k of ["ext_inspera_maxQuestionScore","ext_inspera_questionNumber","ext_inspera_questionTitle","ext_inspera_autoScore","ext_inspera_questionWeight"])
@@ -1301,6 +1326,46 @@ function minimizeInspera(obj, offset){
     return {result:res};
   });
   return out;
+}
+
+/* ---------- Ladok-listan över registrerade studenter ----------
+   Uppdelningen i studenter registrerade på kursen innevarande termin och övriga finns inte i Inspera. Den kommer ur
+   en lista från Ladok (CSV) där kolumnen AidCode är samma nummer som Insperas kandidatnummer. BARA den kolumnen
+   läses: namn och personnummer lagras aldrig, och i datafilen står bara ja eller nej per student (fl_registered).
+   Kopplingen måste göras i steg 1, eftersom kandidatnumren sedan ersätts av löpnummer. */
+function regKey(x){ return String(x===null||x===undefined ? "" : x).trim(); }
+function csvRows(text, sep){
+  const rows=[]; let row=[], cell="", q=false; const t=String(text||"").replace(/^\uFEFF/,"");
+  for(let i=0;i<t.length;i++){ const c=t[i];
+    if(q){ if(c==='"'){ if(t[i+1]==='"'){ cell+='"'; i++; } else q=false; } else cell+=c; }
+    else if(c==='"') q=true;
+    else if(c===sep){ row.push(cell); cell=""; }
+    else if(c==="\n" || c==="\r"){ if(c==="\r" && t[i+1]==="\n") i++; row.push(cell); cell=""; rows.push(row); row=[]; }
+    else cell+=c; }
+  if(cell!=="" || row.length){ row.push(cell); rows.push(row); }
+  return rows.filter(r=>r.some(x=>String(x).trim()!==""));
+}
+/* Ger listans koder och antal rader. Kastar ett begripligt fel när kolumnen saknas. */
+function parseRegList(text, name){
+  const isCol=x=>/^(aid\s*code|aid|anonymkod|anonymitetskod)$/i.test(String(x).trim());
+  for(const sep of [";", ",", "\t"]){
+    const rows=csvRows(text, sep); if(!rows.length) continue;
+    const ci=rows[0].findIndex(isCol); if(ci<0) continue;
+    const codes=[]; let empty=0;
+    for(const r of rows.slice(1)){ const k=regKey(r[ci]); if(k) codes.push(k); else empty++; }
+    return {codes:[...new Set(codes)], rows:rows.length-1, empty};
+  }
+  throw new Error(`Filen "${name||"okänd"}" har ingen kolumn som heter AidCode. Exportera listan med tentans resultat ur Ladok, med anonymkoderna.`);
+}
+/* Hur listan passar tentan: antal koder i listan, hur många av dem som finns bland tentans studenter, och hur många
+   studenter som alltså räknas som registrerade. Utan en enda träff används listan inte. */
+function regFit(jsonObjs, regCodes){
+  if(!regCodes || !regCodes.length) return null;
+  const set=new Set(regCodes.map(regKey)), seen=new Set(); let n=0, reg=0;
+  for(const d of jsonObjs){ for(const c of ((d && (d.ext_inspera_candidates || d.candidates)) || [])){
+    const r=(c && c.result) || c || {}, k=regKey(r.ext_inspera_candidateId); n++;
+    if(set.has(k)){ reg++; seen.add(k); } } }
+  return {listed:set.size, hit:seen.size, miss:set.size-seen.size, reg, n, used:seen.size>0};
 }
 
 /* ---------- datafilen (i koden: paketet) ----------
@@ -1326,16 +1391,18 @@ function ortNames(titles){
   if(t.length===1) return [""];
   return t.map((a,i)=>a.slice(n).filter(w=>!/^\d+$/.test(w)).join(" ") || `Ort ${i+1}`);
 }
-function buildPackage({jsonObjs, pdfMcqs, tagRows}){
+function buildPackage({jsonObjs, pdfMcqs, tagRows, regCodes}){
   const titles = jsonObjs.map(o=>o && o.ext_inspera_assessmentRunTitle).filter(Boolean);
   const pdfName = (pdfMcqs && pdfMcqs.examName) || null;
+  const fit = regFit(jsonObjs, regCodes), regSet = (fit && fit.used) ? new Set(regCodes.map(regKey)) : null;
   return { format:PKG_FORMAT, formatVersion:PKG_VERSION, toolVersion:VERSION,
     created:new Date().toISOString().slice(0,10),
     examName: commonTitle(titles),
     orter: ortNames(jsonObjs.map(o=>o && o.ext_inspera_assessmentRunTitle)),   // en per resultatfil, i samma ordning som data
+    regList: regSet ? {listed:fit.listed, miss:fit.miss} : null,                // Ladok-listan: bara antal koder och hur många som inte fanns
     examWarning: examMismatch(pdfName, titles) || null,
     data: (()=>{ let off=0;                                   // löpnumren löper över alla filer (en fil per ort)
-      return jsonObjs.map(o=>{ const m=minimizeInspera(o, off); off+=m.ext_inspera_candidates.length; return m; }); })(),
+      return jsonObjs.map(o=>{ const m=minimizeInspera(o, off, regSet); off+=m.ext_inspera_candidates.length; return m; }); })(),
     pdf: pdfMcqs ? {examName:pdfName, items:[...pdfMcqs], essays:[...(pdfMcqs.essays||[])]} : null,
     tagRows: tagRows || null };
 }
@@ -1394,7 +1461,7 @@ function resolveInputs(objs, loaded){
            fromPackage:true, examWarning: own.pdfMcqs ? null : P.examWarning };
 }
 /* Kvittot i steg 1, innan datafilen sparas – aldrig några resultat. */
-function prepReceipt({jsonObjs, pdfMcqs, tagRows}){
+function prepReceipt({jsonObjs, pdfMcqs, tagRows, regCodes}){
   if(jsonObjs.some(isPackage)) throw new Error("Det här är redan en datafil från steg 1. Släpp resultatfilerna från Inspera i stället.");
   if(jsonObjs.some(o=>!isPlainObj(o))) throw new Error("Resultatfilen har inte det format som Inspera exporterar.");
   let n=0; for(const d of jsonObjs){ const l=(d && (d.ext_inspera_candidates || d.candidates)) || []; n+=l.length; }
@@ -1404,6 +1471,7 @@ function prepReceipt({jsonObjs, pdfMcqs, tagRows}){
   return { orter: ortNames(jsonObjs.map(o=>o && o.ext_inspera_assessmentRunTitle)).filter(Boolean), nFiles: jsonObjs.length,
            tagCols: tg ? tg.tagCols.map(c=>c.name) : [], essays: pdfMcqs && pdfMcqs.essays ? pdfMcqs.essays.length : 0,
            examName:commonTitle(titles), candCount:n, mcqPdf: pdfMcqs ? pdfMcqs.length : null,
+           reg: regFit(jsonObjs, regCodes),
            hasTags: !!(tagRows && tagRows.length), warning: examMismatch(pdfMcqs && pdfMcqs.examName, titles) || null };
 }
 
@@ -1515,7 +1583,10 @@ function parseJSON(jsonObjs){
   const zeroWeight=[], partialZero=[];
   for(const qn of order){ const w=agg[qn].w0||0; if(!w) continue;
     if(w===cands.length) zeroWeight.push(String(qn)); else partialZero.push({num:String(qn), n:w}); }
-  const J={candCount:cands.length, agg, mcqSeqs, qMeta, qTitle:titleOf, cohortScores, ungradedPts, fullyGraded, maxTotal, mcqSlot:mcqSlotByCand, candMeta, zeroWeight, partialZero, candFile,
+  // Registrerad på kursen innevarande termin (ur Ladok-listan i steg 1): true/false per student, eller null utan lista.
+  const hasReg = cands.some(c=>typeof c.fl_registered==="boolean");
+  const reg = hasReg ? cands.map(c=>c.fl_registered===true) : null;
+  const J={candCount:cands.length, agg, mcqSeqs, qMeta, qTitle:titleOf, cohortScores, ungradedPts, fullyGraded, maxTotal, mcqSlot:mcqSlotByCand, candMeta, zeroWeight, partialZero, candFile, reg,
     insp: cands.map(c=>({grade:(typeof c.ext_inspera_finalGrade==="string" ? c.ext_inspera_finalGrade : ""),
                          total:(typeof c.ext_inspera_totalScore==="number" ? c.ext_inspera_totalScore : null)}))};
   // Diskrimineringen mot flervalsdelen räknas en gång här; vyerna räknar om med sitt eget kriterium i render().
@@ -1970,12 +2041,20 @@ function lathundKontrollInit(){
   const ABS = ['alltid', 'aldrig', 'endast', 'uteslutande', 'samtliga', 'inga', 'enbart'];
   const NEG_STAM = /\b(inte|ej|utom|förutom|aldrig|felaktig[t]?|minst (?:trolig|sannolik)[a-z]*|stämmer inte)\b/i;
   /* "Vad stämmer bäst …" och "Vilket alternativ stämmer …" tillagda 23 nov 2026 (samma form utan "av följande"). */
-  const PASTAENDE = /\b(vilket av följande (?:påståenden? )?(?:stämmer|är (?:korrekt|sant|riktigt|falskt|fel))|vilket påstående|vad (?:som )?stämmer(?: bäst| inte)?|vilket (?:alternativ|svar) stämmer(?: bäst| inte)?|stämmer inte|är inte (?:korrekt|sant|riktigt))\b/i;
+  /* Egen ordgräns i stället för \b: \b räknar inte å, ä och ö som bokstäver, så ett led som börjar på "är"
+     hittades aldrig efter ett mellanslag. Träffen ligger i grupp 1. */
+  const PASTAENDE = /(?:^|[^a-zåäö])(vilket av följande (?:påståenden? )?(?:stämmer|är (?:korrekt|sant|riktigt|falskt|fel))|vilket påstående|vad (?:som )?stämmer(?: bäst| inte)?|vilket (?:alternativ|svar) stämmer(?: bäst| inte)?|stämmer inte|är inte (?:korrekt|sant|riktigt))(?![a-zåäö])/i;
   const PEKAR = /\b(vilket alternativ|vilket av följande|vilken av följande|vilket av nedanstående|vilket påstående)\b/i;
   const BASTA = /\b(bäst|bästa|mest|främst|främsta|troligast|troligaste|sannolikast|sannolikaste|huvudsaklig\w*|viktigast\w*|lämpligast\w*|första hand)\b/i;
   const LED = /\b(så att|vilket|som|eftersom|medan|därför|därmed|när|om|och)\b|[;,]/gi;
   const TVA = /\b(både|samtidigt|och därmed|liksom)\b|;/i;
-  const SAMLING = /\b(alla|samtliga|inget|ingen|inga|ingetdera) (?:av )?(?:ovanstående|ovan|de ovanstående|nedanstående|alternativen)\b|\b(?:både|såväl) [a-eA-E] (?:och|som) [a-eA-E]\b|\b[a-eA-E] (?:och|\+) [a-eA-E]\b/i;
+  /* Samlingsalternativ: "alla ovanstående" och liknande var som helst i alternativet. Bokstavskombinationer räknas
+     bara när hela alternativet är kombinationen ("A och B", "Både A och C", "A, B och D") eller när det står
+     "alternativ A och B". Annars slår regeln på innehåll som "Hepatit B och C" och "vitamin A och D". */
+  const SAMLING_ORD = /\b(alla|samtliga|inget|ingen|inga|ingetdera) (?:av )?(?:ovanstående|ovan|de ovanstående|nedanstående|alternativen)\b/i;
+  const SAMLING_HEL = /^(?:(?:både|såväl)\s+)?(?:alternativ(?:en)?\s+)?[a-e](?:\s*,\s*[a-e])*\s*(?:och|som|\+|&)\s*[a-e]\.?$/i;
+  const SAMLING_ALT = /\balternativ(?:en)? [a-e](?:, [a-e])* (?:och|som|\+) [a-e]\b/i;
+  const samling = a => { const m = a.match(SAMLING_ORD) || a.match(SAMLING_HEL) || a.match(SAMLING_ALT); return m ? m[0] : null; };
 
   const ord = (t, min) => {
     const m = new Map();
@@ -1986,7 +2065,10 @@ function lathundKontrollInit(){
   /* Fyndtext för ordträffar: ordet som det står i rätt svar, och i parentes formen i
      vinjetten eller stammen när den skiljer sig ("kortisonbehandling", i vinjetten "kortisonbehandlingen"). */
   const par = (har, dar, plats) => har.toLowerCase() === dar.toLowerCase() ? '"' + har + '"' : '"' + har + '" (i ' + plats + ' "' + dar + '")';
-  const strip = s => s.replace(/^\s*(?:[-–•*]|\(?[a-hA-H1-9][.):]|[a-hA-H]\))\s*/, '').trim();
+  /* Skalar bort listtecken och alternativbokstav ("A.", "b)", "(C)", "1."). Efter bokstav eller siffra krävs ett
+     mellanslag, så "2.5 mg" och "2:1-blockad" lämnas hela. "X." före liten bokstav lämnas också, eftersom det
+     oftast är ett släktnamn ("E. coli", "C. difficile"). */
+  const strip = s => s.replace(/^\s*(?:[-–•*]\s*|\(?[a-hA-H1-9][):]\s+|\([a-hA-H1-9]\)\s*|[1-9]\.\s+|[a-hA-H]\.\s+(?![a-zåäö]))/, '').trim();
 
   function kor(I, inp) {
     const vinjett = (inp.vinjett || '').trim();
@@ -2007,7 +2089,7 @@ function lathundKontrollInit(){
     if (kvot > 2 && !enord) f('kvot', 'Längsta alternativet är ' + kvot.toFixed(1) + ' gånger det kortaste (' + lens.join(', ') + ' tecken).');
 
     /* K2 absoluta ord */
-    alla.forEach((a, i) => ABS.forEach(t => { if (!SAMLING.test(a) && new RegExp('\\b' + t + '\\b', 'i').test(a)) f('absolut', '"' + t + '" i ' + (i === 0 ? 'rätt svar' : 'distraktor ' + i) + '.'); }));
+    alla.forEach((a, i) => ABS.forEach(t => { if (!samling(a) && new RegExp('\\b' + t + '\\b', 'i').test(a)) f('absolut', '"' + t + '" i ' + (i === 0 ? 'rätt svar' : 'distraktor ' + i) + '.'); }));
 
     /* K3 ordeko stam/vinjett → rätt svar, saknas i distraktorerna. Spegelregeln (vinjettord bara i en
        distraktor) togs bort 5 nov 2026: slog på var femte vinjettfråga i tentaanalysen utan samband med B. */
@@ -2035,18 +2117,18 @@ function lathundKontrollInit(){
        och kunde inte skilja en negation som bär svaret från en ovidkommande. */
 
     /* K8 stammen (NBME) */
-    if (PASTAENDE.test(stam)) f('pastaende', '"' + stam.match(PASTAENDE)[0] + '".');
+    if (PASTAENDE.test(stam)) f('pastaende', '"' + stam.match(PASTAENDE)[1] + '".');
     else if (NEG_STAM.test(stam)) f('negstam', '"' + stam.match(NEG_STAM)[0] + '".');
     if (PEKAR.test(stam) && !PASTAENDE.test(stam)) f('pekar', '"' + stam.match(PEKAR)[0] + '".');
     if (!BASTA.test(stam) && !PEKAR.test(stam) && !PASTAENDE.test(stam)) f('markor', '');
 
     /* K9 samlingsalternativ (NBME) */
-    alla.forEach((a, i) => { if (SAMLING.test(a)) f('samling', '"' + a.match(SAMLING)[0] + '" i ' + (i === 0 ? 'rätt svar' : 'distraktor ' + i) + '.'); });
+    alla.forEach((a, i) => { if (samling(a)) f('samling', '"' + samling(a) + '" i ' + (i === 0 ? 'rätt svar' : 'distraktor ' + i) + '.'); });
 
     /* K10 dubbletter och grammatisk ojämnhet (NBME) */
     const sett = {};
     alla.forEach((a, i) => { const k = norm(a); if (sett[k] != null) f('dubblett', (sett[k] === 0 ? 'Rätt svar' : 'Distraktor ' + sett[k]) + ' och ' + (i === 0 ? 'rätt svar' : 'distraktor ' + i) + ' är samma text.'); else sett[k] = i; });
-    const stor = alla.map(a => /^[A-ZÅÄÖ]/.test(a)), punkt = alla.map(a => /[.!?]$/.test(a));
+    const stor = alla.filter(a => /^[a-zåäö]/i.test(a)).map(a => /^[A-ZÅÄÖ]/.test(a)), punkt = alla.map(a => /[.!?]$/.test(a));
     if (alla.length > 2 && (new Set(stor).size > 1 || new Set(punkt).size > 1)) f('ojamn', 'Blandad stor och liten begynnelsebokstav eller punkt bara i vissa alternativ.');
 
     /* K11 antal distraktorer */
@@ -2074,7 +2156,7 @@ function lathundKontrollInit(){
 /* </LATHUND-KONTROLL> */
 }
 /* <LATHUND-REGLER> */
-const FORM_META = {"version":"Version 1.0","datum":"23 november 2026","licens":"CC BY 4.0","upphov":"© 2026 Kajsa Igelström"};
+const FORM_META = {"version":"Version 1.1.1","datum":"23 november 2026","licens":"CC BY 4.0","upphov":"© 2026 Kajsa Igelström"};
 const FORM_REGLER = {
  "langst": {
   "prio": "battre",
@@ -2315,6 +2397,7 @@ function render(){
     const tri = state.step==="triage", hx=$("#exp-xlsx"), ho=$("#exp-overview");
     { const hpq=$("#exp-problems"); if(hpq) hpq.classList.toggle("hidden", !tri); }
     { const hc=$("#exp-charts"); if(hc) hc.classList.toggle("hidden", tri); }
+    { const hb=$("#exp-bokslut"); if(hb){ hb.classList.toggle("hidden", tri); hb.disabled=!(state.json && state.json.reg); } }
     { const ht=$("#exp-temapdf"); if(ht){ ht.classList.toggle("hidden", tri); ht.disabled=!(state.json && state.json.fullyGraded); } }
     { const gc=$("#gctl"); if(gc) gc.classList.toggle("hidden", tri); }
     if(eh) eh.classList.toggle("hidden", tri); if(hx) hx.classList.toggle("hidden", tri); if(ho) ho.classList.toggle("hidden", tri); }
@@ -2341,7 +2424,7 @@ function render(){
   results.classList.toggle("premode", isPre());
   renderFileLine();
   { const sd = state.step==="report" ? statsData() : null;   // räknas en gång, till G-gränsen och till jämförelsen med Inspera
-    renderGLimit(sd); renderGradeNote(sd); }
+    renderGLimit(sd); renderGradeNote(sd); renderBokslut(sd); }
   $("#nnote").innerHTML = state.smallN
     ? `<div class="advnote">Litet underlag: ${esc(state.json.candCount)} studenter. Under ${MIN_N} svar visas bara mätvärdena, utan etiketter, observationer eller uppmaningar. Ett svar väger ${Math.round(100/Math.max(1,state.json.candCount))} procentenheter.</div>`
     : "";
@@ -2967,13 +3050,33 @@ function statsData(){
   const orter=state.orter||[];
   const students=J.cohortScores.map((row,k)=>{ const scores=keep.map(i=>+(+row[i]).toFixed(2)), total=scores.reduce((s,v)=>s+v,0);
     const x=(J.insp||[])[k]||{};
-    return {nr:k+1, ort:orter[(J.candFile||[])[k]]||"", scores, total:+total.toFixed(2), g:gPassed(total, gThr),
+    return {nr:k+1, ort:orter[(J.candFile||[])[k]]||"", scores, total:+total.toFixed(2), g:gPassed(total, gThr), reg:J.reg ? !!J.reg[k] : null,
             inspTotal:(x.total===null||x.total===undefined)?"":x.total, inspGrade:x.grade||""}; });
   const names=[...new Set(questions.map(q=>q.tema).filter(Boolean))];
   const themes=names.map(t=>{ const qs=questions.filter(q=>q.tema===t);
     return {name:t, nums:qs.map(q=>q.num), max:qs.reduce((s,q)=>s+q.max,0), mean:qs.reduce((s,q)=>s+q.mean,0)}; });
-  return {exam:state.examName||"", max:+max.toFixed(2), gThr, passPct:state.th.pass, questions, students, themes, excluded, rel:reliability(),
+  return {exam:state.examName||"", max:+max.toFixed(2), gThr, passPct:state.th.pass, questions, students, themes, excluded, rel:reliability(), reg:regSplit(students),
           orter:[...new Set(students.map(x=>x.ort).filter(Boolean))]};
+}
+/* Uppdelningen i registrerade innevarande termin och övriga: antal och antal godkända per grupp. null utan Ladok-lista.
+   Bara summor, aldrig vilka studenter. */
+function regSplit(students){
+  if(!students.length || students[0].reg===null || students[0].reg===undefined) return null;
+  const grp=xs=>({n:xs.length, g:xs.filter(x=>x.g).length});
+  return {reg:grp(students.filter(x=>x.reg)), oth:grp(students.filter(x=>!x.reg)), all:grp(students)};
+}
+/* Texten till kursbokslutet, efter den mall som används i dag (Kajsa 23 nov 2026). kind = "omtenta" eller ordinarie.
+   Procenten är hela tal. En grupp utan studenter får ingen andel. */
+function bokslutText(d, kind){
+  const s=d && d.reg; if(!s) return "";
+  const pc=(a,b)=>b ? Math.round(a/b*100) : 0, stud=n=>n===1 ? "student" : "studenter";
+  const head = kind==="omtenta" ? "Omtentamen" : "Ordinarie tentamen";
+  let t=`${head} skrevs av ${s.all.n} ${stud(s.all.n)}, ${s.reg.n} av dessa var registrerade på kursen. `
+      + `Av ${s.all.g} godkända (${pc(s.all.g,s.all.n)}%) tillhörde ${s.reg.g} ${stud(s.reg.g)} innevarande termin.`;
+  if(s.reg.n && s.oth.n) t+=` Därmed klarade ${pc(s.reg.g,s.reg.n)}% av studenterna registrerade på kursen tentan, medan ${pc(s.oth.g,s.oth.n)}% av övriga klarade tentamen.`;
+  else if(s.reg.n) t+=` Därmed klarade ${pc(s.reg.g,s.reg.n)}% av studenterna registrerade på kursen tentan.`;
+  else if(s.oth.n) t+=` Därmed klarade ${pc(s.oth.g,s.oth.n)}% av övriga tentamen.`;
+  return t;
 }
 /* Jämför verktygets uträkning med Insperas egen totalpoäng och slutbetyg, student för student. Skillnader betyder
    att något räknas olika: en fråga som är exkluderad på ena stället men inte det andra, en annan G-gräns, eller
@@ -2998,6 +3101,28 @@ function renderGradeNote(d){
   if(c.totalDiff) parts.push(`Totalpoängen skiljer sig från Insperas för ${c.totalDiff} av ${c.n} studenter. Det händer när en fråga räknas på ena stället men inte på det andra, till exempel en fråga som är exkluderad här men inte nedviktad i Inspera, eller tvärtom.`);
   if(c.gradeDiff) parts.push(`Betyget skiljer sig från Insperas för ${c.gradeDiff} av ${c.n} studenter: här blir det ${c.toolG} G med G-gräns ${c.passPct} % (${c.gThr} p), i Inspera står ${c.inspG} G.`);
   el.innerHTML = `<div class="bad">⚠ ${parts.join(" ")}</div>`;
+}
+/* Rutan med texten till kursbokslutet. Öppnas med knappen Kursbokslutstext i steg 3 och räknas om när G-gränsen
+   eller exkluderingarna ändras. Valet mellan ordinarie tentamen och omtentamen gör användaren: det står inte i datan. */
+function renderBokslut(d){
+  const el=$("#bokslut"); if(!el) return;
+  d = (state.step==="report" && state.bokslutOpen) ? (d||statsData()) : null;
+  if(!d || !d.reg){ el.classList.add("hidden"); el.innerHTML=""; return; }
+  const kind = state.bokslutKind==="omtenta" ? "omtenta" : "ordinarie";
+  el.classList.remove("hidden");
+  el.innerHTML = `<b>Text till kursbokslutet</b><br>`
+    + `<label><input type="radio" name="bokslut-kind" value="ordinarie"${kind==="ordinarie"?" checked":""}> Ordinarie tentamen</label>`
+    + `<label><input type="radio" name="bokslut-kind" value="omtenta"${kind==="omtenta"?" checked":""}> Omtentamen</label>`
+    + `<textarea id="bokslut-text" rows="4" readonly>${esc(bokslutText(d, kind))}</textarea>`
+    + `<button class="expbtn" id="bokslut-copy" type="button">Kopiera texten</button> `
+    + (state.regList && state.regList.miss ? `<div class="warn">⚠ ${esc(regMissText(state.regList))}</div>` : "")
+    + `<span class="hint">Räknat med G-gränsen ${esc(thFmt("pass"))} % (${d.gThr} p) och utan exkluderade frågor. Registrerade är de studenter som finns i Ladok-listan från steg 1.</span>`;
+  if(typeof el.querySelectorAll==="function") el.querySelectorAll('input[name="bokslut-kind"]').forEach(r=>r.addEventListener("change", ()=>{ state.bokslutKind=r.value; renderBokslut(); }));
+  const cp=el.querySelector && el.querySelector("#bokslut-copy");
+  if(cp) cp.addEventListener("click", ()=>{ const ta=el.querySelector("#bokslut-text"); if(!ta) return;
+    const done=()=>{ cp.textContent="Kopierad"; };
+    try{ if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(done, ()=>{ ta.select(); });
+         else { ta.select(); document.execCommand("copy"); done(); } }catch(_){ ta.select(); } });
 }
 /* G-gränsen på rapportsidan: procent av maxpoängen, och vad det blir i poäng utan exkluderade frågor. */
 function renderGLimit(d){
@@ -3035,8 +3160,11 @@ function statsSheets(d){
     ["Antal G", {v:nG, f:`COUNTIF(${bet},"G")`}, {v:pc(nG,n)||0, f:"ROUND(B9/B7*100,2)"}, "% av tentanderna"],["Antal U", {v:n-nG, f:`COUNTIF(${bet},"U")`}, {v:pc(n-nG,n)||0, f:"ROUND(B10/B7*100,2)"}, "% av tentanderna"],
     ...(insp ? [["Antal G enligt Inspera", d.students.filter(x=>x.inspGrade && x.inspGrade.toUpperCase()!=="U").length, "", "Slutbetyget som står i Inspera, för jämförelse."],
                  ["Antal U enligt Inspera", d.students.filter(x=>x.inspGrade && x.inspGrade.toUpperCase()==="U").length]] : []),
-    ["Registrerade innevarande termin: antal G och U", "", "Fylls i för hand. Uppgiften finns inte i Inspera."],
-    ["Registrerade tidigare terminer: antal G och U", "", "Fylls i för hand. Uppgiften finns inte i Inspera."],[""]];
+    ...(d.reg ? [["Registrerade innevarande termin: antal G och U", d.reg.reg.g, d.reg.reg.n-d.reg.reg.g, pc(d.reg.reg.g,d.reg.reg.n), "Antal G, antal U och andel G i procent. Ur Ladok-listan i steg 1. Räknat med G-gränsen vid exporten. Följer inte med om gränsen ändras här i Excel."
+                    + (state.regList && state.regList.miss ? " OBS: "+regMissText(state.regList) : "")],
+                  ["Registrerade tidigare terminer: antal G och U", d.reg.oth.g, d.reg.oth.n-d.reg.oth.g, pc(d.reg.oth.g,d.reg.oth.n), "Studenter som inte finns i Ladok-listan."]]
+               : [["Registrerade innevarande termin: antal G och U", "", "Fylls i för hand, eller välj Ladok-listan i steg 1."],
+                  ["Registrerade tidigare terminer: antal G och U", "", "Fylls i för hand, eller välj Ladok-listan i steg 1."]]),[""]];
   if(d.rel){ const r3=x=>(x===null||x===undefined) ? "" : +(+x).toFixed(3);
     sum.push(["Reliabilitet","Cronbachs alfa","Medeldiskriminering (r)","Antal frågor"]);
     d.rel.parts.forEach((p,i)=>sum.push([p.label, r3(p.alpha), r3(p.meanR), p.k, ...(i===2 ? [REL_CAVEAT] : [])]));
@@ -3548,6 +3676,7 @@ async function tryRun(){
     (state.json.zeroWeight||[]).forEach(n=>{ if(!state.excluded.has(n)) state.excluded.set(n, INSPERA_REASON); });
     renderWeightNote();
     { const pk=objs.find(isPackage);
+      state.regList = (pk && isPlainObj(pk.regList)) ? {listed:+pk.regList.listed||0, miss:+pk.regList.miss||0} : null;
       state.orter = pk ? (Array.isArray(pk.orter) ? pk.orter : []) : ortNames(objs.map(o=>o && o.ext_inspera_assessmentRunTitle));
       state.examName = (pk && pk.examName) || commonTitle(objs.map(o=>o && o.ext_inspera_assessmentRunTitle)) || ""; }
     state.synthMcqs = null;   // JSON-lägets kortunderlag byggs om från nya datan vid behov
@@ -3592,7 +3721,11 @@ async function prepInputs(){
   const pdfMcqs = (state.prepPdf!==undefined) ? state.prepPdf : ((state.pdfMcqs && !state.pdfFromPackage) ? state.pdfMcqs : null);
   const tf = state.prepTags || state.tagsFile;
   const tagRows = (tf && typeof tf.arrayBuffer==="function") ? readTagRows(await tf.arrayBuffer()) : null;
-  return {jsonObjs, pdfMcqs, tagRows};
+  // Ladok-listan: bara koderna läses ut. Ett fel i en fil (ingen kolumn AidCode) stoppar inte resten; det visas vid rutan.
+  let regCodes=null; state.regError=null;
+  for(const f of (state.prepReg || state.regFiles || [])){ if(typeof f.text!=="function") continue;
+    try{ regCodes=(regCodes||[]).concat(parseRegList(await f.text(), f.name).codes); }catch(e){ state.regError=e.message; } }
+  return {jsonObjs, pdfMcqs, tagRows, regCodes};
 }
 /* Det kvittot behöver veta om den kombinerade datafilen innan analysen visas: frågetyper, om allt är rättat och hur
    många frågor taggfilen träffade. Räknas på samma minimerade data som sparas. */
@@ -3633,12 +3766,25 @@ function examFacts(J, T){
   const counts=typeCounts(J);
   const hit = T ? J.qMeta.filter(m=>{ const t=J.qTitle ? J.qTitle[m.num] : "";
     const v=T.byNum.get(String(m.num)) || (t ? T.byCode.get(String(t).toLowerCase()) : null); return !!v && v.some(Boolean); }).length : null;
-  return {candCount:J.candCount, counts, total:J.qMeta.length, fullyGraded:!!J.fullyGraded, ungradedPts:J.ungradedPts||0, tagHit:hit};
+  return {candCount:J.candCount, counts, total:J.qMeta.length, fullyGraded:!!J.fullyGraded, ungradedPts:J.ungradedPts||0, tagHit:hit,
+          regN: J.reg ? J.reg.filter(Boolean).length : null};
 }
 /* Kvittots två rader om rättning och taggar (Kajsa 21 nov 2026). */
 function receiptFacts(f){
   return (f.counts.text ? `<br>${f.fullyGraded ? "Essäfrågorna är rättade." : "Essäfrågorna är inte rättade än."}` : "")
-       + (f.tagHit!==null ? `<br>${f.tagHit<f.total ? '<span class="warn">' : "<span>"}Taggfilen matchade ${f.tagHit} av ${f.total} frågor.</span>` : "");
+       + (f.tagHit!==null ? `<br>${f.tagHit<f.total ? '<span class="warn">' : "<span>"}Taggfilen matchade ${f.tagHit} av ${f.total} frågor.</span>` : "")
+       + (f.regN!==null && f.regN!==undefined ? `<br>Ladok-listan är med: ${f.regN} av ${f.candCount} studenter finns i listan och räknas som registrerade på kursen.` : "");
+}
+/* Kvittots rad om hur Ladok-listan passade tentan. Koder som inte finns bland studenterna kan höra till ett annat
+   tentatillfälle (Ladok visar varje students senaste resultat), och då räknas de studenterna som övriga. */
+function regNote(r){
+  if(!r) return "";
+  if(!r.used) return `<br><span class="warn">⚠ Ingen av Ladok-listans ${r.listed} koder finns bland tentans studenter, så listan används inte. Kontrollera att listan gäller den här tentan.</span>`;
+  if(!r.miss) return "";
+  return `<br><span class="warn">⚠ ${regMissText(r)}</span>`;
+}
+function regMissText(r){
+  return `${r.miss} av Ladok-listans ${r.listed} koder finns inte bland tentans studenter. Ladok visar varje students senaste resultat, så koderna kan gälla ett senare tentatillfälle. Skrev de studenterna också den här tentan räknas de här som övriga, och antalet registrerade blir för lågt.`;
 }
 async function refreshPrep(){
   const box=$("#prep-receipt"), b=$("#prep-save"); if(!state.prep || !box || !b) return;
@@ -3656,12 +3802,13 @@ async function refreshPrep(){
     const f=prepAnalysis(inp); state.prepInfo=f;
     { const gj=$("#got-json"); if(gj) gj.textContent = `✓ ${k.nFiles} ${k.nFiles===1?"fil":"filer"} — ${k.candCount} studenter${k.orter.length?` (${k.orter.join(", ")})`:""}`;
       const gp=$("#got-pdf"); if(gp && f.pdf) gp.textContent = `✓ ${pdfCountText(f.pdf).replace(" lästa ur PDF:en","")}${k.essays?`, ${k.essays} essäfrågor`:""} lästa`;
-      const gt=$("#got-tags"); if(gt && k.hasTags) gt.textContent = `✓ ger filter på ${k.tagCols.join(", ") || "taggarna"}`; }
+      const gt=$("#got-tags"); if(gt && k.hasTags) gt.textContent = `✓ ger filter på ${k.tagCols.join(", ") || "taggarna"}`;
+      const gr=$("#got-reg"); if(gr) gr.textContent = state.regError ? `✗ ${state.regError}` : k.reg ? `✓ ${k.reg.listed} koder lästa` : ""; }
     box.innerHTML = `<b>${esc(k.examName||"Tenta utan namn")}</b><br>`
       + `${k.candCount} studenter · `
       + (f.pdf ? pdfCountText(f.pdf) : "ingen PDF") + " · "
       + (k.hasTags ? "taggfilen är med" : "ingen taggfil")
-      + receiptFacts(f)
+      + receiptFacts(f) + regNote(k.reg)
       + (k.warning ? `<br><span class="warn">⚠ ${esc(k.warning)}</span>` : "")
       + ((!k.warning && f.pdf && f.pdf.warning) ? `<br><span class="warn">⚠ ${esc(f.pdf.warning)}</span>` : "");
   }catch(e){ b.disabled=true; state.prepInfo=null; box.innerHTML=`<span class="warn">⚠ ${esc(e.message)}</span>`; }
@@ -3736,13 +3883,17 @@ $("#tags").addEventListener("change", e=>{
   state.tagsFile=e.target.files[0]; state.prepTags=state.tagsFile; state.prepDirty=true; state.activeTags={}; if(!state.fromDataFile) state.dataSaved=false;
   $("#got-tags").textContent=state.tagsFile?`✓ ${state.tagsFile.name}`:""; refreshPrep();
 });
+$("#reg").addEventListener("change", e=>{
+  state.regFiles=[...e.target.files]; state.prepReg=state.regFiles; state.prepDirty=true; if(!state.fromDataFile) state.dataSaved=false;
+  $("#got-reg").textContent=state.regFiles.length?"läser …":""; refreshPrep();
+});
 $("#datafile").addEventListener("change", async e=>{
   const f=e.target.files && e.target.files[0]; if(!f) return;
   $("#got-data").textContent="läser …";
   // En sparad datafil ersätter filerna som valts i steg 1. Sidan står kvar i det steg där filen valdes.
   const ok=await loadDataFile(await f.text(), f.name, {saved:true, stay:state.prep});
-  if(ok){ state.prepFiles=null; state.prepPdf=undefined; state.prepTags=null; state.prepDirty=false;
-    ["#got-json","#got-pdf","#got-tags"].forEach(s=>{ const g=$(s); if(g) g.textContent=""; }); refreshPrep(); }
+  if(ok){ state.prepFiles=null; state.prepPdf=undefined; state.prepTags=null; state.prepReg=null; state.regFiles=null; state.prepDirty=false;
+    ["#got-json","#got-pdf","#got-tags","#got-reg"].forEach(s=>{ const g=$(s); if(g) g.textContent=""; }); refreshPrep(); }
   $("#got-data").textContent = (ok && state.json) ? `✓ ${f.name}` : "";
 });
 $("#step-triage").addEventListener("click", ()=>{ goStep("triage"); });
@@ -3785,10 +3936,11 @@ $("#clearfilter").addEventListener("click", clearFilters);
 $("#exp-xlsx").addEventListener("click", ()=>{ if(state.json) exportXlsx(); });
 $("#exp-overview").addEventListener("click", ()=>{ if(state.json) exportOverview(); });
 $("#exp-problems").addEventListener("click", ()=>{ if(state.vm) exportProblems(); });
+$("#exp-bokslut").addEventListener("click", ()=>{ if(state.json && state.json.reg){ state.bokslutOpen=!state.bokslutOpen; renderBokslut(); } });
 $("#exp-charts").addEventListener("click", ()=>{ if(state.json) exportCharts(); });
 $("#exp-temapdf").addEventListener("click", ()=>{ if(state.vm) exportTemaPdf(); });
 $("#g-pct").addEventListener("change", e=>{ setThreshold("pass", e.target.value);            // ogiltigt värde: fältet återgår
-  const sd = state.step==="report" ? statsData() : null; renderGLimit(sd); renderGradeNote(sd); });
+  const sd = state.step==="report" ? statsData() : null; renderGLimit(sd); renderGradeNote(sd); renderBokslut(sd); });
 $("#exp-html").addEventListener("click", ()=>{ if(state.vm) exportInteractive(); });
 $("#modeseg").addEventListener("click", e=>{
   const b=e.target.closest(".modebtn"); if(!b || b.dataset.mode===state.mode) return;

@@ -6,6 +6,19 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.34.0
+- **Uppdelning i studenter registrerade innevarande termin och övriga.** Steg 1 har en fjärde, valfri filruta för
+  en lista från Ladok (CSV) med kolumnen AidCode, som är samma nummer som Insperas kandidatnummer. Bara den
+  kolumnen läses. I datafilen står bara ja eller nej per student. Kvittot säger hur många av listans koder som
+  finns bland tentans studenter.
+- **Kursbokslutstext** i steg 3: en färdig text efter kursbokslutets mall, med val mellan ordinarie tentamen och
+  omtentamen. Följer G-gränsen och exkluderingarna.
+- **Tentamensstatistiken** fyller i raderna om registrerade innevarande termin och tidigare terminer (antal G,
+  antal U, andel G) när Ladok-listan är med.
+- **Formkontrollen synkad med MCQ-lathunden 1.1.1:** bokstavspar räknas som samlingsalternativ bara när alternativet
+  är själva kombinationen, alternativbokstav skalas inte bort ur "E. coli" eller "2.5 mg", ojämn form jämför inte
+  bokstav mot siffra, och "är inte korrekt" i stammen hittas som påståendeform.
+
 ## 3.33.0
 - **Varning när sidan visas inbäddad**, till exempel i Teams-appens förhandsvisning. Där stoppas nya fönster,
   nedladdningar och utskrift utan felmeddelande, så knapparna gör ingenting. Sidan säger nu det högst upp och
