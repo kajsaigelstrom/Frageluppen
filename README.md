@@ -23,7 +23,7 @@ Hela verktyget är **en enda fil**, `index.html`. Du behöver inte installera n�
 ## Tre steg
 
 Verktyget används i tre steg, som väljs i raden överst. Vem som gör vilket steg bestämmer ni
-själva. I Linköping gör kurssamordnaren steg 1 och examinatorn steg 2 och 3.
+själva.
 
 **1 Förbered filer.** Sidan öppnar här.
 
