@@ -6,6 +6,15 @@ ska alltid matcha den senaste Git-taggen.
 Loggen börjar vid 3.13.0 (utgångsläget när repot skapades). Tidigare historik finns
 inte dokumenterad här.
 
+## 3.33.0
+- **Varning när sidan visas inbäddad**, till exempel i Teams-appens förhandsvisning. Där stoppas nya fönster,
+  nedladdningar och utskrift utan felmeddelande, så knapparna gör ingenting. Sidan säger nu det högst upp och
+  hänvisar till webbläsaren. Gäller både verktyget och den exporterade temarapporten.
+
+## 3.32.8
+- Formkontrollen synkad med MCQ-lathunden 1.0: negation i vinjetten är inte längre en regel, och stammar som
+  "Vad stämmer bäst …" räknas som påståendeform.
+
 ## 3.32.7
 - Ett formfynd som bara var en citerad fras ur stammen skrivs nu ut som en mening: "Stammen har formuleringen
   «Vilket påstående»."

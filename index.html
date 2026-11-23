@@ -307,6 +307,8 @@
   .advtw ul{margin:0;padding-left:18px}
   .advtw li{font-size:12.5px;color:var(--ink);line-height:1.5;margin:3px 0}
   .advbucket{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin:4px 0 1px}
+  .embednote{font-size:14px;line-height:1.5;color:#5a2a00;background:#fff3e0;border-bottom:2px solid #e08a2c;padding:12px 16px;font-weight:600}
+  @media print{ .embednote{display:none!important} }
   .advnote{font-size:12.5px;color:var(--muted);background:#eef2f4;border:1px solid #d5dee3;border-radius:8px;padding:9px 12px;line-height:1.5}
   .nnote{margin:0 0 4px}
   .code .qtitle{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:500;color:var(--accent);background:#eef4ef;border:1px solid #d4e4d8;border-radius:5px;padding:1px 6px;margin-left:8px}
@@ -697,7 +699,7 @@ function discLabel(r){
 }
 /* Version & attribution – enda sanningskälla. Bumpa VERSION vid release (MINOR = nya
    funktioner, PATCH = buggfixar, MAJOR = omarbetning) och sätt UPDATED till releasedatum. */
-const VERSION = "3.32.8";
+const VERSION = "3.33.0";
 const UPDATED = "2026-11-23";
 
 /* Hjälptext – gemensam källa för appen och den exporterade filen. Rendereras i en enkel
@@ -3126,7 +3128,21 @@ function xExportPrint(){
   if(ph) ph.textContent=["Temarapport", EMBED.exam||"", urval, filtersActive()?filterText(true):"", new Date().toLocaleDateString('sv-SE')].filter(Boolean).join(" · ");
   window.print();
 }
+/* Teams-appen och andra förhandsvisare visar filen inbäddad i ett låst läge: inga nya fönster, inga nedladdningar,
+   ingen utskrift, och inga felmeddelanden när de stoppas. Knapparna gör då ingenting. Det går inte att komma runt
+   inifrån sidan, så sidan säger det högst upp i stället. */
+function isEmbedded(){
+  try{ return typeof window!=="undefined" && window.self!==window.top; }catch(_){ return true; }
+}
+const EMBED_NOTE="Sidan visas inbäddad, till exempel inne i Teams. Här går det inte att spara filer, skriva ut eller öppna rapporter, och knapparna gör då ingenting. Öppna filen i webbläsaren i stället, eller ladda ner den och öppna den från datorn.";
+function embeddedNote(){
+  if(!isEmbedded() || typeof document==="undefined" || !document.body || document.getElementById("embednote")) return;
+  const d=document.createElement("div"); d.id="embednote"; d.className="embednote"; d.setAttribute("role","alert");
+  d.textContent=EMBED_NOTE;
+  document.body.insertBefore(d, document.body.firstChild);
+}
 function xExportInit(){
+  embeddedNote();
   wireHelp();
   $("#search").addEventListener("input", applyFilters);
   $("#sort").addEventListener("change", applyFilters);
@@ -3399,13 +3415,13 @@ function temaFns(){
              scoreQuestions,scorePatterns,scoredVisible,scoreCard,activePatternRows,relBoxHtml,filterText,overviewHtml,exportOverview,
              lathundKontrollInit,splitStem,formFindings,renderForm,isForebild,
              controlsHtml,wireComments,subsetEmbed,selVisible,renderSelBar,selRedraw,selAllVisible,selClear,saveSubset,savePage,printHtml,
-             fileLineText,temaSource,xExportRender,xExportPrint,openHelp,closeHelp,wireHelp,xExportInit];
+             fileLineText,temaSource,xExportRender,xExportPrint,openHelp,closeHelp,wireHelp,isEmbedded,embeddedNote,xExportInit];
 }
 function temaConsts(){
   return `const MIN_N=${MIN_N};const R_LOW=${R_LOW};const TH_DEFAULT=${JSON.stringify(TH_DEFAULT)};const TH_RANGE=${JSON.stringify(TH_RANGE)};const TH_LABEL=${JSON.stringify(TH_LABEL)};const PSY=${JSON.stringify(PSY)};`
     + `const FORM_META=${JSON.stringify(FORM_META)};const FORM_REGLER=${JSON.stringify(FORM_REGLER)};const FORM_CUE=${JSON.stringify(FORM_CUE)};const FORM_EFTER=${JSON.stringify(FORM_EFTER)};const FORM_EXPLAINS=${JSON.stringify(FORM_EXPLAINS)};`
     + `const NO_STEM=${JSON.stringify(NO_STEM)};const REL_CAVEAT=${JSON.stringify(REL_CAVEAT)};const FACETS=${JSON.stringify(FACETS)};const SCORE_TEXT=${JSON.stringify(SCORE_TEXT)};const EXCL_REASONS=${JSON.stringify(EXCL_REASONS)};const INSPERA_REASON=${JSON.stringify(INSPERA_REASON)};const LOCAL_EXCL_NOTE=${JSON.stringify(LOCAL_EXCL_NOTE)};const ASK_TEXT=${JSON.stringify(ASK_TEXT)};`
-    + `const HELP_HTML=${JSON.stringify(HELP_TEMA_HTML)};const HELP_TEMA_HTML=HELP_HTML;`;
+    + `const HELP_HTML=${JSON.stringify(HELP_TEMA_HTML)};const HELP_TEMA_HTML=HELP_HTML;const EMBED_NOTE=${JSON.stringify(EMBED_NOTE)};`;
 }
 /* Bygger hela den fristående temarapporten som en HTML-sträng. Använder bara embed, funktionslistan
    och sidans <style> – och fungerar därför likadant i appen och inne i en exporterad rapport. */
@@ -3760,6 +3776,7 @@ $("#reopen").addEventListener("click", expandUpload);
   }
 }
 refreshPrep();
+embeddedNote();
 wireHelp();
 wireSettings(false, ()=>{ if(state.json && (state.step==="triage" || state.step==="report")) render(); });   // G-gränsen har ett eget fält på rapportsidan
 { const c=$("#credit"); if(c) c.innerHTML=creditText(); }
