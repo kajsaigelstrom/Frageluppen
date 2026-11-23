@@ -152,7 +152,7 @@ test("filen heter datafil, och texterna säger inte vem som gör vad", () => {
     assert.match(SRC, /downloadText\(`datafil_\$\{stamp\(\)\}\.json`/);
     const help = a.ev("HELP_HTML");
     assert.match(help, /De tre stegen/);
-    assert.match(help, /I Linköping/);                                 // rollerna nämns bara som exempel
+    assert.ok(!/[Kk]urssamordnar|[Ee]xaminator|Linköping/.test(help));  // hjälpen nämner ingen roll (Kajsa 23 nov 2026)
     for (const s of ["#stephint", "#log"]) assert.ok(!/[Kk]urssamordnar|[Ee]xaminator/.test(a.el(s).textContent), s);
   });
 });
