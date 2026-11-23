@@ -53,8 +53,8 @@ och tentamensstatistiken i Excel, som också har tentans reliabilitet. Exportern
 
 ## För temagrupper: temarapporten
 
-Examinatorn skickar en fil, `temarapport_….html`, som öppnas i webbläsaren. Den visar hur
-tentans frågor fungerade och innehåller bara sammanräknade resultat.
+Temarapporten är en fil, `temarapport_….html`, som skapas i steg 3 och öppnas i webbläsaren. Den
+visar hur tentans frågor fungerade och innehåller bara sammanräknade resultat.
 
 - Filtrera på tema och klicka **Markera alla visade**, eller bocka för enskilda frågor.
 - **Spara sida med valda frågor** ger en ny fil med bara de frågorna, att ge vidare till den
@@ -109,7 +109,7 @@ tentans frågor fungerade och innehåller bara sammanräknade resultat.
 
 - Läser tentans **PDF** och ett eller flera **JSON-resultat** från Inspera, samt en valfri **Excel** med teman per fråga.
 - Visar per fråga: **svarsfördelning** per alternativ, **andel rätt** (svårighet) och **diskriminering** (punkt-biseriell item–total-korrelation), med färgkodad distraktoranalys.
-- Två vägar för examinatorn: **problemfrågor före betygssättning** (flervalsfrågorna, före rättningen av essäfrågorna) och **hela rapporten** (alla frågetyper på en sida efter rättning, med Översiktstabell inför betygskollegiet).
+- Två tillfällen: **problemfrågor före betygssättning** (flervalsfrågorna, innan essäfrågorna är rättade) och **alla frågor efter rättningen** (alla frågetyper på en sida, med Översiktstabell inför betygskollegiet).
 - Filtrering på tema, exkludering av trasiga frågor, och export till **Excel** och som **översiktstabell** att skriva ut.
 - En fristående **Temarapport** att dela med temagrupperna: utan uppmaningar, med observationer och möjliga orsaker där svaren följer ett mönster, och med möjlighet att bocka för frågor och spara en egen sida att ge vidare.
 - **Justerbara gränser** för märkningarna Lätt och Svår och för god diskriminering, i en hopfälld inställningspanel, och G-gränsen i procent direkt på rapportsidan.
