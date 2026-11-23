@@ -1,8 +1,8 @@
 # Frågeluppen
 
-**Ett webbverktyg för att analysera flervalstentor (MCQ) från Inspera – och för att bedöma och förbättra frågornas kvalitet.**
+**Ett webbverktyg för att analysera tentor från Inspera fråga för fråga, och för att bedöma och förbättra frågornas kvalitet.**
 
-Frågeluppen visar, för varje fråga på en tenta, hur svaren fördelade sig, hur många som svarade rätt, och hur väl frågan *skiljer mellan studenter med höga och låga totalpoäng* (diskriminering). Det används för att hitta frågor som behöver rättas om eller exkluderas, för att förbereda betygskollegiet, och för att ge frågekonstruktörer återkoppling.
+Frågeluppen visar, för varje fråga på en tenta, hur studenterna svarade och hur väl frågan *skiljer mellan studenter med höga och låga totalpoäng* (diskriminering). Flervalsfrågor (MCQ) visas med svarsfördelning per alternativ och andel rätt, essä- och flersvarsfrågor med medelpoäng och poängfördelning. Det används för att hitta frågor som behöver rättas om eller exkluderas, för att förbereda betygskollegiet, och för att ge frågekonstruktörer återkoppling.
 
 ---
 
@@ -108,7 +108,8 @@ visar hur tentans frågor fungerade och innehåller bara sammanräknade resultat
 ## Vad verktyget gör
 
 - Läser tentans **PDF** och ett eller flera **JSON-resultat** från Inspera, samt en valfri **Excel** med teman per fråga.
-- Visar per fråga: **svarsfördelning** per alternativ, **andel rätt** (svårighet) och **diskriminering** (punkt-biseriell item–total-korrelation), med färgkodad distraktoranalys.
+- Visar per flervalsfråga: **svarsfördelning** per alternativ, **andel rätt** (svårighet) och **diskriminering** (punkt-biseriell item–total-korrelation), med färgkodad distraktoranalys.
+- Visar per essä- och flersvarsfråga: **medelpoäng**, **poängfördelning** och diskriminering.
 - Två tillfällen: **problemfrågor före betygssättning** (flervalsfrågorna, innan essäfrågorna är rättade) och **alla frågor efter rättningen** (alla frågetyper på en sida, med Översiktstabell inför betygskollegiet).
 - Filtrering på tema, exkludering av trasiga frågor, och export till **Excel** och som **översiktstabell** att skriva ut.
 - En fristående **Temarapport** att dela med temagrupperna: utan uppmaningar, med observationer och möjliga orsaker där svaren följer ett mönster, och med möjlighet att bocka för frågor och spara en egen sida att ge vidare.
@@ -121,7 +122,7 @@ Allt körs lokalt i webbläsaren – **inga data laddas upp någonstans**.
 
 ## Vad jag har gjort
 
-Frågeluppen är utvecklad av mig, **Kajsa Igelström**, för analys av läkarprogrammets MCQ-tentor. Mitt bidrag är den pedagogiska och psykometriska utformningen:
+Frågeluppen är utvecklad av mig, **Kajsa Igelström**, för analys av läkarprogrammets tentor. Mitt bidrag är den pedagogiska och psykometriska utformningen:
 
 - **Vilka mått som är relevanta och hur de ska tolkas** – svårighet, item–total-diskriminering och distraktoreffektivitet – och hur de presenteras så att en examinator kan agera på dem.
 - **Arbetsflödet** i tre steg (förbered filer, hitta problemfrågor före betygssättningen, skapa rapporter efter rättningen), och återkopplingen till frågekonstruktörer.

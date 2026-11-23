@@ -1,6 +1,6 @@
 # CLAUDE.md – arbetsregler för det här repot
 
-Detta är **Frågeluppen**, ett pedagogiskt verktyg som analyserar MCQ-tentaresultat
+Detta är **Frågeluppen**, ett pedagogiskt verktyg som analyserar tentaresultat
 från Inspera. Läs den här filen innan du gör ändringar.
 
 ## Status och backlog (utanför repot)
